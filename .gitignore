@@ -1,0 +1,13 @@
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/tmp/
+.idea
+.DS_Store
+cache
+config.yml
+data
