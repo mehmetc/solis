@@ -1,5 +1,5 @@
 require_relative 'shape/reader/file'
-require_relative 'shape/reader/sheet2'
+require_relative 'shape/reader/sheet'
 
 module Solis
   module Shape

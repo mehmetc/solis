@@ -10,12 +10,13 @@ class SimpleSheets
     @id = spreadsheet_id
     @key = key
     @sheets_service = Google::Apis::SheetsV4::SheetsService.new
-    @sheets_service.key = @key
+    @sheets_service.key = @key    
   end
 
   def worksheets
     spreadsheet_api = @sheets_service.get_spreadsheet(@id, fields: 'sheets.properties')
     spreadsheet_api.sheets.map { |s| Worksheet.new(self, s.properties) }
+    #TODO: catch not found
   end
 
   def worksheet_by_title(title)

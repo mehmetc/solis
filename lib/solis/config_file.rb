@@ -2,6 +2,7 @@
 
 require 'yaml'
 
+module Solis
 class ConfigFile
   @config = {}
   @config_file_path = ''
@@ -82,4 +83,5 @@ class ConfigFile
 
     new_config
   end
+end
 end
