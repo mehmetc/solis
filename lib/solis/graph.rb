@@ -26,10 +26,15 @@ module Solis
 
       @shape_tree = {}
       shape_keys = @shapes.map do |shape_name, _|
+        if shape_name.empty?
+          LOGGER.warn("Dangling entity found #{_[:target_class].to_s} removing")
+          next
+        end
         @shapes[shape_name][:attributes].select { |_, metadata| metadata.key?(:node_kind) && !metadata[:node_kind].nil? }.values.map { |m| m[:datatype].to_s }
       end
       shape_keys += @shapes.keys
       shape_keys = shape_keys.flatten.compact.sort.uniq
+
       shape_keys.each do |shape_name|
         d = @shape_tree.key?(shape_name) ? @shape_tree[shape_name] : 0
         d += 1
@@ -69,7 +74,7 @@ module Solis
       raise Solis::Error::NotFoundError, "'#{shape_name}' not found. Available classes are #{list_shapes.join(', ')}" unless shape?(shape_name)
       return Object.const_get(shape_name) if Object.const_defined?(shape_name)
 
-      puts shape_name
+      LOGGER.info("Creating model #{shape_name}")
       attributes = @shapes[shape_name][:attributes].keys.map { |m| m.to_sym }
 
       # attributes << :id unless attributes.include?(:id)
@@ -115,7 +120,7 @@ module Solis
       raise Solis::Error::NotFoundError, "#{shape_name} not found. Available classes are #{list_shapes.join(', ')}" unless shape?(shape_name)
       return Object.const_get(resource_name) if Object.const_defined?(resource_name)
 
-      puts resource_name
+      LOGGER.info("Creating resource #{resource_name}")
 
       attributes = @shapes[shape_name][:attributes].select { |_, metadata| metadata.key?(:node_kind) && metadata[:node_kind].nil? }
 
@@ -165,7 +170,7 @@ module Solis
           next if value[:datatype].to_s.classify.eql?(shape_name)
           if (value[:mincount] && value[:mincount] > 1) || (value[:maxcount] && value[:maxcount] > 1)
             has_many_resource_name = value[:datatype].nil? ? value[:class].gsub(self.model.graph_name, '') : value[:datatype].to_s.classify
-            puts "#{resource_name} has_many #{has_many_resource_name}"
+            LOGGER.info "\t a #{resource_name} has_many #{has_many_resource_name}"
             resource.has_many(key.to_sym, foreign_key: :id, primary_key: :id, resource: graph.shape_as_resource("#{has_many_resource_name}", stack_level << has_many_resource_name)) do
 
               belongs_to_resource = graph.shape_as_resource("#{has_many_resource_name}")
@@ -204,7 +209,7 @@ module Solis
             end
           else
             belongs_to_resource_name = value[:datatype].nil? ? value[:class].value.gsub(self.model.graph_name, '') : value[:datatype].to_s.tableize.classify
-            puts "#{resource_name} belongs_to #{belongs_to_resource_name}"
+            LOGGER.info "\t A #{resource_name} belongs_to #{belongs_to_resource_name}"
             resource.belongs_to(key.to_sym, foreign_key: :id, resource: graph.shape_as_resource("#{belongs_to_resource_name}", stack_level << belongs_to_resource_name)) do
 
               link do |resource|

@@ -10,5 +10,6 @@
 .DS_Store
 cache
 config.yml
-data
+examples/data
 .vscode
+*.gem

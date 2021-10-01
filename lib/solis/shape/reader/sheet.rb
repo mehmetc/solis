@@ -90,6 +90,7 @@ module Solis
 
                   entities.store(e['name'].to_sym, { description: e['description'],
                                                      plural: e['nameplural'],
+                                                     label: e['name'].to_s.strip,
                                                      sub_class_of: e['subclassof'].nil? || e['subclassof'].empty? ? [] : [e['subclassof']],
                                                      same_as: e['sameas'],
                                                      properties: entity_data })
@@ -546,7 +547,7 @@ CREATE SCHEMA #{graph_prefix};
                 out += t.map{|m| m[1]}.join("\n")
               end
 
-              ::File.open("#{ConfigFile[:cache]}/test.json", 'wb') {|f| f.puts references.to_json}
+              #              ::File.open("#{ConfigFile[:cache]}/test.json", 'wb') {|f| f.puts references.to_json}
 
               out += relations.sort.uniq.join("\n")
               out += erd_footer(data, type)
