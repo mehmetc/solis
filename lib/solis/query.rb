@@ -348,43 +348,5 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
       data&.delete_if { |_k, v| v.nil? || v.try(:empty?) }
       @model.class.graph.shape_as_model(klass_name).new(data)
     end
-
-    def build_object2(m)
-      klass_metadata = @shapes.select do |_, v|
-        if m.key?('@type')
-          m['@type'].first.eql?(v[:target_class].value)
-        else
-          m.keys.select { |s| s =~ /^http/ }.first.eql?(v[:target_class].value)
-        end
-      end.first || nil
-      if klass_metadata
-        klass_name = klass_metadata[0]
-        data = {}
-        klass_metadata[1][:attributes].each do |attribute, metadata|
-          if metadata.key?(:node_kind) && !metadata[:node_kind].nil?
-            internal_result = []
-            next unless m.key?(metadata[:path])
-
-            m[metadata[:path]].map { |s| s.transform_keys { |k| k.gsub(/^@/, '') } }.select { |s| s.keys.first.eql?('id') }.map { |m| m['id'] }.each do |id|
-              internal_result << @model.class.graph.shape_as_model(attribute.classify).new.query.filter({ filters: { id: id.split('/').last } }).find_all.map { |a| a }
-            end
-            # internal_result.flatten!
-            data[attribute] = JSON.parse(internal_result.flatten.to_json)
-          elsif m.key?(metadata[:path])
-            data_attribute = m[metadata[:path]].map { |s| s['@value'] }.compact
-            data_attribute = data_attribute.size == 1 ? data_attribute.first : data_attribute
-            data[attribute] = data_attribute
-          end
-        end
-      end
-      data['id'] = begin
-        m[klass_metadata[1][:attributes]['id'][:path]].map { |s| s['@value'] }.first
-      rescue StandardError
-        m['@id']
-      end
-
-      data.delete_if { |_k, v| v.nil? || v.empty? }
-      @model.class.graph.shape_as_model(klass_name).new(data)
-    end
   end
 end
