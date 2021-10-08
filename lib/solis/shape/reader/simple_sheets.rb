@@ -17,6 +17,15 @@ class SimpleSheets
     spreadsheet_api = @sheets_service.get_spreadsheet(@id, fields: 'sheets.properties')
     spreadsheet_api.sheets.map { |s| Worksheet.new(self, s.properties) }
     #TODO: catch not found
+  rescue Google::Apis::ClientError => e
+    case e.status_code
+    when 404
+      raise "Sheet with id #{@id} NOT FOUND"
+    else
+      raise "An error occured reading sheet with id #{@id}. HTTP status code = #{e.status_code}, reason = '#{e.header.reason_phrase}'"
+    end
+  rescue Exception  => e
+    raise e
   end
 
   def worksheet_by_title(title)

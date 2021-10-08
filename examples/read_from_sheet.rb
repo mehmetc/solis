@@ -4,11 +4,9 @@ Bundler.require
 
 require 'solis'
 Solis::ConfigFile.path = Dir.pwd
-sheet_key = :abv
+sheet_key = :t
 key = Solis::ConfigFile[:key]
-sheets = { abv: Solis::ConfigFile[:sheets][:abv], t: Solis::ConfigFile[:sheets][:t],
-           lp: Solis::ConfigFile[:sheets][:lp] }
-s = Solis::Shape::Reader::Sheet.read(key, sheets[sheet_key], from_cache: false)
+s = Solis::Shape::Reader::Sheet.read(key, Solis::ConfigFile[:sheets][sheet_key], from_cache: false)
 
 File.open("./data/#{sheet_key}.sql", 'wb') { |f| f.puts s[:sql] }
 File.open("./data/#{sheet_key}.json", 'wb') { |f| f.puts s[:inflections] }

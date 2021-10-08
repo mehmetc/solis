@@ -1,8 +1,10 @@
 # Solis
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/solis`. To experiment with that code, run `bin/console` for an interactive prompt.
+Solis might mean 'the sun' in Latin or just Silos spelled backwards. It is an attempt to use a SHACL file as a description for an API on top of a data store.
 
-TODO: Delete this and the text above, and describe your gem
+
+TODO:
+ - extract sparql layer into its own gem
 
 ## Installation
 
@@ -21,6 +23,20 @@ Or install it yourself as:
     $ gem install solis
 
 ## Usage
+
+Transforming a Google Sheet into a SHACL file and Entity model.
+
+[Google sheet template](https://docs.google.com/spreadsheets/d/1vi2U9Gpgu9mA6OpvrDBWRg8oVKs6Es63VyLDIKFNWYM/edit?usp=drive_web&ouid=105856802847127219255) example
+
+Tabs starting with an underscore define general metadata 
+    - _PREFIXES: ontologies to include in SHACL file
+    - _METADATA: key/value pairs describing the ontology
+    - _ENTITIES: a list of entities describing if it is a sub class of or same as an external entity
+
+Every entity that is referenced in _ENTITIES can be further described in its own tab.
+
+
+
 
 TODO: Write usage instructions here
 

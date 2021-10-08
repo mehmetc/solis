@@ -32,9 +32,7 @@ module Solis
             def read_sheets(key, spreadsheet_id, options)
               data = nil
 
-              cache_dir = ConfigFile.include?(:cache) ? ConfigFile[:cache] : '/tmp'
-
-              puts cache_dir
+              cache_dir = ConfigFile.include?(:solis) && ConfigFile[:solis].include?(:cache) ? ConfigFile[:solis][:cache] : '/tmp'
 
               if ::File.exist?("#{cache_dir}/#{spreadsheet_id}.json") && (options.include?(:from_cache) && options[:from_cache])
                 Solis::LOGGER.info("from cache #{cache_dir}/#{spreadsheet_id}.json")

@@ -65,8 +65,13 @@ module Solis
       sparql.insert_data(graph, graph: graph.name)
     end
 
-    def to_ttl
-      as_graph(self, false).dump(:ttl)
+    def to_ttl(resolve_all=true)
+      graph = as_graph(self, resolve_all)
+      graph.dump(:ttl)
+    end
+
+    def to_graph
+      as_graph(self)
     end
 
     def update(data)
@@ -85,13 +90,22 @@ module Solis
       delete_graph = as_graph(original_klass, false)
       where_graph = RDF::Graph.new
       where_graph.name = RDF::URI(self.class.graph_name)
-      where_graph << [RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{id}"), :p, :o]
+      if id.is_a?(Array)
+        id.each do |i|
+          where_graph << [RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{i}"), :p, :o]
+        end
+      else
+        where_graph << [RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{id}"), :p, :o]
+      end
 
       attributes.each_pair do |key, value|
         original_klass.send(:"#{key}=", value)
       end
-      insert_graph = as_graph(original_klass,false)
+      insert_graph = as_graph(original_klass,true)
+      Solis::LOGGER.info delete_graph.dump(:ttl) if ConfigFile[:debug]
       Solis::LOGGER.info insert_graph.dump(:ttl) if ConfigFile[:debug]
+      Solis::LOGGER.info where_graph.dump(:ttl) if ConfigFile[:debug]
+
       sparql.delete_insert(delete_graph, insert_graph, where_graph, graph: insert_graph.name)
       data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
       if data.nil?
@@ -161,6 +175,21 @@ module Solis
           m[:attributes][attribute.to_sym] = { description: attribute_metadata[:comment]&.value,
                                                mandatory: (attribute_metadata[:mincount].to_i > 0),
                                                data_type: attribute_metadata[:datatype] }
+        end
+      end
+
+      m
+    end
+
+    def self.model_template(level = 0)
+      m = { type: self.name.tableize, attributes: {} }
+      self.metadata[:attributes].each do |attribute, attribute_metadata|
+
+        if attribute_metadata.key?(:class) && !attribute_metadata[:class].nil? && attribute_metadata[:class].value =~ /#{self.graph_name}/ && level == 0
+          cm = self.graph.shape_as_model(self.metadata[:attributes][attribute][:datatype].to_s).model_template(level + 1)
+          m[:attributes][attribute.to_sym] = cm[:attributes]
+        else
+          m[:attributes][attribute.to_sym] = ''
         end
       end
 
