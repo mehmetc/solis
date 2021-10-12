@@ -12,7 +12,7 @@ module Solis
       attributes.each do |attribute, value|
         if self.class.metadata[:attributes].keys.include?(attribute.to_s)
           if !self.class.metadata[:attributes][attribute.to_s][:node_kind].nil? && !(value.is_a?(Hash) || value.is_a?(Array) || value.class.ancestors.include?(Solis::Model))
-            raise Solis::Error::InvalidAttributeError, "'#{attribute}' must be an object"
+            raise Solis::Error::InvalidAttributeError, "'#{@model_name}.#{attribute}' must be an object"
           end
 
           value = value.first if value.is_a?(Array) && (attribute.eql?('id') || attribute.eql?(:id))
@@ -23,7 +23,7 @@ module Solis
       end
 
       id = instance_variable_get("@id")
-      if id.nil? || id.empty?
+      if id.nil? || (id.is_a?(String) && id&.empty?)
         instance_variable_set("@id", SecureRandom.uuid)
       end
     end
@@ -61,7 +61,7 @@ module Solis
       # File.open('/Users/mehmetc/Dropbox/AllSources/LP/graphiti-api/save.ttl', 'wb') do |file|
       #   file.puts graph.dump(:ttl)
       # end
-      Solis::LOGGER.info graph.dump(:ttl) if ConfigFile[:debug]
+      Solis::LOGGER.info SPARQL::Client::Update::InsertData.new(graph, graph: graph.name).to_s if ConfigFile[:debug]
       sparql.insert_data(graph, graph: graph.name)
     end
 
@@ -164,6 +164,14 @@ module Solis
       @graph = graph
     end
 
+    def self.language
+      @language
+    end
+
+    def self.language=(language)
+      @language = language
+    end
+
     def self.model(level = 0)
       m = { type: self.name.tableize, attributes: {} }
       self.metadata[:attributes].each do |attribute, attribute_metadata|
@@ -247,11 +255,14 @@ module Solis
           end
 
           if model && d.is_a?(Hash)
-            if parent_model
-              model_instance = parent_model.new(d)
-            else
-              model_instance = model.new(d)
-            end
+            #TODO: figure out in what use case we need the parent_model
+            # model_instance = if parent_model
+            #                     parent_model.new(d)
+            #                  else
+            #                     model.new(d)
+            #                  end
+
+            model_instance = model.new(d)
 
             if resolve_all
               d = build_ttl_objekt(graph, model_instance, hierarchy, false)
@@ -274,7 +285,11 @@ module Solis
           else
             datatype = RDF::Vocabulary.find_term(metadata[:datatype_rdf] || metadata[:node])
             if datatype && datatype.datatype?
-              d = RDF::Literal.new(d, datatype: datatype)
+              d = if metadata[:datatype_rdf].eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString')
+                    RDF::Literal.new(d, language: self.class.language)
+                  else
+                    RDF::Literal.new(d, datatype: datatype)
+                  end
               d = (d.object.value rescue d.object) unless d.valid?
             end
           end
@@ -282,7 +297,6 @@ module Solis
           graph << [id, RDF::URI("#{self.class.graph_name}#{attribute}"), d]
         end
       end
-
       hierarchy.pop
       id
     end

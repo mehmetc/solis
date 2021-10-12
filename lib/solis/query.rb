@@ -52,7 +52,14 @@ module Solis
       self
     end
 
+    def language(language = nil)
+      @language = language || ConfigFile[:solis][:env][:language] || 'en'
+      self
+    end
+
     def filter(params)
+      #FILTER(LANG(?label) = "" || LANGMATCHES(LANG(?label), "fr"))
+      #
       @filter = ''
       if params.key?(:filters)
         filters = params[:filters]
@@ -69,6 +76,7 @@ module Solis
             if value[:value].is_a?(String)
               contains = value[:value].split(',').map { |m| "CONTAINS(LCASE(str(?__search#{i})), LCASE(\"#{m}\"))" }.join(' || ')
             else
+              value[:value] = [value[:value]] unless value[:value].is_a?(Array)
               value[:value].flatten!
               contains = value[:value].map { |m| "CONTAINS(LCASE(str(?__search#{i})), LCASE(\"#{m}\"))" }.join(' || ')
             end

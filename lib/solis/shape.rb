@@ -20,13 +20,17 @@ module Solis
         end
 
         def lookup_datatype(datatype, node)
+          
           if datatype =~ /^http:\/\/www.w3.org\/2001\/XMLSchema#/
-            if datatype =~ /^http:\/\/www.w3.org\/2001\/XMLSchema#anyURI/
+            case datatype
+            when /^http:\/\/www.w3.org\/2001\/XMLSchema#anyURI/
               'string'
-            elsif datatype =~ /http:\/\/www.w3.org\/2001\/XMLSchema#duration/
+            when /http:\/\/www.w3.org\/2001\/XMLSchema#duration/
               'string'
-            elsif datatype =~ /http:\/\/www.w3.org\/2001\/XMLSchema#dateTime/
+            when /http:\/\/www.w3.org\/2001\/XMLSchema#dateTime/
               'datetime'
+            when /http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns#langString/
+              'string'
             else
               datatype.split('#').last.to_sym
             end

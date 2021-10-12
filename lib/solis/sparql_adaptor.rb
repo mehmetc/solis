@@ -218,11 +218,26 @@ module Solis
 
 
   class HasMany  < Graphiti::Sideload::HasMany
+    def inverse_filter
+      @inverse_filter || foreign_key
+    end
+
+
     def load_params(parents, query)
       query.hash.tap do |hash|
         hash[:filter] ||= {}
         hash[:filter].merge!({primary_key => parents.map{|m| m.instance_variable_get("@#{query.association_name.to_s}")&.id}.join(',') })
       end
+    end
+
+    def link_filter(parents)
+      {inverse_filter => parent_filter(parents)}
+    end
+
+    private
+
+    def parent_filter(parents)
+      ids_for_parents(parents).join(",")
     end
   end
 end

@@ -16,6 +16,7 @@ module Solis
       @sparql_endpoint = options.delete(:sparql_endpoint) || nil
       @inflections = options.delete(:inflections) || nil
       @shapes = Solis::Shape.from_graph(graph)
+      @language = options.delete(:language) || 'nl'
 
       unless @inflections.nil?
         raise 'Inflection file not found' unless File.exist?(@inflections)
@@ -100,6 +101,7 @@ module Solis
       model.graph_prefix = @graph_prefix
       model.shapes = @shapes
       model.metadata = @shapes[shape_name]
+      model.language = @language
       unless parent_model.nil?
         parent_model.metadata[:attributes].each do |k, v|
           unless model.metadata[:attributes].key?(k)
