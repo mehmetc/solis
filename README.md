@@ -45,10 +45,11 @@ Config file contains all the options needed to run Solis.
 
 ![Template model](./test/resources/data/t.png)
 
+This is simple template exclusively used for testing.
 ### Google Sheet [model](https://docs.google.com/spreadsheets/d/1vi2U9Gpgu9mA6OpvrDBWRg8oVKs6Es63VyLDIKFNWYM/edit#gid=577648221)
 
 #### Tabs
-- _PREFIXES: a list of ontologies and prefixes
+- _PREFIXES: a list of ontologies and prefixes used
   - Base: All entities defined under this URI. Selected by '*'
   - Prefix: prefix of ontology
   - URI: URI of ontology
@@ -74,21 +75,20 @@ This is a base entity were other entities that fit a code table are inherited fr
 |short_label|lookup key, short label|0|1|xsd:string|
 |label|prefered display label|1|1|xsd:string|
 
-
-
 ##### Skill
-Inherits from CodeTable no tab is created
+Inherits from CodeTable no tab is needed.
+
 ##### Person
 Base class for a person
-
 
 | Name | Description | Min | Max | sameAs | datatype |
 |---|---|---|---|---|---|
 | id | unique record identifier | 1 | 1 | schema:identifier | xsd:string |
 |first_name|Person's first name|1|1|schema:givenName|xsd:string|
 |first_name|Person's last name|1|1|schema:familyName|xsd:string|
+
 ##### Teacher
-Inherits all fields from Person and adds extra property "skill" 
+Inherits all fields from Person and adds extra property "skill" an extra tab with the extra properties must exist 
 
 | Name | Description | Min | Max | sameAs | datatype |
 |---|---|---|---|---|---|
@@ -96,7 +96,7 @@ Inherits all fields from Person and adds extra property "skill"
 |skill|field teacher is skilled in|1| | |t:Skill|
 
 ##### Student
-Inherits all fields from Person and adds extra property "age"
+Inherits all fields from Person and adds extra property "age" an extra tab with the extra properties must exist
 
 | Name | Description | Min | Max | sameAs | datatype |
 |---|---|---|---|---|---|
@@ -108,6 +108,7 @@ Inherits all fields from Person and adds extra property "age"
 |---|---|---|---|---|---|
 | id | unique record identifier | 1 | 1 | schema:identifier | xsd:string |
 |name|name of a course|1|1| |xsd:string|
+
 ##### Schedule
 | Name | Description | Min | Max | sameAs | datatype |
 |---|---|---|---|---|---|
@@ -155,6 +156,55 @@ Create schedule with existing teacher and course records
     "end_date": "2022-01-01"
   }
 }
+```
+
+## Solis API
+### Solis::ConfigFile
+Static class to read and manipulate config.yml file
+- name=: name of config file defaults to config.yml
+- path=: location of config file defaults to ./config.yml or ./config/config.yml
+- [key]=: lookup or set a key in your config file
+- include?(key): is key available in config file
+
+```ruby
+Solis::ConfigFile.path='/path/to/config/file'
+raise ':key not found' unless Solis::ConfigFile.include?(:key)
+
+key = Solis::Configfile[:key]
+```
+
+### Solis::LOGGER
+Logger class defaults to STDOUT for now
+
+TODO: check if this needs to be configurable
+
+### Solis::VERSION
+Returns Solis version number 
+
+### Solis::Error
+List of Solis errors
+
+##### Solis::Error::GeneralError
+An unknown error
+##### Solis::Error::InvalidAttributeError
+Attribute error. Happens when data does not match model 
+##### Solis::Error::NotFoundError
+When query returns not found
+
+### Solis::Graph
+### Solis::Model
+### Solis::Resource
+### Solis::Query
+### Solis::Shape
+
+### Solis::Shape::Reader
+#### Solis::Shape::Reader::File
+#### Solis::Shape::Reader::Sheet
+
+### Setup Solis
+``` ruby
+Solis::ConfigFile.path = './'
+solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), Solis::ConfigFile[:solis][:env])
 ```
 
 
