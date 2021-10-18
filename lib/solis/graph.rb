@@ -19,7 +19,7 @@ module Solis
       @language = options.delete(:language) || 'nl'
 
       unless @inflections.nil?
-        raise 'Inflection file not found' unless File.exist?(@inflections)
+        raise "Inflection file not found #{File.absolute_path(@inflections)}" unless File.exist?(@inflections)
         JSON.parse(File.read(@inflections)).each do |s, p|
           ActiveSupport::Inflector.inflections.irregular(s, p)
         end

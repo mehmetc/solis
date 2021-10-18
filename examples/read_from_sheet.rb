@@ -15,6 +15,7 @@ File.open("./data/#{sheet_key}_schema.ttl", 'wb') { |f| f.puts s[:schema] }
 File.open("./data/#{sheet_key}.puml", 'wb') { |f| f.puts s[:plantuml] }
 File.open("./data/#{sheet_key}_erd.puml", 'wb') { |f| f.puts s[:plantuml_erd] }
 
+#https://plantuml.com/elk
 `plantuml -tsvg ./data/#{sheet_key}.puml`
 `gm convert ./data/#{sheet_key}.svg ./data/#{sheet_key}.png`
 `plantuml -tsvg ./data/#{sheet_key}_erd.puml`

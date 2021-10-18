@@ -1,0 +1,68 @@
+@startuml
+!pragma layout elk
+skinparam classFontSize 14
+!define LIGHTORANGE
+skinparam groupInheritance 1
+skinparam componentStyle uml2
+skinparam wrapMessageWidth 100
+skinparam ArrowColor #Maroon
+
+title SOLIS template - 0.1 - 2021-10-18 10:52:13 +0200
+              
+package t {
+
+class CodeTable{
+	{field} xsd:string : id 
+	{field} xsd:string : short_label 
+	{field} xsd:string : label 
+}
+
+
+class Course{
+	{field} xsd:string : id 
+	{field} xsd:string : name 
+}
+
+
+class Person{
+	{field} xsd:string : id 
+	{field} xsd:string : first_name 
+	{field} xsd:string : last_name 
+}
+
+
+class Schedule{
+	{field} xsd:string : id 
+	{field} t:Teacher : teacher 
+	{field} t:Student : students 
+	{field} t:Course : course 
+	{field} xsd:date : start_date 
+	{field} xsd:date : end_date 
+}
+Teacher - "1" Schedule : teacher >
+Student -  Schedule : students >
+Course -  Schedule : course >
+
+class Skill{
+	{field} xsd:string : id 
+}
+
+Skill --|> CodeTable
+
+class Student{
+	{field} xsd:integer : age 
+}
+
+Student --|> Person
+
+class Teacher{
+	{field} t:Skill : skill 
+}
+Skill -  Teacher : skill >
+Teacher --|> Person
+
+hide circle
+hide methods
+hide empty members
+@enduml
+          

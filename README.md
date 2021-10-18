@@ -1,6 +1,161 @@
 # Solis
 
-Solis might mean 'the sun' in Latin or just Silos spelled backwards. It is an attempt to use a SHACL file as a description for an API on top of a data store.
+Solis means 'the sun' in Latin or just Silos spelled backwards. It is an attempt to use a SHACL file as a description for an API on top of a data store.
+
+# From Google Sheets to RDF, Shacl, ... to API
+The biggest hurdle when developing a model is the communication between the people who know the problem domain and the developers. 
+Next to this every change in the model has a direct impact on everything that uses the model. From migrations to documentation and eventually the API.
+This is an effort to streamline and minimalize this impact.
+
+## config.yml
+Config file contains all the options needed to run Solis.
+
+```yaml
+:debug: false
+:key: your_Google_API_key
+:solis:
+    :cache: tmp/cache
+    :shacl: /path/to/t_shacl.ttl
+    :env:
+        :graph_name: https://t.example.com/
+        :graph_prefix: t
+        :sparql_endpoint: http://127.0.0.1:8890/sparql
+        :inflections: /path/to/t.json
+        :language: nl
+:sheets:  
+  :t: 1vi2U9Gpgu9mA6OpvrDBWRg8oVKs6Es63VyLDIKFNWYM  
+
+```
+
+- debug: extra logging like generated queries etc.
+- key: Google API key used to read a Google Sheet
+- solis: runtime configuration
+  - cache: Google Sheets can be cached to minimize Google API calls
+  - shacl: location of the shacl file to use
+  - env: shacl info
+    - graph_name: uri of the graph
+    - graph_prefix: uri prefix of the graph
+    - sparql_endpoint: uri to connect to the data store. Currently focus is on triple stores
+    - inflections: singular, plural mapping file for multi lingual data models
+    - language: default language strings are stored in.
+- sheets: list of models
+  - t: an example sheet
+  
+## Solis Model Template
+
+![Template model](./test/resources/data/t.png)
+
+### Google Sheet [model](https://docs.google.com/spreadsheets/d/1vi2U9Gpgu9mA6OpvrDBWRg8oVKs6Es63VyLDIKFNWYM/edit#gid=577648221)
+
+#### Tabs
+- _PREFIXES: a list of ontologies and prefixes
+  - Base: All entities defined under this URI. Selected by '*'
+  - Prefix: prefix of ontology
+  - URI: URI of ontology
+- _METADATA: description fields for metadata
+  - key: identifier of metadata
+  - value: metadata value
+- _ENTITIES: a list of entities(classes) used in the model
+  - Name: name of entity
+  - NamePlural: plural name of entity. The generated API has RESTful endpoints. Non english entities are incorrectly pluralized
+  - Description: purpose of entity
+  - subClassOf: internal entity reference. Entity you want to inherit from 
+  - sameAs: External entity reference (not activily used, yet)
+- Any number of tabs describing properties of an entity. See below  
+
+#### Entity tabs
+Not every entity described in _ENTITIES needs a tab. 
+##### CodeTable
+This is a base entity were other entities that fit a code table are inherited from
+
+| Name | Description | Min | Max | sameAs | datatype |
+|---|---|---|---|---|---|
+| id | unique record identifier | 1 | 1 | schema:identifier | xsd:string |
+|short_label|lookup key, short label|0|1|xsd:string|
+|label|prefered display label|1|1|xsd:string|
+
+
+
+##### Skill
+Inherits from CodeTable no tab is created
+##### Person
+Base class for a person
+
+
+| Name | Description | Min | Max | sameAs | datatype |
+|---|---|---|---|---|---|
+| id | unique record identifier | 1 | 1 | schema:identifier | xsd:string |
+|first_name|Person's first name|1|1|schema:givenName|xsd:string|
+|first_name|Person's last name|1|1|schema:familyName|xsd:string|
+##### Teacher
+Inherits all fields from Person and adds extra property "skill" 
+
+| Name | Description | Min | Max | sameAs | datatype |
+|---|---|---|---|---|---|
+| id | unique record identifier | 1 | 1 | schema:identifier | xsd:string |
+|skill|field teacher is skilled in|1| | |t:Skill|
+
+##### Student
+Inherits all fields from Person and adds extra property "age"
+
+| Name | Description | Min | Max | sameAs | datatype |
+|---|---|---|---|---|---|
+| id | unique record identifier | 1 | 1 | schema:identifier | xsd:string |
+|age|age of student|1|1| |xsd:integer|
+
+##### Course 
+| Name | Description | Min | Max | sameAs | datatype |
+|---|---|---|---|---|---|
+| id | unique record identifier | 1 | 1 | schema:identifier | xsd:string |
+|name|name of a course|1|1| |xsd:string|
+##### Schedule
+| Name | Description | Min | Max | sameAs | datatype |
+|---|---|---|---|---|---|
+| id | unique record identifier | 1 | 1 | schema:identifier | xsd:string |
+|teacher|schedule belongs to|1|	1| |t:Teacher|
+|course|course within schedule| |1 | |t:Course|
+|start_date| |1|1| |xsd:date|
+|end_date|	|1|	1| |xsd:date|
+
+##### Example data
+
+When no id is supplied records will be created and id will be assigned
+This example will create a schedule, teacher and course record. The skill and student records are referenced by id and must exist.
+```json
+{
+  "type": "schedules",
+  "attributes": {
+    "teacher": {
+      "first_name": "John",
+      "last_mame": "Doe",
+      "skill": [{"id":  "1"}, {"id":  "2"}]
+    },
+    "students": [{"id": "s1"}, {"id": "s2"}],
+    "course": {
+      "name": "Algebra 101"
+    },
+    "start_date": "2021-10-01",
+    "end_date": "2022-01-01"
+  }
+}
+```
+
+Create schedule with existing teacher and course records
+```json
+{
+  "type": "schedules",
+  "attributes": {
+    "teacher": {
+      "id": "1"
+    },
+    "course": {
+      "id": "A23B-101"
+    },
+    "start_date": "2021-10-01",
+    "end_date": "2022-01-01"
+  }
+}
+```
 
 
 TODO:
