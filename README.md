@@ -76,7 +76,15 @@ This is a base entity were other entities that fit a code table are inherited fr
 |label|prefered display label|1|1|xsd:string|
 
 ##### Skill
-Inherits from CodeTable no tab is needed.
+Inherits from CodeTable no tab is needed. Skills a teacher can teach
+```json
+[
+  { "id": 1, "short_label": "problemsolv", "label": "Applying and problem-solving"},
+  { "id": 2, "short_label": "commexp", "label": "Communicating and expressing"},
+  { "id": 3, "short_label": "intcon", "label": "Integrating and connecting"},
+  { "id": 4, "label": "Reasoning"}
+]
+```
 
 ##### Person
 Base class for a person
@@ -103,6 +111,13 @@ Inherits all fields from Person and adds extra property "age" an extra tab with 
 | id | unique record identifier | 1 | 1 | schema:identifier | xsd:string |
 |age|age of student|1|1| |xsd:integer|
 
+```json
+[
+  {"id":  "s1", "first_name":  "Jane", "last_name":  "Smith", "age":  22},
+  {"id":  "s1", "first_name":  "Gino", "last_name":  "Santi", "age":  25}
+]
+```
+
 ##### Course 
 | Name | Description | Min | Max | sameAs | datatype |
 |---|---|---|---|---|---|
@@ -120,7 +135,7 @@ Inherits all fields from Person and adds extra property "age" an extra tab with 
 
 ##### Example data
 
-When no id is supplied records will be created and id will be assigned
+When __no__ id is supplied records will be created and an id will be assigned
 This example will create a schedule, teacher and course record. The skill and student records are referenced by id and must exist.
 ```json
 {
@@ -133,7 +148,7 @@ This example will create a schedule, teacher and course record. The skill and st
     },
     "students": [{"id": "s1"}, {"id": "s2"}],
     "course": {
-      "name": "Algebra 101"
+      "name": "Something 101"
     },
     "start_date": "2021-10-01",
     "end_date": "2022-01-01"
