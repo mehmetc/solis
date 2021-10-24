@@ -53,7 +53,7 @@ t:CourseShape
     sh:property [sh:path t:name ;
                  sh:name "name";
                  sh:description "name of a course" ;
-                 sh:datatype xsd:string ;
+                 sh:datatype rdf:langString ;
                  sh:minCount 1 ;
                  sh:maxCount 1 ;
     ] ;

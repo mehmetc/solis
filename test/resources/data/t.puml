@@ -7,7 +7,7 @@ skinparam componentStyle uml2
 skinparam wrapMessageWidth 100
 skinparam ArrowColor #Maroon
 
-title SOLIS template - 0.1 - 2021-10-18 10:52:13 +0200
+title SOLIS template - 0.1 - 2021-10-24 10:59:58 +0200
               
 package t {
 
@@ -20,7 +20,7 @@ class CodeTable{
 
 class Course{
 	{field} xsd:string : id 
-	{field} xsd:string : name 
+	{field} rdf:langString : name 
 }
 
 
