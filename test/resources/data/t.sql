@@ -1,5 +1,5 @@
 --
--- SOLIS template - 0.1 - 2021-10-24 10:59:58 +0200
+-- SOLIS template - 0.1 - 2021-10-24 15:16:27 +0200
 -- description: Template for the SOLIS gem
 -- author: Mehmet Celik
 --
@@ -22,11 +22,11 @@ COMMENT ON COLUMN t.code_tables.label IS 'prefered display label';
 
 CREATE TABLE t.courses(
 	id SERIAL NOT NULL PRIMARY KEY, 
-	name text NOT NULL
+	course_name text NOT NULL
 );
 COMMENT ON TABLE t.courses 'Name of a course';
 COMMENT ON COLUMN t.courses.id IS 'unique record identifier';
-COMMENT ON COLUMN t.courses.name IS 'name of a course';
+COMMENT ON COLUMN t.courses.course_name IS 'name of a course';
 
 CREATE TABLE t.people(
 	id SERIAL NOT NULL PRIMARY KEY, 

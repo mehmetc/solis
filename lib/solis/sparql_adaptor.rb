@@ -181,7 +181,9 @@ module Solis
 
     def resolve(scope)
       query = self.resource.model.new().query.paging(scope).filter(scope).sort(scope)
-      data = query.find_all.map { |m| m }
+      data = query.find_all.map { |m|
+        m
+      }
       data
     end
   end
@@ -223,21 +225,21 @@ module Solis
     end
 
 
-    def load_params(parents, query)
-      query.hash.tap do |hash|
-        hash[:filter] ||= {}
-        hash[:filter].merge!({primary_key => parents.map{|m| m.instance_variable_get("@#{query.association_name.to_s}")&.id}.join(',') })
-      end
-    end
+    # def load_params(parents, query)
+    #   query.hash.tap do |hash|
+    #     hash[:filter] ||= {}
+    #     hash[:filter].merge!({primary_key => parents.map{|m| m.instance_variable_get("@#{query.association_name.to_s}")&.id}.join(',') })
+    #   end
+    # end
 
-    def link_filter(parents)
-      {inverse_filter => parent_filter(parents)}
-    end
+    # def link_filter(parents)
+    #   {inverse_filter => parent_filter(parents)}
+    # end
 
-    private
-
-    def parent_filter(parents)
-      ids_for_parents(parents).join(",")
-    end
+    # private
+    #
+    # def parent_filter(parents)
+    #   ids_for_parents(parents).join(",")
+    # end
   end
 end

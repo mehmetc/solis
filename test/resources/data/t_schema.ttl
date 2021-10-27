@@ -1,4 +1,5 @@
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix schema: <http://schema.org/> .
 @prefix t: <http://solis.template/> .
@@ -9,24 +10,24 @@ schema:Person a owl:Class;
 
 t: a owl:Ontology;
   <dc11:creator> "Mehmet Celik";
-  <dc11:date> "2021-10-24 10:59:58 +0200";
+  <dc11:date> "2021-10-24 15:16:27 +0200";
   <dc11:description> "Template for the SOLIS gem";
   <dc11:title> "SOLIS template";
   owl:versionInfo 0.1 .
 
-t:course a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>;
+t:course a rdf:Property;
   rdfs:label "course";
   rdfs:comment "course within schedule";
   rdfs:domain t:Schedule;
   rdfs:range t:Course .
 
-t:skill a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>;
+t:skill a rdf:Property;
   rdfs:label "skill";
   rdfs:comment "field teacher is skilled in";
   rdfs:domain t:Teacher;
   rdfs:range t:Skill .
 
-t:students a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>;
+t:students a rdf:Property;
   rdfs:label "students";
   rdfs:comment "list of enrolled students";
   rdfs:domain t:Schedule;
@@ -35,12 +36,11 @@ t:students a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>;
 t:Skill a owl:Class;
   rdfs:label "Skill";
   rdfs:comment "List of skills";
-  rdfs:subClassOf [
+  rdfs:subClassOf t:CodeTable, [
     a owl:Restriction;
     owl:minCardinality 1;
     owl:onProperty t:id
-  ],
-    t:CodeTable, [
+  ], [
     a owl:Restriction;
     owl:maxCardinality 1;
     owl:onProperty t:id
@@ -70,55 +70,55 @@ t:Teacher a owl:Class;
   ],
     t:Person .
 
-t:age a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>;
+t:age a rdf:Property;
   rdfs:label "age";
   rdfs:comment "Age of student";
   rdfs:domain t:Student;
   rdfs:range xsd:integer .
 
-t:end_date a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>;
+t:course_name a rdf:Property;
+  rdfs:label "course_name";
+  rdfs:comment "name of a course";
+  rdfs:domain t:Course;
+  rdfs:range rdf:langString .
+
+t:end_date a rdf:Property;
   rdfs:label "end_date";
   rdfs:comment "";
   rdfs:domain t:Schedule;
   rdfs:range xsd:date .
 
-t:first_name a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>;
+t:first_name a rdf:Property;
   rdfs:label "first_name";
   rdfs:comment "Person's first name";
   rdfs:domain t:Person;
   rdfs:range xsd:string .
 
-t:label a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>;
+t:label a rdf:Property;
   rdfs:label "label";
   rdfs:comment "prefered display label";
   rdfs:domain t:CodeTable;
   rdfs:range xsd:string .
 
-t:last_name a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>;
+t:last_name a rdf:Property;
   rdfs:label "last_name";
   rdfs:comment "Person's last name";
   rdfs:domain t:Person;
   rdfs:range xsd:string .
 
-t:name a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>;
-  rdfs:label "name";
-  rdfs:comment "name of a course";
-  rdfs:domain t:Course;
-  rdfs:range <http://www.w3.org/1999/02/22-rdf-syntax-ns#langString> .
-
-t:short_label a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>;
+t:short_label a rdf:Property;
   rdfs:label "short_label";
   rdfs:comment "lookup key, short label";
   rdfs:domain t:CodeTable;
   rdfs:range xsd:string .
 
-t:start_date a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>;
+t:start_date a rdf:Property;
   rdfs:label "start_date";
   rdfs:comment "";
   rdfs:domain t:Schedule;
   rdfs:range xsd:date .
 
-t:teacher a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>;
+t:teacher a rdf:Property;
   rdfs:label "teacher";
   rdfs:comment "schedule belongs to";
   rdfs:domain t:Schedule;
@@ -133,16 +133,16 @@ t:Course a owl:Class;
     owl:onProperty t:id
   ], [
     a owl:Restriction;
+    owl:minCardinality 1;
+    owl:onProperty t:course_name
+  ], [
+    a owl:Restriction;
     owl:maxCardinality 1;
     owl:onProperty t:id
   ], [
     a owl:Restriction;
-    owl:minCardinality 1;
-    owl:onProperty t:name
-  ], [
-    a owl:Restriction;
     owl:maxCardinality 1;
-    owl:onProperty t:name
+    owl:onProperty t:course_name
   ] .
 
 t:CodeTable a owl:Class;
@@ -150,38 +150,34 @@ t:CodeTable a owl:Class;
   rdfs:comment "Abstract code table entity";
   rdfs:subClassOf [
     a owl:Restriction;
-    owl:maxCardinality 1;
+    owl:minCardinality 1;
     owl:onProperty t:id
   ], [
     a owl:Restriction;
     owl:minCardinality 1;
-    owl:onProperty t:id
+    owl:onProperty t:label
   ], [
     a owl:Restriction;
     owl:minCardinality 0;
     owl:onProperty t:short_label
   ], [
     a owl:Restriction;
-    owl:minCardinality 1;
+    owl:maxCardinality 1;
+    owl:onProperty t:id
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
     owl:onProperty t:label
   ], [
     a owl:Restriction;
     owl:maxCardinality 1;
     owl:onProperty t:short_label
-  ], [
-    a owl:Restriction;
-    owl:maxCardinality 1;
-    owl:onProperty t:label
   ] .
 
 t:Person a owl:Class;
   rdfs:label "Person";
   rdfs:comment "Abstract entity";
   rdfs:subClassOf [
-    a owl:Restriction;
-    owl:minCardinality 1;
-    owl:onProperty t:id
-  ], [
     a owl:Restriction;
     owl:minCardinality 1;
     owl:onProperty t:first_name
@@ -191,12 +187,16 @@ t:Person a owl:Class;
     owl:onProperty t:last_name
   ], [
     a owl:Restriction;
-    owl:maxCardinality 1;
+    owl:minCardinality 1;
     owl:onProperty t:id
   ], [
     a owl:Restriction;
     owl:maxCardinality 1;
     owl:onProperty t:first_name
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:id
   ], [
     a owl:Restriction;
     owl:maxCardinality 1;
@@ -208,52 +208,52 @@ t:Schedule a owl:Class;
   rdfs:comment "Teachers course schedule";
   rdfs:subClassOf [
     a owl:Restriction;
+    owl:minCardinality 1;
+    owl:onProperty t:start_date
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 1;
+    owl:onProperty t:id
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 1;
+    owl:onProperty t:teacher
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:end_date
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:teacher
+  ], [
+    a owl:Restriction;
     owl:minCardinality 0;
     owl:onProperty t:students
-  ], [
-    a owl:Restriction;
-    owl:maxCardinality 1;
-    owl:onProperty t:teacher
-  ], [
-    a owl:Restriction;
-    owl:maxCardinality 1;
-    owl:onProperty t:id
-  ], [
-    a owl:Restriction;
-    owl:minCardinality 1;
-    owl:onProperty t:id
-  ], [
-    a owl:Restriction;
-    owl:maxCardinality 1;
-    owl:onProperty t:end_date
-  ], [
-    a owl:Restriction;
-    owl:minCardinality 1;
-    owl:onProperty t:teacher
-  ], [
-    a owl:Restriction;
-    owl:minCardinality 1;
-    owl:onProperty t:end_date
-  ], [
-    a owl:Restriction;
-    owl:maxCardinality 1;
-    owl:onProperty t:start_date
   ], [
     a owl:Restriction;
     owl:minCardinality 1;
     owl:onProperty t:course
   ], [
     a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:id
+  ], [
+    a owl:Restriction;
     owl:minCardinality 1;
+    owl:onProperty t:end_date
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
     owl:onProperty t:start_date
   ] .
 
-t:id a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>;
+t:id a rdf:Property;
   rdfs:label "id";
   rdfs:comment "systeem UUID";
-  rdfs:domain t:Course,
-    t:Person,
-    t:Skill,
+  rdfs:domain t:Schedule,
     t:CodeTable,
-    t:Schedule;
+    t:Skill,
+    t:Course,
+    t:Person;
   rdfs:range xsd:string .

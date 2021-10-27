@@ -170,7 +170,8 @@ module Solis
 
         relations.each do |key, value|
           next if value[:datatype].to_s.classify.eql?(shape_name)
-          if (value[:mincount] && value[:mincount] > 1) || (value[:maxcount] && value[:maxcount] > 1)
+          #if (value[:mincount] && value[:mincount] > 1) || (value[:maxcount] && value[:maxcount] > 1)
+          if (value[:mincount] && value[:mincount] > 1 || value[:mincount].nil?) || (value[:maxcount] && value[:maxcount] > 1 || value[:maxcount].nil?)
             has_many_resource_name = value[:datatype].nil? ? value[:class].gsub(self.model.graph_name, '') : value[:datatype].to_s.classify
             LOGGER.info "\t a #{resource_name} has_many #{has_many_resource_name}"
             resource.has_many(key.to_sym, foreign_key: :id, primary_key: :id, resource: graph.shape_as_resource("#{has_many_resource_name}", stack_level << has_many_resource_name)) do
@@ -226,6 +227,7 @@ module Solis
 
                   #    return remote_resources.length == 1 ? remote_resources.first : remote_resources
                 end
+
                 remote_resources.first if remote_resources #belongs_to
               end
             end

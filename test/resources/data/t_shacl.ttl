@@ -7,6 +7,7 @@
 @prefix dc11: <http://purl.org/dc/terms/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
 t:CodeTableShape
     a               sh:NodeShape ;
@@ -50,8 +51,8 @@ t:CourseShape
                  sh:minCount 1 ;
                  sh:maxCount 1 ;
     ] ;
-    sh:property [sh:path t:name ;
-                 sh:name "name";
+    sh:property [sh:path t:course_name ;
+                 sh:name "course_name";
                  sh:description "name of a course" ;
                  sh:datatype rdf:langString ;
                  sh:minCount 1 ;
