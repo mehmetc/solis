@@ -184,45 +184,46 @@ module Solis
       data = query.find_all.map { |m|
         m
       }
+
       data
     end
   end
 
 
   class BelongsTo < Graphiti::Sideload::BelongsTo
-    def load_params(parents, query)
-      query.hash.tap do |hash|
-        hash[:filter] ||= {}
-        unless hash[:filter].include?(:id)
-          hash[:filter].merge!({primary_key => parents.map{|m| m.instance_variable_get("@#{query.association_name.to_s}")&.id}.uniq.compact.join(',')})
-        end
-      end
-    end
-
-    def child_map(children)
-      children.index_by(&primary_key)
-    end
-
-    def children_for(parent, map)
-      fk = parent.send(name).send(foreign_key) rescue nil #TODO: this is bad
-      children = map[fk]
-      return children if children
-
-      keys = map.keys
-      if fk.is_a?(String) && keys[0].is_a?(Integer)
-        fk = fk.to_i
-      elsif fk.is_a?(Integer) && keys[0].is_a?(String)
-        fk = fk.to_s
-      end
-      map[fk] || []
-    end
+    # def load_params(parents, query)
+    #   query.hash.tap do |hash|
+    #     hash[:filter] ||= {}
+    #     unless hash[:filter].include?(:id)
+    #       hash[:filter].merge!({primary_key => parents.map{|m| m.instance_variable_get("@#{query.association_name.to_s}")&.id}.uniq.compact.join(',')})
+    #     end
+    #   end
+    # end
+    #
+    # def child_map(children)
+    #   children.index_by(&primary_key)
+    # end
+    #
+    # def children_for(parent, map)
+    #   fk = parent.send(name).send(foreign_key) rescue nil #TODO: this is bad
+    #   children = map[fk]
+    #   return children if children
+    #
+    #   keys = map.keys
+    #   if fk.is_a?(String) && keys[0].is_a?(Integer)
+    #     fk = fk.to_i
+    #   elsif fk.is_a?(Integer) && keys[0].is_a?(String)
+    #     fk = fk.to_s
+    #   end
+    #   map[fk] || []
+    # end
   end
 
 
   class HasMany  < Graphiti::Sideload::HasMany
-    def inverse_filter
-      @inverse_filter || foreign_key
-    end
+    # def inverse_filter
+    #   @inverse_filter || foreign_key
+    # end
 
 
     # def load_params(parents, query)

@@ -278,10 +278,19 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
               end
 
               if data.key?(attribute)
-                data[attribute] = [data[attribute]] unless data[attribute].is_a?(Array)
-                data[attribute] << object
+                raise "Cardinality error, max = #{solution_model.metadata[:attributes][attribute][:maxcount]}" if solution_model.metadata[:attributes][attribute][:maxcount] == 0
+                if solution_model.metadata[:attributes][attribute][:maxcount] == 1
+                  data[attribute] = object
+                else
+                  data[attribute] = [data[attribute]] unless data[attribute].is_a?(Array)
+                  data[attribute] << object
+                end
               else
-                data[attribute] = object
+                if solution_model.metadata[:attributes][attribute][:maxcount].nil? || solution_model.metadata[:attributes][attribute][:maxcount] > 1
+                  data[attribute] = [object]
+                else
+                  data[attribute] = object
+                end
               end
             rescue StandardError => e
               puts e.backtrace.first

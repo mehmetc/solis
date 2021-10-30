@@ -163,7 +163,13 @@ module Solis
             if key.eql?('id')
               attribute key.to_sym, :uuid, description: metadata[:comment]
             else
-              attribute key.to_sym, metadata[:datatype], description: metadata[:comment]
+              if (metadata[:maxcount] && metadata[:maxcount] > 1 || metadata[:maxcount].nil?) && ![:boolean, :hash, :array].include?(metadata[:datatype])
+                datatype = "array_of_#{metadata[:datatype]}s".to_sym
+              else
+                datatype = metadata[:datatype]
+              end
+              puts "#{resource_name}.#{key}(#{datatype})"
+              attribute key.to_sym, datatype, description: metadata[:comment]
             end
           end
         end)
@@ -173,10 +179,12 @@ module Solis
           #if (value[:mincount] && value[:mincount] > 1) || (value[:maxcount] && value[:maxcount] > 1)
           if (value[:mincount] && value[:mincount] > 1 || value[:mincount].nil?) || (value[:maxcount] && value[:maxcount] > 1 || value[:maxcount].nil?)
             has_many_resource_name = value[:datatype].nil? ? value[:class].gsub(self.model.graph_name, '') : value[:datatype].to_s.classify
-            LOGGER.info "\t a #{resource_name} has_many #{has_many_resource_name}"
+            LOGGER.info "\t a #{resource_name}(#{resource_name.gsub('Resource','').tableize.singularize}) has_many #{has_many_resource_name}(#{key})"
             resource.has_many(key.to_sym, foreign_key: :id, primary_key: :id, resource: graph.shape_as_resource("#{has_many_resource_name}", stack_level << has_many_resource_name)) do
 
               belongs_to_resource = graph.shape_as_resource("#{has_many_resource_name}")
+
+
               belongs_to_resource.belongs_to(resource.model.name.tableize.singularize, foreign_key: :id, primary_key: :id, resource: graph.shape_as_resource(resource.model.name)) do
                 link do |resource|
                   remote_resources = resource.instance_variable_get("@#{shape_name.tableize.singularize}")
@@ -212,8 +220,9 @@ module Solis
             end
           else
             belongs_to_resource_name = value[:datatype].nil? ? value[:class].value.gsub(self.model.graph_name, '') : value[:datatype].to_s.tableize.classify
-            LOGGER.info "\t A #{resource_name} belongs_to #{belongs_to_resource_name}"
+            LOGGER.info "\t A #{resource_name}(#{resource_name.gsub('Resource','').tableize.singularize}) belongs_to #{belongs_to_resource_name}(#{key})"
             resource.belongs_to(key.to_sym, foreign_key: :id, resource: graph.shape_as_resource("#{belongs_to_resource_name}", stack_level << belongs_to_resource_name)) do
+              #resource.attribute key.to_sym, :string, only: [:filterable]
 
               link do |resource|
                 remote_resources = resource.instance_variable_get("@#{key}")
