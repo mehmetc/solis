@@ -46,7 +46,7 @@ module Solis
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
 
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
-      graph = as_graph
+      graph = as_graph(klass=self, resolve_all=false)
       Solis::LOGGER.info graph.dump(:ttl) if ConfigFile[:debug]
       #sparql.insert_data(graph, graph: graph.name)
       sparql.delete_data(graph, graph: graph.name)
