@@ -9,7 +9,7 @@ class ConfigFile
   @config_file_name = 'config.yml'
 
   def self.version
-    "0.0.2"
+    "0.0.3"
   end
 
   def self.name
@@ -25,7 +25,7 @@ class ConfigFile
   end
 
   def self.path=(config_file_path)
-    @config_file_path = config_file_path
+    @config_file_path = File.absolute_path(config_file_path)
   end
 
   def self.[](key)
@@ -74,6 +74,7 @@ class ConfigFile
   def self.process(config)
     new_config = {}
     config.each do |k,v|
+
       if config[k].is_a?(Hash)
         v = process(v)
       end

@@ -203,6 +203,8 @@ order by ?s
       Solis::LOGGER.info(query) if ConfigFile[:debug]
 
       graph_to_object(sparql_client.query(query))
+    rescue StandardError => e
+      Solis::LOGGER.error(e.message)
     end
 
     def core_query(relationship)

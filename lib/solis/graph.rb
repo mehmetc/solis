@@ -1,6 +1,7 @@
 require 'graphiti'
 require 'moneta'
 require 'active_support/all'
+require 'uri'
 
 require_relative 'shape'
 require_relative 'model'
@@ -14,6 +15,12 @@ module Solis
       @graph_name = options.delete(:graph_name) || '/'
       @graph_prefix = options.delete(:graph_prefix) || 'pf0'
       @sparql_endpoint = options.delete(:sparql_endpoint) || nil
+
+      unless @sparql_endpoint.nil?
+        uri = URI.parse(@sparql_endpoint)
+        @sparql_endpoint = RDF::Repository.new(uri: RDF::URI(@graph_name), title: uri.host) if uri.scheme.eql?('repository')
+      end
+
       @inflections = options.delete(:inflections) || nil
       @shapes = Solis::Shape.from_graph(graph)
       @language = options.delete(:language) || 'nl'
@@ -168,7 +175,7 @@ module Solis
               else
                 datatype = metadata[:datatype]
               end
-              puts "#{resource_name}.#{key}(#{datatype})"
+              LOGGER.info "\t#{resource_name}.#{key}(#{datatype})"
               attribute key.to_sym, datatype, description: metadata[:comment]
             end
           end
@@ -177,13 +184,12 @@ module Solis
         relations.each do |key, value|
           next if value[:datatype].to_s.classify.eql?(shape_name)
           #if (value[:mincount] && value[:mincount] > 1) || (value[:maxcount] && value[:maxcount] > 1)
-          if (value[:mincount] && value[:mincount] > 1 || value[:mincount].nil?) || (value[:maxcount] && value[:maxcount] > 1 || value[:maxcount].nil?)
+          unless (value[:mincount] && value[:mincount] > 1 || value[:mincount].nil?) || (value[:maxcount] && value[:maxcount] > 1 || value[:maxcount].nil?)
             has_many_resource_name = value[:datatype].nil? ? value[:class].gsub(self.model.graph_name, '') : value[:datatype].to_s.classify
-            LOGGER.info "\t a #{resource_name}(#{resource_name.gsub('Resource','').tableize.singularize}) has_many #{has_many_resource_name}(#{key})"
+            LOGGER.info "\t\t\t#{resource_name}(#{resource_name.gsub('Resource','').tableize.singularize}) has_many #{has_many_resource_name}(#{key})"
             resource.has_many(key.to_sym, foreign_key: :id, primary_key: :id, resource: graph.shape_as_resource("#{has_many_resource_name}", stack_level << has_many_resource_name)) do
 
               belongs_to_resource = graph.shape_as_resource("#{has_many_resource_name}")
-
 
               belongs_to_resource.belongs_to(resource.model.name.tableize.singularize, foreign_key: :id, primary_key: :id, resource: graph.shape_as_resource(resource.model.name)) do
                 link do |resource|
@@ -216,11 +222,10 @@ module Solis
                 end
                 remote_resources.first if remote_resources
               end
-
             end
           else
             belongs_to_resource_name = value[:datatype].nil? ? value[:class].value.gsub(self.model.graph_name, '') : value[:datatype].to_s.tableize.classify
-            LOGGER.info "\t A #{resource_name}(#{resource_name.gsub('Resource','').tableize.singularize}) belongs_to #{belongs_to_resource_name}(#{key})"
+            LOGGER.info "\t\t\t#{resource_name}(#{resource_name.gsub('Resource','').tableize.singularize}) belongs_to #{belongs_to_resource_name}(#{key})"
             resource.belongs_to(key.to_sym, foreign_key: :id, resource: graph.shape_as_resource("#{belongs_to_resource_name}", stack_level << belongs_to_resource_name)) do
               #resource.attribute key.to_sym, :string, only: [:filterable]
 
@@ -245,6 +250,15 @@ module Solis
       end
       resource.sparql_endpoint = @sparql_endpoint
       resource
+    end
+
+    def flush_all(graph_name=nil, force = false)
+      raise Solis::Error::NotFoundError, "Supplied graph_name '#{graph_name}' does not equal graph name defined in config file '#{@graph_name}', set force to true" unless graph_name.eql?(@graph_name) && !force
+
+      @sparql_client = SPARQL::Client.new(@sparql_endpoint)
+      result = @sparql_client.query("with <#{graph_name}> delete {?s ?p ?o} where{?s ?p ?o}")
+      LOGGER.info(result.first.to_a.first.last.value)
+      true
     end
   end
 end
