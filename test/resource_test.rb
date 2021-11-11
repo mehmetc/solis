@@ -37,10 +37,9 @@ class ResourceTest < Minitest::Test
     teacher.save
     t = TeacherResource.all({"page"=>{"number"=>"0", "size"=>"5"}, "include"=>"skill", "stats"=>{"total"=>:count}})
 
-    expected='{"data":[{"id":"3","last_name":"Doe","first_name":"John","skill":[{"id":"1","short_label":null,"label":null},{"id":"2","short_label":null,"label":null}]}],"meta":{"stats":{"total":{"count":1}}}}'
+    expected= JSON.parse('{"data":[{"id":"3","last_name":"Doe","first_name":"John","skill":{"id":"2","label":"Description Logic","short_label":null}}],"meta":{"stats":{"total":{"count":1}}}}')
 
-    puts t.to_json
-    assert_equal(expected, t.to_json)
+    assert_equal(expected['data'].first['skill']['label'], t.data.first.skill.label)
 
     # teacher.destroy
     # algebra_skill.destroy
