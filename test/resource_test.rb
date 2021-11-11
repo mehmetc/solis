@@ -21,7 +21,7 @@ class ResourceTest < Minitest::Test
   end
 
 
-  def test_has_many
+  def test_belongs_to_relationship_load
     algebra_skill = Skill.new({id: '1', label: 'Algebra'})
     logic_skill = Skill.new({id: '2', label: 'Description Logic'})
 
@@ -46,5 +46,38 @@ class ResourceTest < Minitest::Test
     # logic_skill.destroy
     # t = TeacherResource.all({"page"=>{"number"=>"0", "size"=>"5"}, "include"=>"skill", "stats"=>{"total"=>:count}})
   end
+
+  def test_predicate_on_relationship
+    @solis.flush_all('http://solis.template/')
+
+    algebra_skill = Skill.new({id: '1', label: 'Algebra'})
+    logic_skill = Skill.new({id: '2', label: 'Description Logic'})
+
+    algebra_skill.save
+    logic_skill.save
+
+    teacher3 = Teacher.new({id:3,
+                           first_name: 'John',
+                           last_name: 'Doe',
+                           skill: [{id: '2'}]
+                          })
+
+    teacher4 = Teacher.new({id:4,
+                            first_name: 'Jane',
+                            last_name: 'Doe',
+                            skill: [{id: '2'}]
+                           })
+
+
+    teacher3.save
+    teacher4.save
+
+
+    t = TeacherResource.all("include"=>"skill", "filter"=>{"skill.id"=>"1"})
+
+    assert_equal(1, t.data.length)
+
+  end
+
 end
 
