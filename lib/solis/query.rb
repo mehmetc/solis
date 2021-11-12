@@ -60,6 +60,8 @@ module Solis
     def filter(params)
       #FILTER(LANG(?label) = "" || LANGMATCHES(LANG(?label), "fr"))
       #
+      #
+      #
       @filter = ''
       if params.key?(:filters)
         filters = params[:filters]
@@ -69,52 +71,60 @@ module Solis
         else
           i = 0
           filters.each do |key, value|
-            unless value.is_a?(Hash) && value.key?(:value)
-              value= {value: value.first, operator: '=', is_not: false}
-            end
-
-            if value[:value].is_a?(String)
-              contains = value[:value].split(',').map { |m| "CONTAINS(LCASE(str(?__search#{i})), LCASE(\"#{m}\"))" }.join(' || ')
+            if  @metadata[:attributes].key?(key.to_s) && @metadata[:attributes][key.to_s][:node_kind] && @metadata[:attributes][key.to_s][:node_kind]&.vocab == RDF::Vocab::SH
+              @filter += "?concept <#{@metadata[:attributes][key.to_s][:path].downcase}> <#{@model.class.graph_name}#{key.to_s.downcase.pluralize}/#{value}>."
             else
-              value[:value] = [value[:value]] unless value[:value].is_a?(Array)
-              value[:value].flatten!
-              contains = value[:value].map { |m| "CONTAINS(LCASE(str(?__search#{i})), LCASE(\"#{m}\"))" }.join(' || ')
-            end
+              unless value.is_a?(Hash) && value.key?(:value)
+                #TODO: only handles 'eq' for now
+                value = { value: value.first, operator: '=', is_not: false }
+              end
 
-            metadata = @metadata[:attributes][key.to_s]
-            if metadata
-              if metadata[:path] =~ %r{/id$}
-                if value[:value].is_a?(String)
-                  contains = value[:value].split(',').map { |m| "\"#{m}\"" }.join(',')
-                else
-                  value[:value].flatten!
-                  contains = value[:value].map { |m| "\"#{m}\"" }.join(',')
-                end
-                if value[:is_not]
-                  value[:value].each do |v|
-                    @filter += "filter( !exists {?concept <#{@model.class.graph_name}id> \"#{v}\"})"
-                  end
-                else
-                  @filter += "?concept <#{@model.class.graph_name}id> ?__search FILTER (?__search IN(#{contains})) ."
-                end
+              if value[:value].is_a?(String)
+                contains = value[:value].split(',').map { |m| "CONTAINS(LCASE(str(?__search#{i})), LCASE(\"#{m}\"))" }.join(' || ')
               else
-                if ["=", "<", ">"].include?(value[:operator])
-                  not_operator = value[:is_not] ? '!' : ''
-                  value[:value].each do |v|
-                    @filter += "?concept <#{metadata[:path]}> ?__search#{i} FILTER(?__search#{i} #{not_operator}#{value[:operator]} \"#{v}\") ."
+                value[:value] = [value[:value]] unless value[:value].is_a?(Array)
+                value[:value].flatten!
+                contains = value[:value].map { |m| "CONTAINS(LCASE(str(?__search#{i})), LCASE(\"#{m}\"))" }.join(' || ')
+              end
+
+              metadata = @metadata[:attributes][key.to_s]
+              if metadata
+                if metadata[:path] =~ %r{/id$}
+                  if value[:value].is_a?(String)
+                    contains = value[:value].split(',').map { |m| "\"#{m}\"" }.join(',')
+                  else
+                    value[:value].flatten!
+                    contains = value[:value].map { |m| "\"#{m}\"" }.join(',')
+                  end
+                  if value[:is_not]
+                    value[:value].each do |v|
+                      @filter += "filter( !exists {?concept <#{@model.class.graph_name}id> \"#{v}\"})"
+                    end
+                  else
+                    @filter += "?concept <#{@model.class.graph_name}id> ?__search FILTER (?__search IN(#{contains})) .\n"
                   end
                 else
-                  @filter += "?concept <#{metadata[:path]}> ?__search#{i} FILTER(#{contains.empty? ? '""' : contains}) ."
+                  if ["=", "<", ">"].include?(value[:operator])
+                    not_operator = value[:is_not] ? '!' : ''
+                    value[:value].each do |v|
+                      @filter += "?concept <#{metadata[:path]}> ?__search#{i} FILTER(?__search#{i} #{not_operator}#{value[:operator]} \"#{v}\") .\n"
+                    end
+                  else
+                    @filter += "?concept <#{metadata[:path]}> ?__search#{i} FILTER(#{contains.empty? ? '""' : contains}) .\n"
+                  end
                 end
               end
+              i += 1
             end
-            i += 1
           end
-          #  end
         end
       end
 
       self
+    rescue StandardError => e
+      LOGGER.error(e.message)
+      LOGGER.error(e.backtrace.join("\n"))
+      raise Error::GeneralError, e.message
     end
 
     def count_construct(g)
@@ -358,10 +368,10 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
           end
         end
         data['id'] = begin
-          m[klass_metadata[1][:attributes]['id'][:path]].map { |s| s['@value'] }.first
-        rescue StandardError
-          m['@id']
-        end
+                       m[klass_metadata[1][:attributes]['id'][:path]].map { |s| s['@value'] }.first
+                     rescue StandardError
+                       m['@id']
+                     end
       end
 
       data&.delete_if { |_k, v| v.nil? || v.try(:empty?) }

@@ -59,7 +59,7 @@ class ResourceTest < Minitest::Test
     teacher3 = Teacher.new({id:3,
                            first_name: 'John',
                            last_name: 'Doe',
-                           skill: [{id: '2'}]
+                           skill: [{id: '1'}]
                           })
 
     teacher4 = Teacher.new({id:4,
@@ -72,10 +72,10 @@ class ResourceTest < Minitest::Test
     teacher3.save
     teacher4.save
 
-
-    t = TeacherResource.all("include"=>"skill", "filter"=>{"skill.id"=>"1"})
-
+    t = TeacherResource.all({"filter"=>{"skill_id"=>{"eq"=>"1"}}, "include"=>"skill"})
     assert_equal(1, t.data.length)
+    assert_equal('John', t.data.first.first_name)
+
 
   end
 

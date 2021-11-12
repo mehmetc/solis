@@ -183,8 +183,29 @@ module Solis
 
         relations.each do |key, value|
           next if value[:datatype].to_s.classify.eql?(shape_name)
-          #if (value[:mincount] && value[:mincount] > 1) || (value[:maxcount] && value[:maxcount] > 1)
-          unless (value[:mincount] && value[:mincount] > 1 || value[:mincount].nil?) || (value[:maxcount] && value[:maxcount] > 1 || value[:maxcount].nil?)
+          if (value[:mincount] && value[:mincount] > 1 || value[:mincount].nil?) || (value[:maxcount] && value[:maxcount] > 1 || value[:maxcount].nil?)
+            belongs_to_resource_name = value[:datatype].nil? ? value[:class].value.gsub(self.model.graph_name, '') : value[:datatype].to_s.tableize.classify
+            LOGGER.info "\t\t\t#{resource_name}(#{resource_name.gsub('Resource','').tableize.singularize}) belongs_to #{belongs_to_resource_name}(#{key})"
+            resource.belongs_to(key.to_sym, foreign_key: :id, resource: graph.shape_as_resource("#{belongs_to_resource_name}", stack_level << belongs_to_resource_name)) do
+              #resource.attribute key.to_sym, :string, only: [:filterable]
+
+              link do |resource|
+                remote_resources = resource.instance_variable_get("@#{key}")
+                if remote_resources
+                  remote_resources = [remote_resources] unless remote_resources.is_a?(Array)
+                  remote_resources = remote_resources.map do |remote_resource|
+                    resource_id = remote_resource.id =~ /^http/ ? remote_resource.id.split('/').last : remote_resource.id
+                    #"/#{key.tableize}/#{resource_id}"
+                    "/#{belongs_to_resource_name.tableize}/#{resource_id}"
+                  end
+
+                  #    return remote_resources.length == 1 ? remote_resources.first : remote_resources
+                end
+
+                remote_resources.first if remote_resources #belongs_to
+              end
+            end
+          else
             has_many_resource_name = value[:datatype].nil? ? value[:class].gsub(self.model.graph_name, '') : value[:datatype].to_s.classify
             LOGGER.info "\t\t\t#{resource_name}(#{resource_name.gsub('Resource','').tableize.singularize}) has_many #{has_many_resource_name}(#{key})"
             resource.has_many(key.to_sym, foreign_key: :id, primary_key: :id, resource: graph.shape_as_resource("#{has_many_resource_name}", stack_level << has_many_resource_name)) do
@@ -223,29 +244,15 @@ module Solis
                 remote_resources.first if remote_resources
               end
             end
-          else
-            belongs_to_resource_name = value[:datatype].nil? ? value[:class].value.gsub(self.model.graph_name, '') : value[:datatype].to_s.tableize.classify
-            LOGGER.info "\t\t\t#{resource_name}(#{resource_name.gsub('Resource','').tableize.singularize}) belongs_to #{belongs_to_resource_name}(#{key})"
-            resource.belongs_to(key.to_sym, foreign_key: :id, resource: graph.shape_as_resource("#{belongs_to_resource_name}", stack_level << belongs_to_resource_name)) do
-              #resource.attribute key.to_sym, :string, only: [:filterable]
+          end
 
-              link do |resource|
-                remote_resources = resource.instance_variable_get("@#{key}")
-                if remote_resources
-                  remote_resources = [remote_resources] unless remote_resources.is_a?(Array)
-                  remote_resources = remote_resources.map do |remote_resource|
-                    resource_id = remote_resource.id =~ /^http/ ? remote_resource.id.split('/').last : remote_resource.id
-                    #"/#{key.tableize}/#{resource_id}"
-                    "/#{belongs_to_resource_name.tableize}/#{resource_id}"
-                  end
-
-                  #    return remote_resources.length == 1 ? remote_resources.first : remote_resources
-                end
-
-                remote_resources.first if remote_resources #belongs_to
-              end
+          resource.filter :"#{key}_id", :string, single: true, only: [:eq] do
+            eq do |scope, filter_value|
+              scope[:filters][key.to_sym] = filter_value
+              scope
             end
           end
+
         end
       end
       resource.sparql_endpoint = @sparql_endpoint

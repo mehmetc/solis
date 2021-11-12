@@ -189,7 +189,6 @@ module Solis
     end
   end
 
-
   class BelongsTo < Graphiti::Sideload::BelongsTo
     def load_params(parents, query)
       query.hash.tap do |hash|
@@ -204,6 +203,7 @@ module Solis
 
     private
 
+    # relations are included here
     def children_for(parent, map)
       map.values
     end
