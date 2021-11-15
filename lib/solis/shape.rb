@@ -26,15 +26,24 @@ module Solis
               :string
             when /http:\/\/www.w3.org\/2001\/XMLSchema#duration/
               :string
+            when /http:\/\/www.w3.org\/2001\/XMLSchema#integer/
+              :integer
+            when /http:\/\/www.w3.org\/2001\/XMLSchema#int/
+              :integer
             when /http:\/\/www.w3.org\/2001\/XMLSchema#dateTime/
               :datetime
-            when /http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns#langString/
-              :string
             else
               datatype.split('#').last.to_sym
             end
           elsif datatype.nil? && node.is_a?(RDF::URI)
             node.value.split('/').last.gsub(/Shape$/, '').to_sym
+          elsif datatype =~ /^http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns/
+            case datatype
+            when /http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns#langString/
+              :string
+            else
+              :string
+            end
           else
             :string
           end

@@ -15,6 +15,7 @@ Config file contains all the options needed to run Solis.
 :key: your_Google_API_key
 :solis:
     :cache: tmp/cache
+    :query_cache_expire: 300
     :shacl: /path/to/t_shacl.ttl
     :env:
         :graph_name: https://t.example.com/
@@ -31,6 +32,7 @@ Config file contains all the options needed to run Solis.
 - key: Google API key used to read a Google Sheet
 - solis: runtime configuration
   - cache: Google Sheets can be cached to minimize Google API calls
+  - query_cache_expire: time construct queries should expire. 0 is never expire
   - shacl: location of the shacl file to use
   - env: shacl info
     - graph_name: uri of the graph

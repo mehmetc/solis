@@ -445,6 +445,7 @@ hide empty members
             def build_inflections(data)
               inflections = {}
               data[:entities].each do |entity, metadata|
+                inflections[entity]=metadata[:plural]
                 inflections[entity.to_s.underscore.to_sym] = metadata[:plural].underscore
               end
 

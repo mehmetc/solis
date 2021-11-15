@@ -15,7 +15,7 @@ module Solis
       @filter = ''
       @sort = 'ORDER BY ?s'
       @sort_select = ''
-      @moneta = Moneta.new(:File, dir: 'cache', expires: 300)
+      @moneta = Moneta.new(:File, dir: 'cache', expires: Solis::ConfigFile[:solis][:query_cache_expire])
     end
 
     def each(&block)
@@ -171,7 +171,7 @@ module Solis
         result.each_solution.each do |statement|
           graph << [statement.s, statement.p, statement.o]
         end
-        @moneta.store(key, graph, expire: 300)
+        @moneta.store(key, graph, expire: Solis::ConfigFile[:solis][:query_cache_expire])
       end
       graph
     end
