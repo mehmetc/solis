@@ -7,6 +7,8 @@ module Solis
     include Enumerable
 
     def initialize(model)
+      @construct_cache = File.absolute_path(Solis::ConfigFile[:solis][:cache])
+      LOGGER.info("Construct query cache time: #{Solis::ConfigFile[:solis][:query_cache_expire]} - #{@construct_cache}")
       @model = model
       @shapes = @model.class.shapes
       @metadata = @model.class.metadata
@@ -15,7 +17,7 @@ module Solis
       @filter = ''
       @sort = 'ORDER BY ?s'
       @sort_select = ''
-      @moneta = Moneta.new(:File, dir: 'cache', expires: Solis::ConfigFile[:solis][:query_cache_expire])
+      @moneta = Moneta.new(:File, dir: @construct_cache, expires: Solis::ConfigFile[:solis][:query_cache_expire])
     end
 
     def each(&block)
@@ -72,7 +74,10 @@ module Solis
           i = 0
           filters.each do |key, value|
             if  @metadata[:attributes].key?(key.to_s) && @metadata[:attributes][key.to_s][:node_kind] && @metadata[:attributes][key.to_s][:node_kind]&.vocab == RDF::Vocab::SH
-              @filter += "?concept <#{@metadata[:attributes][key.to_s][:path].downcase}> <#{@model.class.graph_name}#{key.to_s.downcase.pluralize}/#{value}>."
+              values_model = @model.class.graph.shape_as_model(@metadata[:attributes][key.to_s][:datatype].to_s)&.new
+              @filter = "VALUES ?filter_by_id{#{target_class_by_model(values_model, value)}}\n" if values_model
+              #@filter += "?concept <#{@metadata[:attributes][key.to_s][:path].downcase}> <#{@model.class.graph_name}#{key.to_s.downcase.pluralize}/#{value}>."
+              @filter += "?concept <#{@metadata[:attributes][key.to_s][:path].downcase}> ?filter_by_id ."
             else
               unless value.is_a?(Hash) && value.key?(:value)
                 #TODO: only handles 'eq' for now
@@ -182,6 +187,17 @@ module Solis
       descendants << @model.class.metadata[:target_class].value
       descendants.map { |m| "<#{m}>" }.join(' ')
     end
+
+    def target_class_by_model(model, id=nil)
+      descendants = ObjectSpace.each_object(Class).select { |klass| klass < model.class }.reject { |m| m.metadata.nil? }.map { |m| m.metadata[:target_class].value.tableize }
+      descendants << model.class.metadata[:target_class].value.tableize
+      if id.nil?
+        descendants.map { |m| "<#{m}>" }.join(' ')
+      else
+        descendants.map { |m| "<#{m}/#{id}>" }.join(' ')
+      end
+    end
+
 
     def query(options = {})
       limit = @limit || 10

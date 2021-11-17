@@ -187,6 +187,32 @@ module Solis
 
       data
     end
+
+    def associate(parent, child, association_name, association_type)
+      if activerecord_associate?(parent, child, association_name)
+        activerecord_adapter.associate \
+            parent, child, association_name, association_type
+      elsif [:has_many, :many_to_many].include?(association_type)
+        if parent.send(:"#{association_name}").nil?
+          parent.send(:"#{association_name}=", [child])
+        else
+          parent_child_data = parent.send(:"#{association_name}")
+
+          if parent_child_data.is_a?(Array)
+            parent_child_data = parent_child_data.map do |m|
+              m.id.eql?(child.id) ? child : m
+            end
+          else
+            parent_child_data = child if parent_child_data.id.eql?(child.id)
+          end
+
+          parent.send(:"#{association_name}=", parent_child_data)
+          #parent.send(:"#{association_name}") << child
+        end
+      else
+        parent.send(:"#{association_name}=", child)
+      end
+    end
   end
 
   class BelongsTo < Graphiti::Sideload::BelongsTo
@@ -242,6 +268,10 @@ module Solis
           hash[:filter].merge!({primary_key => all_ids})
         end
       end
+    end
+
+    def children_for(parent, map)
+      map.values.flatten
     end
 
     def link_filter(parents)
