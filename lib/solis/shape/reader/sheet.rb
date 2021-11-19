@@ -106,7 +106,7 @@ module Solis
                   metadata: ontology_metadata
                 }
 
-                ::File.open("#{cache_dir}/#{spreadsheet_id}.json", 'wb') do |f|
+                ::File.open("#{::File.absolute_path(cache_dir)}/#{spreadsheet_id}.json", 'wb') do |f|
                   f.puts data.to_json
                 end
               end

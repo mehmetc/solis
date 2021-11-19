@@ -3,6 +3,9 @@ require_relative 'query'
 
 module Solis
   class Model
+
+    class_attribute :create_proc, :update_proc, :delete_proc
+
     def initialize(attributes = {})
       @model_name = self.class.name
       @model_plural_name = @model_name.pluralize
@@ -45,6 +48,8 @@ module Solis
     def destroy
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
 
+      delete_proc&.call(self)
+
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
       graph = as_graph(klass=self, resolve_all=false)
       Solis::LOGGER.info graph.dump(:ttl) if ConfigFile[:debug]
@@ -54,6 +59,8 @@ module Solis
 
     def save
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
+
+      create_proc&.call(self)
 
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
       graph = as_graph
@@ -81,7 +88,10 @@ module Solis
 
       attributes = data['attributes']
       raise "id is mandatory in attributes" unless attributes.keys.include?('id')
+      update_proc&.call(self, attributes)
+
       id = attributes.delete('id')
+
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
 
       original_klass = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
@@ -203,6 +213,19 @@ module Solis
 
       m
     end
+
+    def self.model_created(&blk)
+      self.create_proc = blk
+    end
+
+    def self.model_updated(&blk)
+      self.update_proc = blk
+    end
+
+    def self.model_deleted(&blk)
+      self.delete_proc = blk
+    end
+
 
     private
 

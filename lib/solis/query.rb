@@ -13,7 +13,7 @@ module Solis
       @shapes = @model.class.shapes
       @metadata = @model.class.metadata
       @sparql_endpoint = @model.class.sparql_endpoint
-      @sparql_client = SPARQL::Client.new(@sparql_endpoint)
+      @sparql_client = SPARQL::Client.new(@sparql_endpoint, graph: @model.class.graph_name)
       @filter = ''
       @sort = 'ORDER BY ?s'
       @sort_select = ''
@@ -132,24 +132,25 @@ module Solis
       raise Error::GeneralError, e.message
     end
 
-    def count_construct(g)
-      sc = SPARQL::Client.new(g)
+    def count_construct(sc)
+      #sc = SPARQL::Client.new(g)
       rr = sc.select(count: { s: :c }).distinct.where(%i[s p o])
       rr.solutions[0].c.object || 0
     end
 
     def count
+      sparql_client = @sparql_client
       if model_construct?
-        count_construct(run_construct)
-      else
-        relationship = ''
-        core_query = core_query(relationship)
-        count_query = core_query.gsub(/SELECT .* WHERE/, 'SELECT COUNT(distinct ?concept) as ?count WHERE')
-
-        result = @sparql_client.query(count_query)
-        solution = result.first
-        solution[:count].object || 0
+        sparql_client = run_construct
       end
+
+      relationship = ''
+      core_query = core_query(relationship)
+      count_query = core_query.gsub(/SELECT .* WHERE/, 'SELECT COUNT(distinct ?concept) as ?count WHERE')
+
+      result = sparql_client.query(count_query)
+      solution = result.first
+      solution[:count].object || 0
     end
 
     private
@@ -163,7 +164,7 @@ module Solis
       # query.gsub!('##filter##', @filter)
     end
 
-    def run_construct
+    def run_construct1
       graph = RDF::Graph.new
       graph.name = RDF::URI(@model.class.graph_name)
       key = "construct_#{@model.name.tableize.singularize}"
@@ -179,6 +180,33 @@ module Solis
         @moneta.store(key, graph, expire: Solis::ConfigFile[:solis][:query_cache_expire])
       end
       graph
+    end
+
+    def run_construct
+      created_at = nil
+      parsed_graph_name = URI.parse(@model.class.graph_name)
+      construct_graph_name = "#{parsed_graph_name.scheme}://#{@model.name.underscore}.#{parsed_graph_name.host}/"
+
+      #check construct validity
+      result = @sparql_client.query("select * from <#{construct_graph_name}> where {<#{construct_graph_name}_metadata> <#{construct_graph_name}created_at> ?_created_at}")
+      unless result.empty?
+        created_at = result[0]._created_at.object
+      end
+
+      if created_at.nil? || (Time.now - created_at) > 1.day
+        result = @sparql_client.query("with <#{construct_graph_name}> delete {?s ?p ?o} where{?s ?p ?o}")
+        LOGGER.info(result[0]['callret-0'].value)
+
+        construct_query = load_construct
+        #        construct_query.gsub!(/construct/i, "insert into <#{construct_graph_name}>")
+        result = @sparql_client.query(construct_query)
+        LOGGER.info(result[0]['callret-0'].value)
+
+        result = @sparql_client.query("insert into <#{construct_graph_name}> { <#{construct_graph_name}_metadata> <#{construct_graph_name}created_at> \"#{Time.now.xmlschema}\"^^xsd:dateTime}")
+        LOGGER.info(result[0]['callret-0'].value)
+      end
+
+      SPARQL::Client.new(@sparql_endpoint, { graph: construct_graph_name })
     end
 
     def target_class
@@ -203,7 +231,8 @@ module Solis
       limit = @limit || 10
       offset = @offset || 0
 
-      sparql_client = model_construct? ? SPARQL::Client.new(run_construct) : @sparql_client
+      sparql_client = model_construct? ? run_construct : @sparql_client
+      #sparql_client = model_construct? ? SPARQL::Client.new(run_construct) : @sparql_client
 
       relationship = ''
       if options.key?(:relationship)
@@ -235,18 +264,16 @@ order by ?s
 
     def core_query(relationship)
       core_query = %(
-        SELECT distinct (?concept AS ?s) WHERE {
-          VALUES ?type {#{target_class}}
-          GRAPH <#{@model.class.graph_name}> {
-            ?concept ?role ?objects.
-            #{relationship}
-            ?concept a ?type .
-            #{@sort_select}
-      #{@filter}
-          }
-        }
-        #{@sort}
-      )
+SELECT distinct (?concept AS ?s) WHERE {
+  VALUES ?type {#{target_class}}
+  ?concept ?role ?objects.
+  #{relationship}
+  ?concept a ?type .
+  #{@sort_select}
+  #{@filter}
+}
+#{@sort}
+)
     end
 
     def prefixes
