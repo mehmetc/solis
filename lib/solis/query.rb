@@ -76,8 +76,10 @@ module Solis
             if  @metadata[:attributes].key?(key.to_s) && @metadata[:attributes][key.to_s][:node_kind] && @metadata[:attributes][key.to_s][:node_kind]&.vocab == RDF::Vocab::SH
               values_model = @model.class.graph.shape_as_model(@metadata[:attributes][key.to_s][:datatype].to_s)&.new
               @filter = "VALUES ?filter_by_id{#{target_class_by_model(values_model, value)}}\n" if values_model
-              #@filter += "?concept <#{@metadata[:attributes][key.to_s][:path].downcase}> <#{@model.class.graph_name}#{key.to_s.downcase.pluralize}/#{value}>."
-              @filter += "?concept <#{@metadata[:attributes][key.to_s][:path].downcase}> ?filter_by_id ."
+              filter_predicate = URI.parse(@metadata[:attributes][key.to_s][:path])
+              filter_predicate.path = "/#{key.to_s.downcase}"
+
+              @filter += "?concept <#{filter_predicate.to_s}> ?filter_by_id ."
             else
               unless value.is_a?(Hash) && value.key?(:value)
                 #TODO: only handles 'eq' for now
