@@ -203,7 +203,11 @@ module Solis
               m.id.eql?(child.id) ? child : m
             end
           else
-            parent_child_data = child if parent_child_data.id.eql?(child.id)
+            if parent_child_data.id.eql?(child.id)
+              parent_child_data = [child]
+            else
+              parent_child_data = nil
+            end
           end
 
           parent.send(:"#{association_name}=", parent_child_data)
