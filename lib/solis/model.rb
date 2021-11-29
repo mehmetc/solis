@@ -4,7 +4,7 @@ require_relative 'query'
 module Solis
   class Model
 
-    class_attribute :create_proc, :update_proc, :delete_proc
+    class_attribute :before_create_proc, :after_create_proc, :before_update_proc, :after_update_proc, :before_delete_proc, :after_delete_proc
 
     def initialize(attributes = {})
       @model_name = self.class.name
@@ -45,33 +45,6 @@ module Solis
       Solis::Query.new(self)
     end
 
-    def destroy
-      raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
-
-      delete_proc&.call(self)
-
-      sparql = SPARQL::Client.new(self.class.sparql_endpoint)
-      graph = as_graph(klass=self, resolve_all=false)
-      Solis::LOGGER.info graph.dump(:ttl) if ConfigFile[:debug]
-      #sparql.insert_data(graph, graph: graph.name)
-      sparql.delete_data(graph, graph: graph.name)
-    end
-
-    def save
-      raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
-
-      create_proc&.call(self)
-
-      sparql = SPARQL::Client.new(self.class.sparql_endpoint)
-      graph = as_graph
-
-      # File.open('/Users/mehmetc/Dropbox/AllSources/LP/graphiti-api/save.ttl', 'wb') do |file|
-      #   file.puts graph.dump(:ttl)
-      # end
-      Solis::LOGGER.info SPARQL::Client::Update::InsertData.new(graph, graph: graph.name).to_s if ConfigFile[:debug]
-      sparql.insert_data(graph, graph: graph.name)
-    end
-
     def to_ttl(resolve_all=true)
       graph = as_graph(self, resolve_all)
       graph.dump(:ttl)
@@ -81,6 +54,35 @@ module Solis
       as_graph(self)
     end
 
+    def destroy
+      raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
+
+      sparql = SPARQL::Client.new(self.class.sparql_endpoint)
+      graph = as_graph(klass=self, resolve_all=false)
+      Solis::LOGGER.info graph.dump(:ttl) if ConfigFile[:debug]
+
+      before_delete_proc&.call(self, graph)
+      result = sparql.delete_data(graph, graph: graph.name)
+      after_delete_proc&.call(self, result)
+      result
+    end
+
+    def save
+      raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
+
+      sparql = SPARQL::Client.new(self.class.sparql_endpoint)
+      graph = as_graph
+
+      # File.open('/Users/mehmetc/Dropbox/AllSources/LP/graphiti-api/save.ttl', 'wb') do |file|
+      #   file.puts graph.dump(:ttl)
+      # end
+      Solis::LOGGER.info SPARQL::Client::Update::InsertData.new(graph, graph: graph.name).to_s if ConfigFile[:debug]
+      before_create_proc&.call(self, graph)
+      result = sparql.insert_data(graph, graph: graph.name)
+      after_create_proc&.call(self, result)
+      result
+    end
+
     def update(data)
       raise Solis::Error::GeneralError, "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
       raise Solis::Error::InvalidAttributeError,"data must contain attributes" unless data.keys.include?('attributes')
@@ -88,7 +90,7 @@ module Solis
 
       attributes = data['attributes']
       raise "id is mandatory in attributes" unless attributes.keys.include?('id')
-      update_proc&.call(self, attributes)
+      before_update_proc&.call(self, attributes)
 
       id = attributes.delete('id')
 
@@ -123,6 +125,7 @@ module Solis
         data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
       end
 
+      after_update_proc&.call(self, data)
       data
     end
 
@@ -214,18 +217,29 @@ module Solis
       m
     end
 
-    def self.model_created(&blk)
-      self.create_proc = blk
+    def self.model_before_create(&blk)
+      self.before_create_proc = blk
     end
 
-    def self.model_updated(&blk)
-      self.update_proc = blk
+    def self.model_after_create(&blk)
+      self.after_create_proc = blk
     end
 
-    def self.model_deleted(&blk)
-      self.delete_proc = blk
+    def self.model_before_update(&blk)
+      self.before_update_proc = blk
     end
 
+    def self.model_after_update(&blk)
+      self.after_update_proc = blk
+    end
+
+    def self.model_before_delete(&blk)
+      self.before_delete_proc = blk
+    end
+
+    def self.model_after_delete(&blk)
+      self.after_delete_proc = blk
+    end
 
     private
 

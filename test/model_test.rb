@@ -42,4 +42,21 @@ class ModelTest < Minitest::Test
     assert_equal(0,result.count)
     assert_empty(result.data)
   end
+
+  def test_after_create_hook
+    Skill.model_before_create do |model,graph|
+      puts "---------BEFORE"
+      puts graph.dump(:jsonld)
+      puts model.to_json
+    end
+
+    Skill.model_after_create do |model, result|
+      puts "---------After"
+      pp result
+    end
+
+    s = Skill.new({id:5, short_label: 'a short label', label: 'a label'})
+
+    s.save
+  end
 end

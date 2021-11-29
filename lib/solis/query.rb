@@ -8,7 +8,6 @@ module Solis
 
     def initialize(model)
       @construct_cache = File.absolute_path(Solis::ConfigFile[:solis][:cache])
-      LOGGER.info("Construct query cache time: #{Solis::ConfigFile[:solis][:query_cache_expire]} - #{@construct_cache}")
       @model = model
       @shapes = @model.class.shapes
       @metadata = @model.class.metadata
@@ -23,6 +22,10 @@ module Solis
     def each(&block)
       data = query
       data.each(&block)
+    rescue StandardError => e
+      message = "Unable to get next record: #{e.message}"
+      @LOGGER.error(message)
+      raise Solis::Error::CursorError(message)
     end
 
     def sort(params)
@@ -75,7 +78,7 @@ module Solis
           filters.each do |key, value|
             if  @metadata[:attributes].key?(key.to_s) && @metadata[:attributes][key.to_s][:node_kind] && @metadata[:attributes][key.to_s][:node_kind]&.vocab == RDF::Vocab::SH
               values_model = @model.class.graph.shape_as_model(@metadata[:attributes][key.to_s][:datatype].to_s)&.new
-              @filter = "VALUES ?filter_by_id{#{target_class_by_model(values_model, value)}}\n" if values_model
+              @filter = "VALUES ?filter_by_id{#{value.split(',').map {|v| target_class_by_model(values_model, v)}.join(' ')}}\n" if values_model
               filter_predicate = URI.parse(@metadata[:attributes][key.to_s][:path])
               filter_predicate.path = "/#{key.to_s.downcase}"
 
@@ -134,12 +137,6 @@ module Solis
       raise Error::GeneralError, e.message
     end
 
-    def count_construct(sc)
-      #sc = SPARQL::Client.new(g)
-      rr = sc.select(count: { s: :c }).distinct.where(%i[s p o])
-      rr.solutions[0].c.object || 0
-    end
-
     def count
       sparql_client = @sparql_client
       if model_construct?
@@ -166,24 +163,6 @@ module Solis
       # query.gsub!('##filter##', @filter)
     end
 
-    def run_construct1
-      graph = RDF::Graph.new
-      graph.name = RDF::URI(@model.class.graph_name)
-      key = "construct_#{@model.name.tableize.singularize}"
-
-      if @moneta.key?(key)
-        Solis::LOGGER.info("construct #{@model.name.tableize.singularize} from cache")
-        graph = @moneta[key]
-      else
-        result = @sparql_client.query(load_construct)
-        result.each_solution.each do |statement|
-          graph << [statement.s, statement.p, statement.o]
-        end
-        @moneta.store(key, graph, expire: Solis::ConfigFile[:solis][:query_cache_expire])
-      end
-      graph
-    end
-
     def run_construct
       created_at = nil
       parsed_graph_name = URI.parse(@model.class.graph_name)
@@ -200,7 +179,6 @@ module Solis
         LOGGER.info(result[0]['callret-0'].value)
 
         construct_query = load_construct
-        #        construct_query.gsub!(/construct/i, "insert into <#{construct_graph_name}>")
         result = @sparql_client.query(construct_query)
         LOGGER.info(result[0]['callret-0'].value)
 
