@@ -17,7 +17,7 @@ class SolisTest < Minitest::Test
 
     assert_equal(template[:type], 'courses')
     assert_includes(template, :attributes)
-    assert_includes(template[:attributes], :name)
+    assert_includes(template[:attributes], :course_name)
   end
 
   def test_should_have_setup_a_course_model
@@ -27,15 +27,15 @@ class SolisTest < Minitest::Test
 
   def test_create_an_instance
     course_name='Algebra 101'
-    course = Course.new({name: course_name})
+    course = Course.new({course_name: course_name})
 
     assert_kind_of(Course, course)
-    assert_equal(course.name, course_name)
+    assert_equal(course.course_name, course_name)
   end
 
   def test_course_returns_ttl
     course_name='Algebra 101'
-    course = Course.new({id:1, name: course_name})
+    course = Course.new({id:1, course_name: course_name})
     file_course = File.read('./test/resources/course_1.ttl')
 
     assert_match(file_course, course.to_ttl)

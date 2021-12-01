@@ -3,7 +3,9 @@ require "test_helper"
 class ModelTest < Minitest::Test
   def setup
     Solis::ConfigFile.path = './test/resources'
-    @solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), Solis::ConfigFile[:solis][:env])
+
+    environment = Marshal.load(Marshal.dump(Solis::ConfigFile[:solis][:env]))
+    @solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), environment)
   end
 
   def test_model_singular_name

@@ -67,11 +67,11 @@ module Solis
       result
     end
 
-    def save
+    def save(validate_dependencies=true)
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
 
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
-      graph = as_graph
+      graph = as_graph(self, validate_dependencies)
 
       # File.open('/Users/mehmetc/Dropbox/AllSources/LP/graphiti-api/save.ttl', 'wb') do |file|
       #   file.puts graph.dump(:ttl)
@@ -83,7 +83,7 @@ module Solis
       result
     end
 
-    def update(data)
+    def update(data, validate_dependencies=true)
       raise Solis::Error::GeneralError, "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
       raise Solis::Error::InvalidAttributeError,"data must contain attributes" unless data.keys.include?('attributes')
       raise Solis::Error::GeneralError,"data must have a type" unless data.keys.include?('type')
@@ -113,7 +113,7 @@ module Solis
       attributes.each_pair do |key, value|
         original_klass.send(:"#{key}=", value)
       end
-      insert_graph = as_graph(original_klass,true)
+      insert_graph = as_graph(original_klass,validate_dependencies)
       Solis::LOGGER.info delete_graph.dump(:ttl) if ConfigFile[:debug]
       Solis::LOGGER.info insert_graph.dump(:ttl) if ConfigFile[:debug]
       Solis::LOGGER.info where_graph.dump(:ttl) if ConfigFile[:debug]

@@ -267,5 +267,9 @@ module Solis
       LOGGER.info(result.first.to_a.first.last.value)
       true
     end
+
+    def model_hooks(hooks = nil)
+
+    end
   end
 end

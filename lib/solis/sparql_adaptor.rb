@@ -188,6 +188,12 @@ module Solis
       data
     end
 
+    # def associate_all(parent, children, association_name, association_type)
+    #   children.each do |c|
+    #     associate(parent, c, association_name, association_type)
+    #   end
+    # end
+
     def associate(parent, child, association_name, association_type)
       if activerecord_associate?(parent, child, association_name)
         activerecord_adapter.associate \
@@ -214,7 +220,21 @@ module Solis
           #parent.send(:"#{association_name}") << child
         end
       else
-        parent.send(:"#{association_name}=", child)
+        parent_child_data = parent.send(:"#{association_name}")
+
+        if parent_child_data.is_a?(Array)
+          parent_child_data = parent_child_data.map do |m|
+            m.id.eql?(child.id) ? child : m
+          end
+        else
+          if parent_child_data.id.eql?(child.id)
+            parent_child_data = [child]
+          else
+            parent_child_data = nil
+          end
+        end
+
+        parent.send(:"#{association_name}=", parent_child_data)
       end
     end
   end

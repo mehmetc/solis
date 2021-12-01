@@ -1,9 +1,14 @@
 require "test_helper"
 
+
 class ResourceTest < Minitest::Test
   def setup
-    Solis::ConfigFile.path = './test/resources'
-    @solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), Solis::ConfigFile[:solis][:env])
+    Solis::ConfigFile.path = './test/resources' #'./test/resources'
+    Solis::ConfigFile.init
+    pp Solis::ConfigFile[:solis]
+
+    environment = Marshal.load(Marshal.dump(Solis::ConfigFile[:solis][:env]))
+    @solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), environment)
 
     #   @solis.flush_all('http://solis.template/')
   end
