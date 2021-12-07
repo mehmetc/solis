@@ -227,7 +227,7 @@ module Solis
             m.id.eql?(child.id) ? child : m
           end
         else
-          if parent_child_data.id.eql?(child.id)
+          if parent_child_data&.id.eql?(child.id)
             parent_child_data = [child]
           else
             parent_child_data = nil

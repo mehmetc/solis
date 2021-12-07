@@ -114,6 +114,7 @@ module Solis
         original_klass.send(:"#{key}=", value)
       end
       insert_graph = as_graph(original_klass,validate_dependencies)
+
       Solis::LOGGER.info delete_graph.dump(:ttl) if ConfigFile[:debug]
       Solis::LOGGER.info insert_graph.dump(:ttl) if ConfigFile[:debug]
       Solis::LOGGER.info where_graph.dump(:ttl) if ConfigFile[:debug]

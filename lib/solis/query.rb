@@ -178,12 +178,13 @@ module Solis
         result = @sparql_client.query("with <#{construct_graph_name}> delete {?s ?p ?o} where{?s ?p ?o}")
         LOGGER.info(result[0]['callret-0'].value)
 
+        result = @sparql_client.query("insert into <#{construct_graph_name}> { <#{construct_graph_name}_metadata> <#{construct_graph_name}created_at> \"#{Time.now.xmlschema}\"^^xsd:dateTime}")
+        LOGGER.info(result[0]['callret-0'].value)
+
         construct_query = load_construct
         result = @sparql_client.query(construct_query)
         LOGGER.info(result[0]['callret-0'].value)
 
-        result = @sparql_client.query("insert into <#{construct_graph_name}> { <#{construct_graph_name}_metadata> <#{construct_graph_name}created_at> \"#{Time.now.xmlschema}\"^^xsd:dateTime}")
-        LOGGER.info(result[0]['callret-0'].value)
       end
 
       SPARQL::Client.new(@sparql_endpoint, { graph: construct_graph_name })

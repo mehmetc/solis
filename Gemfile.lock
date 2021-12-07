@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    solis (0.11.0)
+    solis (0.13.0)
       activesupport (~> 6.1)
       google_drive (~> 3.0)
       graphiti (~> 1.3)

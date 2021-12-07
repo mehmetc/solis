@@ -10,20 +10,21 @@ require_relative 'resource'
 module Solis
   class Graph
     def initialize(graph, options = {})
+      cloned_options = options.clone
       @global_resource_stack = []
       @graph = graph
-      @graph_name = options.delete(:graph_name) || '/'
-      @graph_prefix = options.delete(:graph_prefix) || 'pf0'
-      @sparql_endpoint = options.delete(:sparql_endpoint) || nil
+      @graph_name = cloned_options.delete(:graph_name) || '/'
+      @graph_prefix = cloned_options.delete(:graph_prefix) || 'pf0'
+      @sparql_endpoint = cloned_options.delete(:sparql_endpoint) || nil
 
       unless @sparql_endpoint.nil?
         uri = URI.parse(@sparql_endpoint)
         @sparql_endpoint = RDF::Repository.new(uri: RDF::URI(@graph_name), title: uri.host) if uri.scheme.eql?('repository')
       end
 
-      @inflections = options.delete(:inflections) || nil
+      @inflections = cloned_options.delete(:inflections) || nil
       @shapes = Solis::Shape.from_graph(graph)
-      @language = options.delete(:language) || 'nl'
+      @language = cloned_options.delete(:language) || 'nl'
 
       unless @inflections.nil?
         raise "Inflection file not found #{File.absolute_path(@inflections)}" unless File.exist?(@inflections)
@@ -59,9 +60,12 @@ module Solis
         shape_as_resource(shape_name)
       end
 
-      Graphiti.config.context_for_endpoint = ->(path, action) {
-        Solis::NoopEndpoint.new(path, action)
-      }
+      Graphiti.configure do |config|
+        config.pagination_links = true
+        config.context_for_endpoint= ->(path, action) {
+          Solis::NoopEndpoint.new(path, action)
+        }
+      end
 
       Graphiti.setup!
     end
