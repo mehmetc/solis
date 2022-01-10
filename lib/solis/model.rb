@@ -90,7 +90,6 @@ module Solis
 
       attributes = data['attributes']
       raise "id is mandatory in attributes" unless attributes.keys.include?('id')
-      before_update_proc&.call(self, attributes)
 
       id = attributes.delete('id')
 
@@ -98,6 +97,7 @@ module Solis
 
       original_klass = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
       raise Solis::Error::NotFoundError if original_klass.nil?
+      updated_klass = original_klass.clone
 
       delete_graph = as_graph(original_klass, false)
       where_graph = RDF::Graph.new
@@ -111,13 +111,15 @@ module Solis
       end
 
       attributes.each_pair do |key, value|
-        original_klass.send(:"#{key}=", value)
+        updated_klass.send(:"#{key}=", value)
       end
-      insert_graph = as_graph(original_klass,validate_dependencies)
+      insert_graph = as_graph(updated_klass,validate_dependencies)
 
       Solis::LOGGER.info delete_graph.dump(:ttl) if ConfigFile[:debug]
       Solis::LOGGER.info insert_graph.dump(:ttl) if ConfigFile[:debug]
       Solis::LOGGER.info where_graph.dump(:ttl) if ConfigFile[:debug]
+
+      before_update_proc&.call(self, {old: original_klass, new: updated_klass})
 
       sparql.delete_insert(delete_graph, insert_graph, where_graph, graph: insert_graph.name)
       data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
@@ -326,7 +328,11 @@ module Solis
               d = if metadata[:datatype_rdf].eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString')
                     RDF::Literal.new(d, language: self.class.language)
                   else
-                    RDF::Literal.new(d, datatype: datatype)
+                    if metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#anyURI')
+                      RDF::URI(d)
+                    else
+                      RDF::Literal.new(d, datatype: datatype)
+                    end
                   end
               d = (d.object.value rescue d.object) unless d.valid?
             end

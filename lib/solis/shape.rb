@@ -1,6 +1,15 @@
 require_relative 'shape/reader/file'
 require_relative 'shape/reader/sheet'
 
+Graphiti::Types[:year] = {
+  canonical_name: :year,
+  params: Dry::Types["coercible.integer"],
+  read: Dry::Types["coercible.integer"],
+  write: Dry::Types["coercible.integer"],
+  kind: "scalar",
+  description: "contains only the year of a date"
+}
+
 module Solis
   module Shape
     def self.from_graph(graph)
@@ -32,6 +41,8 @@ module Solis
               :integer
             when /http:\/\/www.w3.org\/2001\/XMLSchema#dateTime/
               :datetime
+            when /http:\/\/www.w3.org\/2001\/XMLSchema#gYear/
+              :year
             else
               datatype.split('#').last.to_sym
             end

@@ -435,6 +435,8 @@ hide empty members
                 rdf_verb = rdf_vocabulary[verb.to_sym]
                 graph << RDF::Statement.new(rdf_verb, RDF::RDFV.type, RDF::OWL.Class)
                 graph << RDF::Statement.new(rdf_verb, RDF::Vocab::OWL.sameAs, o[k.to_sym])
+              rescue StandardError => e
+                puts e.message
               end
 
               graph << o.to_enum

@@ -9,6 +9,9 @@ require_relative 'resource'
 
 module Solis
   class Graph
+
+    attr_accessor :default_before_create, :default_after_create, :default_before_update, :default_after_update, :default_before_delete, :default_after_delete
+
     def initialize(graph, options = {})
       cloned_options = options.clone
       @global_resource_stack = []
@@ -16,6 +19,38 @@ module Solis
       @graph_name = cloned_options.delete(:graph_name) || '/'
       @graph_prefix = cloned_options.delete(:graph_prefix) || 'pf0'
       @sparql_endpoint = cloned_options.delete(:sparql_endpoint) || nil
+
+      if cloned_options.key?(:hooks)
+        hooks = cloned_options[:hooks]
+        if hooks.key?(:create)
+          if hooks[:create].key?(:before)
+            @default_before_create = hooks[:create][:before]
+          end
+
+          if hooks[:create].key?(:after)
+            @default_after_create = hooks[:create][:after]
+          end
+        end
+
+        if hooks.key?(:update)
+          if hooks[:update].key?(:before)
+            @default_before_update = hooks[:update][:before]
+          end
+
+          if hooks[:update].key?(:after)
+            @default_after_update = hooks[:update][:after]
+          end
+        end
+
+        if hooks.key?(:delete)
+          if hooks[:delete].key?(:before)
+            @default_before_delete = hooks[:delete][:before]
+          end
+          if hooks[:delete].key?(:after)
+            @default_after_delete = hooks[:delete][:after]
+          end
+        end
+      end
 
       unless @sparql_endpoint.nil?
         uri = URI.parse(@sparql_endpoint)
@@ -122,6 +157,30 @@ module Solis
       end
       model.sparql_endpoint = @sparql_endpoint
       model.graph = self
+
+      model.model_before_create do |model, graph|
+        @default_before_create.call(model,graph)
+      end if @default_before_create
+
+      model.model_after_create do |model, graph|
+        @default_after_create.call(model,graph)
+      end if @default_after_create
+
+      model.model_before_update do |model, graph|
+        @default_before_update.call(model,graph)
+      end if @default_before_update
+
+      model.model_after_update do |model, graph|
+        @default_after_update.call(model,graph)
+      end if @default_after_update
+
+      model.model_before_delete do |model, graph|
+        @default_before_delete.call(model,graph)
+      end if @default_before_delete
+
+      model.model_after_delete do |model, graph|
+        @default_after_delete.call(model,graph)
+      end if @default_after_delete
 
       model
     end
