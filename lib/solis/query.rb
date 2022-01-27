@@ -24,8 +24,8 @@ module Solis
       data.each(&block)
     rescue StandardError => e
       message = "Unable to get next record: #{e.message}"
-      @LOGGER.error(message)
-      raise Solis::Error::CursorError(message)
+      LOGGER.error(message)
+      raise Error::CursorError, message
     end
 
     def sort(params)

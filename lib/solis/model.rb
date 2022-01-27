@@ -50,8 +50,8 @@ module Solis
       graph.dump(:ttl)
     end
 
-    def to_graph
-      as_graph(self)
+    def to_graph(resolve_all=true)
+      as_graph(self, resolve_all)
     end
 
     def destroy
@@ -274,6 +274,10 @@ module Solis
         data = klass.instance_variable_get("@#{attribute}")
         if data.nil? && metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#boolean')
           data = false
+        end
+
+        if metadata[:datatype_rdf].eql?("http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON")
+          data = data.to_json
         end
 
         if data.nil? && metadata[:mincount] > 0

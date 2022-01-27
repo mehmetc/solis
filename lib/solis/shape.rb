@@ -10,6 +10,28 @@ Graphiti::Types[:year] = {
   description: "contains only the year of a date"
 }
 
+Graphiti::Types[:json] = {
+  canonical_name: :json,
+  params: Dry::Types["coercible.string"],
+  read: Graphiti::Types.create(::JSON){|i|
+    i = JSON.parse(i) if i.is_a?(String)
+    Dry::Types["strict.array"][i]
+  },
+  write: Dry::Types["coercible.string"],
+  kind: "scalar",
+  description: "contains a json object"
+}
+
+# Graphiti::Types[:array_of_jsons] = {
+#   canonical_name: :array_of_jsons,
+#   params: Dry::Types["strict.array"],
+#   read: Dry::Types["strict.array"],
+#   write: Dry::Types["strict.array"],
+#   kind: "array",
+#   description: "contains a json object"
+# }
+
+
 module Solis
   module Shape
     def self.from_graph(graph)
@@ -52,6 +74,8 @@ module Solis
             case datatype
             when /http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns#langString/
               :string
+            when /http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns#JSON/
+              :json
             else
               :string
             end
