@@ -1,6 +1,11 @@
 # Solis
 
-Solis means 'the sun' in Latin or just Silos spelled backwards. It is an attempt to use a SHACL file as a description for an API on top of a data store.
+Solis means 'the sun' in Latin or just Silos spelled backwards. 
+A simple idea to use SHACL to describe models and API on top of a data store.
+
+# Status
+Although I'm using it in production I must shamefully acknowledge that it actually needs refactoring. Solis is currently still grown organically driven by my needs and understanding of problem domain(RDF, triples, ...).
+When my current project is live I'll start to refactor the code and release it as 1.0.
 
 # From Google Sheets to RDF, Shacl, ... to API
 The biggest hurdle when developing a model is the communication between the people who know the problem domain and the developers. 

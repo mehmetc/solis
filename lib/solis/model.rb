@@ -50,26 +50,32 @@ module Solis
       graph.dump(:ttl)
     end
 
+    def dump(format=:ttl, resolve_all=true)
+      graph = as_graph(self, resolve_all)
+      graph.dump(format)
+    end
+
     def to_graph(resolve_all=true)
       as_graph(self, resolve_all)
     end
 
     def destroy
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
+      before_delete_proc&.call(self)
 
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
       graph = as_graph(klass=self, resolve_all=false)
       Solis::LOGGER.info graph.dump(:ttl) if ConfigFile[:debug]
 
-      before_delete_proc&.call(self, graph)
       result = sparql.delete_data(graph, graph: graph.name)
-      after_delete_proc&.call(self, result)
+      after_delete_proc&.call(result)
       result
     end
 
     def save(validate_dependencies=true)
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
 
+      before_create_proc&.call(self)
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
       graph = as_graph(self, validate_dependencies)
 
@@ -77,9 +83,9 @@ module Solis
       #   file.puts graph.dump(:ttl)
       # end
       Solis::LOGGER.info SPARQL::Client::Update::InsertData.new(graph, graph: graph.name).to_s if ConfigFile[:debug]
-      before_create_proc&.call(self, graph)
+
       result = sparql.insert_data(graph, graph: graph.name)
-      after_create_proc&.call(self, result)
+      after_create_proc&.call(result)
       result
     end
 
@@ -97,7 +103,13 @@ module Solis
 
       original_klass = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
       raise Solis::Error::NotFoundError if original_klass.nil?
-      updated_klass = original_klass.clone
+      updated_klass = original_klass.deep_dup
+
+      attributes.each_pair do |key, value|
+        updated_klass.send(:"#{key}=", value)
+      end
+
+      before_update_proc&.call(original_klass, updated_klass)
 
       delete_graph = as_graph(original_klass, false)
       where_graph = RDF::Graph.new
@@ -110,16 +122,12 @@ module Solis
         where_graph << [RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{id}"), :p, :o]
       end
 
-      attributes.each_pair do |key, value|
-        updated_klass.send(:"#{key}=", value)
-      end
-      insert_graph = as_graph(updated_klass,validate_dependencies)
+      insert_graph = as_graph(updated_klass, validate_dependencies)
 
       Solis::LOGGER.info delete_graph.dump(:ttl) if ConfigFile[:debug]
       Solis::LOGGER.info insert_graph.dump(:ttl) if ConfigFile[:debug]
       Solis::LOGGER.info where_graph.dump(:ttl) if ConfigFile[:debug]
 
-      before_update_proc&.call(self, {old: original_klass, new: updated_klass})
 
       sparql.delete_insert(delete_graph, insert_graph, where_graph, graph: insert_graph.name)
       data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
@@ -128,7 +136,7 @@ module Solis
         data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
       end
 
-      after_update_proc&.call(self, data)
+      after_update_proc&.call(updated_klass, data)
       data
     end
 

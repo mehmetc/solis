@@ -624,6 +624,11 @@ hide empty members
                 properties = metadata[:properties].map do |name, property_metadata|
                   is_fk = property_metadata[:datatype].split(':').first.eql?(data[:ontologies][:base][:prefix].to_s) ? true : false
 
+                  if property_metadata.key?(:datatype) && property_metadata[:datatype].empty?
+                    raise Solis::Error::NotFoundError,
+                          "#{entity_name}.#{name} Has no datatype"
+                  end
+
                   if data[:entities][property_metadata[:datatype].split(':').last.to_sym].nil? && is_fk
                     raise Solis::Error::NotFoundError,
                           "#{entity_name}.#{name} Not found in _ENTITIES tab"

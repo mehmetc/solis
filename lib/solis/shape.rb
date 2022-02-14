@@ -1,35 +1,7 @@
 require_relative 'shape/reader/file'
 require_relative 'shape/reader/sheet'
+require_relative 'shape/data_types'
 
-Graphiti::Types[:year] = {
-  canonical_name: :year,
-  params: Dry::Types["coercible.integer"],
-  read: Dry::Types["coercible.integer"],
-  write: Dry::Types["coercible.integer"],
-  kind: "scalar",
-  description: "contains only the year of a date"
-}
-
-Graphiti::Types[:json] = {
-  canonical_name: :json,
-  params: Dry::Types["coercible.string"],
-  read: Graphiti::Types.create(::JSON){|i|
-    i = JSON.parse(i) if i.is_a?(String)
-    Dry::Types["strict.array"][i]
-  },
-  write: Dry::Types["coercible.string"],
-  kind: "scalar",
-  description: "contains a json object"
-}
-
-# Graphiti::Types[:array_of_jsons] = {
-#   canonical_name: :array_of_jsons,
-#   params: Dry::Types["strict.array"],
-#   read: Dry::Types["strict.array"],
-#   write: Dry::Types["strict.array"],
-#   kind: "array",
-#   description: "contains a json object"
-# }
 
 
 module Solis
@@ -56,17 +28,30 @@ module Solis
             when /^http:\/\/www.w3.org\/2001\/XMLSchema#anyURI/
               :string
             when /http:\/\/www.w3.org\/2001\/XMLSchema#duration/
-              :string
+              :duration
             when /http:\/\/www.w3.org\/2001\/XMLSchema#integer/
               :integer
             when /http:\/\/www.w3.org\/2001\/XMLSchema#int/
               :integer
             when /http:\/\/www.w3.org\/2001\/XMLSchema#dateTime/
               :datetime
+            when /http:\/\/www.w3.org\/2001\/XMLSchema#date/
+              :date
+            when /http:\/\/www.w3.org\/2001\/XMLSchema#time/
+              :time
             when /http:\/\/www.w3.org\/2001\/XMLSchema#gYear/
               :year
+            when /http:\/\/www.w3.org\/2001\/XMLSchema#string/
+              :string
+            when /http:\/\/www.w3.org\/2001\/XMLSchema#boolean/
+              :boolean
+            when /http:\/\/www.w3.org\/2001\/XMLSchema#float/
+              :float
+            when /http:\/\/www.w3.org\/2001\/XMLSchema#double/
+              :double
             else
-              datatype.split('#').last.to_sym
+              puts datatype.split('#').last.to_sym
+              :string
             end
           elsif datatype.nil? && node.is_a?(RDF::URI)
             node.value.split('/').last.gsub(/Shape$/, '').to_sym

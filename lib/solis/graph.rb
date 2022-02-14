@@ -158,28 +158,28 @@ module Solis
       model.sparql_endpoint = @sparql_endpoint
       model.graph = self
 
-      model.model_before_create do |model, graph|
-        @default_before_create.call(model,graph)
+      model.model_before_create do |original_class|
+        @default_before_create.call(original_class)
       end if @default_before_create
 
-      model.model_after_create do |model, graph|
-        @default_after_create.call(model,graph)
+      model.model_after_create do |persisted_class|
+        @default_after_create.call(persisted_class)
       end if @default_after_create
 
-      model.model_before_update do |model, graph|
-        @default_before_update.call(model,graph)
+      model.model_before_update do |original_class, updated_class|
+        @default_before_update.call(original_class, updated_class)
       end if @default_before_update
 
-      model.model_after_update do |model, graph|
-        @default_after_update.call(model,graph)
+      model.model_after_update do |updated_class, persisted_class|
+        @default_after_update.call(updated_class, persisted_class)
       end if @default_after_update
 
-      model.model_before_delete do |model, graph|
-        @default_before_delete.call(model,graph)
+      model.model_before_delete do |updated_class|
+        @default_before_delete.call(updated_class)
       end if @default_before_delete
 
-      model.model_after_delete do |model, graph|
-        @default_after_delete.call(model,graph)
+      model.model_after_delete do |persisted_class|
+        @default_after_delete.call(persisted_class)
       end if @default_after_delete
 
       model
