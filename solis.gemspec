@@ -30,7 +30,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'activesupport', '~> 6.1'
   spec.add_runtime_dependency 'graphiti', '~> 1.3'
   spec.add_runtime_dependency 'moneta', '~> 1.4'
-  spec.add_runtime_dependency 'linkeddata', '~> 3.1'
+  spec.add_runtime_dependency 'linkeddata', '~> 3.2'
   spec.add_runtime_dependency 'google_drive', '~> 3.0'
   spec.add_runtime_dependency 'json', '~> 2.5'
   spec.add_runtime_dependency 'hashdiff', '~> 1.0'

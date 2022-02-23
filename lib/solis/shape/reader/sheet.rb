@@ -130,7 +130,10 @@ module Solis
                                    ''
                                  end
                   end
-
+                  puts "#{name}.#{p['name']}"
+                  unless p.key?('name')
+                    pp p
+                  end
                   properties[p['name'].strip] = {
                     datatype: p['datatype'],
                     path: "#{graph_prefix}:#{p['name'].to_s.classify}",

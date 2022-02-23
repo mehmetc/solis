@@ -2,8 +2,6 @@ require_relative 'shape/reader/file'
 require_relative 'shape/reader/sheet'
 require_relative 'shape/data_types'
 
-
-
 module Solis
   module Shape
     def self.from_graph(graph)

@@ -65,9 +65,10 @@ Graphiti::Types[:json] = {
   description: "contains a json object"
 }
 
-duration_definition = Dry::Types['strict.date_time']
+duration_definition = Dry::Types['strict.integer']
 read_duration_type = duration_definition.constructor do |i|
-  ActiveSupport::Duration.parse(i) if i.is_a?(String)
+  (i[0].send(:months) + i[1].send(:seconds)).to_i if i.is_a?(Array)
+  #ActiveSupport::Duration.parse(i[0]) if i.is_a?(String)
 end
 
 write_duration_type = duration_definition.constructor do |i|
