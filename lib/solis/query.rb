@@ -285,7 +285,14 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
             begin
               record_uri = statement.s.value
               attribute = statement.p.value.split('/').last.underscore
-              object = statement.o.canonicalize.object
+              if statement.o.valid?
+                object = statement.o.canonicalize.object
+              else
+                object = Integer(statement.o.value) if Integer(statement.o.value) rescue nil
+                object = Float(statement.o.value) if object.nil? && Float(statement.o.value) rescue nil
+                object = statement.o.value if object.nil?
+              end
+
 
               begin
                 datatype = RDF::Vocabulary.find_term(@model.class.metadata[:attributes][attribute][:datatype_rdf])
