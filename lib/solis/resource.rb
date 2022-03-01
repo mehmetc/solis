@@ -1,11 +1,12 @@
 require_relative 'sparql_adaptor'
+require_relative 'config_file'
 
 module Solis
   class Resource < ::Graphiti::Resource
 
     self.abstract_class = true
     self.adapter = Solis::SparqlAdaptor
-    self.endpoint_namespace = ''
+    self.endpoint_namespace = Solis::ConfigFile[:base_path] || ''
     self.validate_endpoints = true
 
     def self.sparql_endpoint
