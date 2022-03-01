@@ -169,21 +169,27 @@ module Solis
       construct_graph_name = "#{parsed_graph_name.scheme}://#{@model.name.underscore}.#{parsed_graph_name.host}/"
 
       #check construct validity
+      #result = @sparql_client.query("clear graph <#{construct_graph_name}>")
       result = @sparql_client.query("select * from <#{construct_graph_name}> where {<#{construct_graph_name}_metadata> <#{construct_graph_name}created_at> ?_created_at}")
       unless result.empty?
         created_at = result[0]._created_at.object
       end
 
       if created_at.nil? || (Time.now - created_at) > 1.day
-        result = @sparql_client.query("with <#{construct_graph_name}> delete {?s ?p ?o} where{?s ?p ?o}")
+        #result = @sparql_client.query("with <#{construct_graph_name}> delete {?s ?p ?o} where{?s ?p ?o}")
+        result = @sparql_client.query("clear graph <#{construct_graph_name}>")
         LOGGER.info(result[0]['callret-0'].value)
 
-        result = @sparql_client.query("insert into <#{construct_graph_name}> { <#{construct_graph_name}_metadata> <#{construct_graph_name}created_at> \"#{Time.now.xmlschema}\"^^xsd:dateTime}")
-        LOGGER.info(result[0]['callret-0'].value)
-
-        construct_query = load_construct
-        result = @sparql_client.query(construct_query)
-        LOGGER.info(result[0]['callret-0'].value)
+        begin
+          construct_query = load_construct
+          result = @sparql_client.query(construct_query)
+          LOGGER.info(result[0]['callret-0'].value)
+        rescue Solis::Error::QueryError => e
+          raise e
+        else
+          result = @sparql_client.query("insert into <#{construct_graph_name}> { <#{construct_graph_name}_metadata> <#{construct_graph_name}created_at> \"#{Time.now.xmlschema}\"^^xsd:dateTime}")
+          LOGGER.info(result[0]['callret-0'].value)
+        end
 
       end
 
@@ -223,6 +229,9 @@ module Solis
       end
 
       core_query = core_query(relationship)
+      if core_query =~ /IN\((.*?)\)/
+        limit = $1.gsub('"','').split(',').length
+      end
       core_query += " LIMIT #{limit} OFFSET #{offset}"
 
       query = %(
