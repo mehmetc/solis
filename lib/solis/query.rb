@@ -230,9 +230,10 @@ module Solis
 
       core_query = core_query(relationship)
       if core_query =~ /IN\((.*?)\)/
-        limit = $1.gsub('"','').split(',').length
+        #limit = $1.gsub('"','').split(',').length
+      else
+        core_query += " LIMIT #{limit} OFFSET #{offset}"
       end
-      core_query += " LIMIT #{limit} OFFSET #{offset}"
 
       query = %(
       #{prefixes}
@@ -277,6 +278,7 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
     end
 
     def graph_to_object(solutions)
+      return [] if solutions.empty?
       target_class = @model.class.metadata[:target_class].value.split('/').last
       result = []
       record_uri = ''

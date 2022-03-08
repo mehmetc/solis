@@ -194,6 +194,8 @@ module Solis
     #   end
     # end
 
+    # geeft fout als associate super gebruikt wordt
+    # http://127.0.0.1:9292/autocirculaties?filter%5Bgebruiker_id%5D%5Beq%5D=1221&include=uitleenformaat,wat_uitlenen
     def associate(parent, child, association_name, association_type)
       if activerecord_associate?(parent, child, association_name)
         activerecord_adapter.associate \
@@ -211,8 +213,8 @@ module Solis
           else
             if parent_child_data.id.eql?(child.id)
               parent_child_data = [child]
-            else
-              parent_child_data = nil
+            # else
+            #   parent_child_data = nil
             end
           end
 
