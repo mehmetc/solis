@@ -2,7 +2,7 @@ require "test_helper"
 
 class SolisTest < Minitest::Test
   def setup
-    Solis::ConfigFile.path = './test/resources'
+    #    Solis::ConfigFile.path = './test/resources'
     @solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), Solis::ConfigFile[:solis][:env])
   end
 
@@ -43,6 +43,13 @@ class SolisTest < Minitest::Test
 
   def test_that_it_has_a_version_number
     refute_nil ::Solis::VERSION
+  end
+
+  def test_get_teacher_schedule
+    schedule = @solis.shape_as_resource('Schedule').all({stats: {total: :count}})
+
+    pp schedule.data
+    pp schedule.data.to_ttl
   end
 
 end

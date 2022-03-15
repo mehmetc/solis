@@ -6,7 +6,7 @@ module Solis
 
     self.abstract_class = true
     self.adapter = Solis::SparqlAdaptor
-    self.endpoint_namespace = Solis::ConfigFile[:base_path] || ''
+    self.endpoint_namespace = Solis::ConfigFile[:base_path] rescue ''
     self.validate_endpoints = true
 
     def self.sparql_endpoint

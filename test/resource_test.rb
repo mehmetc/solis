@@ -44,7 +44,9 @@ class ResourceTest < Minitest::Test
 
     expected= JSON.parse('{"data":[{"id":"3","last_name":"Doe","first_name":"John","skill":{"id":"2","label":"Description Logic","short_label":null}}],"meta":{"stats":{"total":{"count":1}}}}')
 
-    assert_equal(expected['data'].first['skill']['label'], t.data.first.skill.label)
+    #assert_equal(expected['data'].first['skill']['label'], t.data.first.skill.first.label)
+
+    assert_includes(t.data.first.skill.map{|m| m.label}, expected['data'].first['skill']['label'])
 
     # teacher.destroy
     # algebra_skill.destroy
@@ -80,9 +82,56 @@ class ResourceTest < Minitest::Test
     t = TeacherResource.all({"filter"=>{"skill_id"=>{"eq"=>"1"}}, "include"=>"skill"})
     assert_equal(1, t.data.length)
     assert_equal('John', t.data.first.first_name)
-
-
   end
 
+  def test_relation_class
+    @solis.flush_all('http://solis.template/')
+
+    algebra_skill = Skill.new({id: '1', label: 'Algebra', short_label: 'Algebra'})
+    algebra_skill.save
+
+    course = Course.new({id: '8', course_name: 'Algebra'})
+    course.save
+
+    teacher3 = Teacher.new({id:'3',
+                            first_name: 'John',
+                            last_name: 'Doe',
+                            skill: [{id: algebra_skill.id}]
+                           })
+    teacher3.save(false)
+
+    student5 = Student.new({id:'5',
+                            age: 23,
+                            first_name: 'Jane',
+                            last_name: 'Doe'
+                           })
+    student5.save
+
+    student6 = Student.new({id:'6',
+                            age: 24,
+                            first_name: 'Peter',
+                            last_name: 'Selie'
+                           })
+    student6.save
+
+    schedule = Schedule.new({id: '7',
+                             students: [ {id: student5.id},
+                                        {id: student6.id}],
+                             teacher: {id: teacher3.id},
+                             course: {id: course.id},
+                             start_date: Time.now,
+                             end_date: Time.now
+                            }
+                            )
+
+    schedule.save(false)
+
+
+    s = ScheduleResource.all({"filter"=>{"id"=>{"eq"=>"7"}}, "include"=>"teacher,students"})
+
+    pp s.data
+
+    puts s.data[0].to_ttl
+  end
 end
 

@@ -16,13 +16,13 @@
 Graphiti::Types[:array_of_years] = {
   canonical_name: :year,
   params: Dry::Types["strict.array"].of(Graphiti::Types.create(::Integer) { |input|
-    Dry::Types["coercible.integer"][input]
+    Dry::Types["coercible.integer"][input || 0]
   }),
   read: Dry::Types["strict.array"].of(Graphiti::Types.create(::Integer) { |input|
-    Dry::Types["coercible.integer"][input] if input
+    Dry::Types["coercible.integer"][input || 0] if input
   }),
   write: Dry::Types["strict.array"].of(Graphiti::Types.create(::Integer) { |input|
-    Dry::Types["coercible.integer"][input] if input
+    Dry::Types["coercible.integer"][input || 0] if input
   }),
   kind: "array",
   description: "contains a list of the year of a date"
@@ -91,6 +91,16 @@ Graphiti::Types[:duration] = {
   kind: "scalar",
   description: "contains ISO8601 Duration"
 }
+
+Graphiti::Types[:array_of_durations] = {
+  canonical_name: :duration,
+  params: Dry::Types["strict.array"].of(Graphiti::Types[:duration]),
+  read: Dry::Types["strict.array"].of(Graphiti::Types[:duration]),
+  write: Dry::Types["strict.array"].of(Graphiti::Types[:duration]),
+  kind: "array",
+  description: "contains a list of durations"
+}
+
 
 write_year = Graphiti::Types.create(:Year) do |i|
   input = RDF::Literal::Year.new(i)
