@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
 require 'moneta'
+require 'solis/query/filter'
 
 module Solis
   class Query
     include Enumerable
-
+    include Solis::QueryFilter
     def initialize(model)
       @construct_cache = File.absolute_path(Solis::ConfigFile[:solis][:cache])
       @model = model
@@ -13,7 +14,7 @@ module Solis
       @metadata = @model.class.metadata
       @sparql_endpoint = @model.class.sparql_endpoint
       @sparql_client = SPARQL::Client.new(@sparql_endpoint, graph: @model.class.graph_name)
-      @filter = ''
+      @filter = {values: ["VALUES ?type {#{target_class}}"], concepts: ['?concept a ?type .'] }
       @sort = 'ORDER BY ?s'
       @sort_select = ''
       @moneta = Moneta.new(:File, dir: @construct_cache, expires: Solis::ConfigFile[:solis][:query_cache_expire])
@@ -62,7 +63,7 @@ module Solis
       self
     end
 
-    def filter(params)
+    def filter2(params)
       #FILTER(LANG(?label) = "" || LANGMATCHES(LANG(?label), "fr"))
       #
       #
@@ -78,7 +79,7 @@ module Solis
           filters.each do |key, value|
             if  @metadata[:attributes].key?(key.to_s) && @metadata[:attributes][key.to_s][:node_kind] && @metadata[:attributes][key.to_s][:node_kind]&.vocab == RDF::Vocab::SH
               values_model = @model.class.graph.shape_as_model(@metadata[:attributes][key.to_s][:datatype].to_s)&.new
-              @filter = "VALUES ?filter_by_id{#{value.split(',').map {|v| target_class_by_model(values_model, v)}.join(' ')}}\n" if values_model
+              @filter += "VALUES ?filter_by_id{#{value.split(',').map {|v| target_class_by_model(values_model, v)}.join(' ')}}\n" if values_model
               filter_predicate = URI.parse(@metadata[:attributes][key.to_s][:path])
               filter_predicate.path = "/#{key.to_s.downcase}"
 
@@ -255,14 +256,14 @@ order by ?s
 
     def core_query(relationship)
       core_query = %(
-SELECT distinct (?concept AS ?s) WHERE {
-  VALUES ?type {#{target_class}}
-  ?concept ?role ?objects.
-  #{relationship}
-  ?concept a ?type .
-  #{@sort_select}
-  #{@filter}
-}
+  SELECT distinct (?concept AS ?s) WHERE {
+    #{@filter[:values].join("\n")}
+    ?concept ?role ?objects.
+    #{relationship}
+    #{@filter[:concepts].join("\n")}
+
+    #{@sort_select}
+  }
 #{@sort}
 )
     end
@@ -331,9 +332,11 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
                 object = solution_model.graph.shape_as_model(node_class).new({ id: object.split('/').last })
               end
 
-              if data.key?(attribute)
+              if data.key?(attribute) # attribute exists
                 raise "Cardinality error, max = #{solution_model.metadata[:attributes][attribute][:maxcount]}" if solution_model.metadata[:attributes][attribute][:maxcount] == 0
-                if solution_model.metadata[:attributes][attribute][:maxcount] == 1
+                if solution_model.metadata[:attributes][attribute][:maxcount] == 1 && data.key?(attribute)
+                  raise "Cardinality error, max = #{solution_model.metadata[:attributes][attribute][:maxcount]}"
+                elsif solution_model.metadata[:attributes][attribute][:maxcount] == 1
                   data[attribute] = object
                 else
                   data[attribute] = [data[attribute]] unless data[attribute].is_a?(Array)
@@ -364,60 +367,60 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
       result
     end
 
-    def graph_to_json(graph)
-      parsed_json = ::JSON.parse(graph.dump(:jsonld))
-      result = []
-      parsed_json.map do |m|
-        result << build_object(m)
-      end
-      result
-    end
-
-    def build_object(m)
-      klass_metadata = @shapes.select do |_, v|
-        if m.key?('@type')
-          m['@type'].first.eql?(v[:target_class].value)
-        else
-          m.keys.select { |s| s =~ /^http/ }.first.eql?(v[:target_class].value)
-        end
-      end.first || nil
-      if klass_metadata.nil?
-        klass_metadata = @shapes.select { |_, v| @model.class.metadata[:target_class].value.eql?(v[:target_class].value) }.to_a.flatten
-      end
-
-      if klass_metadata
-        klass_name = klass_metadata[0]
-        data = {}
-        klass_metadata[1][:attributes].each do |attribute, metadata|
-          if metadata.key?(:node_kind) && !metadata[:node_kind].nil?
-            internal_result = []
-            next unless m.key?(metadata[:path])
-
-            m[metadata[:path]].map { |s| s.transform_keys { |k| k.gsub(/^@/, '') } }.select { |s| s.keys.first.eql?('id') }.map { |m| m['id'] }.each do |id|
-              if metadata[:node_kind].nil?
-                internal_result << @model.class.graph.shape_as_model(attribute.classify).new({ id: id.split('/').last })
-                # internal_result << @model.class.graph.shape_as_model(attribute.classify).new.query.filter({ filters: { id: id.split('/').last } }).find_all.map { |a| a }
-              else
-                internal_result << @model.class.graph.shape_as_model(metadata[:datatype].to_s).new({ id: id.split('/').last })
-                # internal_result << @model.class.graph.shape_as_model(metadata[:datatype].to_s).new.query.filter({ filters: { id: id.split('/').last } }).find_all.map { |a| a }
-              end
-            end
-            data[attribute] = internal_result.flatten
-          elsif m.key?(metadata[:path])
-            data_attribute = m[metadata[:path]].map { |s| s['@value'] }.compact
-            data_attribute = data_attribute.size == 1 ? data_attribute.first : data_attribute
-            data[attribute] = data_attribute
-          end
-        end
-        data['id'] = begin
-                       m[klass_metadata[1][:attributes]['id'][:path]].map { |s| s['@value'] }.first
-                     rescue StandardError
-                       m['@id']
-                     end
-      end
-
-      data&.delete_if { |_k, v| v.nil? || v.try(:empty?) }
-      @model.class.graph.shape_as_model(klass_name).new(data)
-    end
+    # def graph_to_json(graph)
+    #   parsed_json = ::JSON.parse(graph.dump(:jsonld))
+    #   result = []
+    #   parsed_json.map do |m|
+    #     result << build_object(m)
+    #   end
+    #   result
+    # end
+    #
+    # def build_object(m)
+    #   klass_metadata = @shapes.select do |_, v|
+    #     if m.key?('@type')
+    #       m['@type'].first.eql?(v[:target_class].value)
+    #     else
+    #       m.keys.select { |s| s =~ /^http/ }.first.eql?(v[:target_class].value)
+    #     end
+    #   end.first || nil
+    #   if klass_metadata.nil?
+    #     klass_metadata = @shapes.select { |_, v| @model.class.metadata[:target_class].value.eql?(v[:target_class].value) }.to_a.flatten
+    #   end
+    #
+    #   if klass_metadata
+    #     klass_name = klass_metadata[0]
+    #     data = {}
+    #     klass_metadata[1][:attributes].each do |attribute, metadata|
+    #       if metadata.key?(:node_kind) && !metadata[:node_kind].nil?
+    #         internal_result = []
+    #         next unless m.key?(metadata[:path])
+    #
+    #         m[metadata[:path]].map { |s| s.transform_keys { |k| k.gsub(/^@/, '') } }.select { |s| s.keys.first.eql?('id') }.map { |m| m['id'] }.each do |id|
+    #           if metadata[:node_kind].nil?
+    #             internal_result << @model.class.graph.shape_as_model(attribute.classify).new({ id: id.split('/').last })
+    #             # internal_result << @model.class.graph.shape_as_model(attribute.classify).new.query.filter({ filters: { id: id.split('/').last } }).find_all.map { |a| a }
+    #           else
+    #             internal_result << @model.class.graph.shape_as_model(metadata[:datatype].to_s).new({ id: id.split('/').last })
+    #             # internal_result << @model.class.graph.shape_as_model(metadata[:datatype].to_s).new.query.filter({ filters: { id: id.split('/').last } }).find_all.map { |a| a }
+    #           end
+    #         end
+    #         data[attribute] = internal_result.flatten
+    #       elsif m.key?(metadata[:path])
+    #         data_attribute = m[metadata[:path]].map { |s| s['@value'] }.compact
+    #         data_attribute = data_attribute.size == 1 ? data_attribute.first : data_attribute
+    #         data[attribute] = data_attribute
+    #       end
+    #     end
+    #     data['id'] = begin
+    #                    m[klass_metadata[1][:attributes]['id'][:path]].map { |s| s['@value'] }.first
+    #                  rescue StandardError
+    #                    m['@id']
+    #                  end
+    #   end
+    #
+    #   data&.delete_if { |_k, v| v.nil? || v.try(:empty?) }
+    #   @model.class.graph.shape_as_model(klass_name).new(data)
+    # end
   end
 end

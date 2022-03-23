@@ -2,6 +2,7 @@ require_relative 'simple_sheets'
 require 'active_support/all'
 require 'active_support/hash_with_indifferent_access'
 require 'rdf/vocab'
+require 'solis/error'
 
 module Solis
   module Shape
@@ -72,8 +73,7 @@ module Solis
                   #   subclassof = candidate_sco['subclassof'].empty? ? nil : candidate_sco['subclassof'].split(':').last
                   #   top_class = candidate_sco['name'].to_s if candidate_sco['subclassof'].empty?
                   # end
-                  
-              
+
                   entity_data = parse_entity_data(e['name'].to_s, graph_prefix, graph_name, sheets[top_class])
 
                   if entity_data.empty?
@@ -307,13 +307,14 @@ hide empty members
                 end
 
                 out += %(
-#{graph_prefix}:#{entity_name}Shape
+                #{graph_prefix}:#{entity_name}Shape
     a               #{shacl_prefix}:NodeShape ;
     #{shacl_prefix}:description "#{description&.gsub('"', "'")&.gsub(/\n|\r/, '')}" ;
-    #{shacl_prefix}:targetClass  #{target_class} ;#{unless node.nil? || node.empty?
-                                                      "\n    #{shacl_prefix}:node         #{node} ;"
-                                                    end}
-    #{shacl_prefix}:name         "#{label}" ;
+    #{shacl_prefix}:targetClass  #{target_class} ;#{
+                  unless node.nil? || node.empty?
+                    "\n    #{shacl_prefix}:node         #{node} ;"
+                  end}
+                #{shacl_prefix}:name         "#{label}" ;
 )
                 metadata[:properties].each do |property, property_metadata|
                   attribute = property.to_s.strip
@@ -326,7 +327,7 @@ hide empty members
                   max_count = property_metadata[:cardinality][:max].strip
 
                   if datatype =~ /^#{graph_prefix}:/ || datatype =~ /^<#{graph_name}/
-                    out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{datatype} ;
+                    out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
                  #{shacl_prefix}:name "#{attribute}" ;
                  #{shacl_prefix}:description "#{description}" ;
                  #{shacl_prefix}:nodeKind #{shacl_prefix}:IRI ;
@@ -407,13 +408,13 @@ hide empty members
               lp = RDF::StrictVocabulary(graph_name)
               o = ::Class.new(lp) do
                 ontology(graph_name.to_sym, {
-                           "dc11:title": data[:metadata][:title].freeze,
-                           "dc11:description": data[:metadata][:description].freeze,
-                           "dc11:date": Time.now.to_s.freeze,
-                           "dc11:creator": data[:metadata][:author].freeze,
-                           "owl:versionInfo": data[:metadata][:version].freeze,
-                           type: 'owl:Ontology'.freeze
-                         })
+                  "dc11:title": data[:metadata][:title].freeze,
+                  "dc11:description": data[:metadata][:description].freeze,
+                  "dc11:date": Time.now.to_s.freeze,
+                  "dc11:creator": data[:metadata][:author].freeze,
+                  "owl:versionInfo": data[:metadata][:version].freeze,
+                  type: 'owl:Ontology'.freeze
+                })
 
                 classes.each do |k, v|
                   term k.to_sym, v
@@ -450,7 +451,7 @@ hide empty members
             def build_inflections(data)
               inflections = {}
               data[:entities].each do |entity, metadata|
-                inflections[entity]=metadata[:plural]
+                inflections[entity] = metadata[:plural]
                 inflections[entity.to_s.underscore.to_sym] = metadata[:plural].underscore
               end
 
@@ -519,44 +520,42 @@ CREATE SCHEMA #{graph_prefix};
                   all_tables[table[:name]] = table
                   d = table[:table].call(type)
                   tables[table[:name]] = d[:out]
-                  
-                  d[:references].each do |k,v|                    
+
+                  d[:references].each do |k, v|
                     references[k] = (references.include?(k) ? references[k] : 0) + v
                   end
-                end                        
+                end
               end
 
-              references = references.sort_by{|k,v| -v }.to_h #each{|m| r[m[0]] = m[1]}
+              references = references.sort_by { |k, v| -v }.to_h #each{|m| r[m[0]] = m[1]}
 
-              r=references.sort_by{|k,v| 
-                k = k[0]                
-                relation =  all_tables.key?(k) ?  all_tables[k][:properties].map{|s| s[:references]}.compact.first : nil
-                
-                a = references.keys.index(k) 
-                b = references.keys.index(relation) 
+              r = references.sort_by { |k, v|
+                k = k[0]
+                relation = all_tables.key?(k) ? all_tables[k][:properties].map { |s| s[:references] }.compact.first : nil
+
+                a = references.keys.index(k)
+                b = references.keys.index(relation)
                 b = 0 if b.nil?
-                a = 0 if a.nil?             
+                a = 0 if a.nil?
 
-                b = a + b if b < a 
-                
+                b = a + b if b < a
+
                 b
               }
 
               references = r.to_h
-              
-              
+
               if type.eql?(:sql)
                 all_keys = references.keys
-                t = tables.sort_by{|k,v| all_keys.include?(k) ? all_keys.index(k) : 0 }
-                out += t.map{|m| m[1]}.join("\n")
+                t = tables.sort_by { |k, v| all_keys.include?(k) ? all_keys.index(k) : 0 }
+                out += t.map { |m| m[1] }.join("\n")
               end
 
               #              ::File.open("#{ConfigFile[:cache]}/test.json", 'wb') {|f| f.puts references.to_json}
 
               out += relations.sort.uniq.join("\n")
               out += erd_footer(data, type)
-              
-              
+
               out
             end
 
@@ -622,9 +621,11 @@ hide empty members
               graph_prefix = data[:ontologies][:base][:prefix]
               data[:entities].map do |entity_name, metadata|
                 table_name = metadata[:plural].to_s.underscore
-                table_comment = metadata[:description]&.gsub('\'', '')&.gsub(/\n|\r/,' ')
+                table_comment = metadata[:description]&.gsub('\'', '')&.gsub(/\n|\r/, ' ')
 
                 properties = metadata[:properties].map do |name, property_metadata|
+                  raise Solis::Error::NotFoundError, "A property in the #{entity_name} tab is empty #{metadata[:properties].to_json}" if name.empty?
+
                   is_fk = property_metadata[:datatype].split(':').first.eql?(data[:ontologies][:base][:prefix].to_s) ? true : false
 
                   if property_metadata.key?(:datatype) && property_metadata[:datatype].empty?
@@ -650,54 +651,54 @@ hide empty members
                     name: name,
                     column_name: column_name,
                     column: lambda { |type = :uml|
-                              out = ''
-                              case type
-                              when :sql
-                                if name.to_s.eql?('id')
-                                  out += "\t#{column_name} SERIAL#{mandatory ? ' NOT NULL' : ''} PRIMARY KEY"
-                                else
-                                  out += "\t#{column_name} #{is_fk ? 'int' : datatype}#{mandatory ? ' NOT NULL' : ''}#{is_fk ? " REFERENCES #{graph_prefix}.#{references}(id)" : ''}"
-                                end
+                      out = ''
+                      case type
+                      when :sql
+                        if name.to_s.eql?('id')
+                          out += "\t#{column_name} SERIAL#{mandatory ? ' NOT NULL' : ''} PRIMARY KEY"
+                        else
+                          out += "\t#{column_name} #{is_fk ? 'int' : datatype}#{mandatory ? ' NOT NULL' : ''}#{is_fk ? " REFERENCES #{graph_prefix}.#{references}(id)" : ''}"
+                        end
 
-                              else
-                                cardinality_min = { '0' => '|o', '' => '}o', '1' => '||' }
-                                cardinality_max = { '0' => 'o|', '' => 'o{', '1' => '||' }
+                      else
+                        cardinality_min = { '0' => '|o', '' => '}o', '1' => '||' }
+                        cardinality_max = { '0' => 'o|', '' => 'o{', '1' => '||' }
 
-                                if name.to_s.eql?('id')
-                                  out += "\t *#{name} : #{datatype} <<generated>>\n"
-                                  out += "--\n"
-                                else
-                                  out += "\t #{mandatory ? '*' : ''}#{column_name} : #{datatype} #{is_fk ? '<<FK>>' : ''}"
-                                end
-                                
-                                relations = []
-                                if property_metadata[:datatype].split(':').first.eql?(graph_prefix.to_s)
-                                  cmin = cardinality_min[(property_metadata[:cardinality][:min]).to_s]
-                                  cmax = cardinality_max[(property_metadata[:cardinality][:max]).to_s]
+                        if name.to_s.eql?('id')
+                          out += "\t *#{name} : #{datatype} <<generated>>\n"
+                          out += "--\n"
+                        else
+                          out += "\t #{mandatory ? '*' : ''}#{column_name} : #{datatype} #{is_fk ? '<<FK>>' : ''}"
+                        end
 
-                                  ref_table_name = [property_metadata[:datatype].split(':').last.to_sym,
-                                                    property_metadata[:path].split(':').last.classify.to_sym].map do |m|
-                                    data[:entities][m].nil? ? nil : data[:entities][m][:plural].underscore
-                                  end.compact.first
+                        relations = []
+                        if property_metadata[:datatype].split(':').first.eql?(graph_prefix.to_s)
+                          cmin = cardinality_min[(property_metadata[:cardinality][:min]).to_s]
+                          cmax = cardinality_max[(property_metadata[:cardinality][:max]).to_s]
 
-                                  relations << "#{table_name} #{cmin}--#{cmax} #{ref_table_name} "
-                                end
-                                out = {out: out, relations: relations, references: references}
-                              end
+                          ref_table_name = [property_metadata[:datatype].split(':').last.to_sym,
+                                            property_metadata[:path].split(':').last.classify.to_sym].map do |m|
+                            data[:entities][m].nil? ? nil : data[:entities][m][:plural].underscore
+                          end.compact.first
 
-                              out
-                            },
+                          relations << "#{table_name} #{cmin}--#{cmax} #{ref_table_name} "
+                        end
+                        out = { out: out, relations: relations, references: references }
+                      end
+
+                      out
+                    },
                     type: datatype,
                     foreign_key: is_fk,
                     mandatory: mandatory,
                     references: references,
                     cardinality: property_metadata[:cardinality],
-                    comment: property_metadata[:description]&.gsub('\'', '')&.gsub(/\n|\r/,' ')
+                    comment: property_metadata[:description]&.gsub('\'', '')&.gsub(/\n|\r/, ' ')
                   }
                 end
 
                 {
-                  table: lambda { |type = :uml|                    
+                  table: lambda { |type = :uml|
                     out = ''
                     case type
                     when :sql
@@ -719,7 +720,7 @@ hide empty members
                         end
                       end
 
-                      out = {out: out, references: all_references.compact.sort.each_with_object(Hash.new(0)) { |o, h| h[o] += 1 }}
+                      out = { out: out, references: all_references.compact.sort.each_with_object(Hash.new(0)) { |o, h| h[o] += 1 } }
                     else
                       out += "entity \"#{table_name}\" as #{table_name}"
                       unless properties.nil? || properties.empty?
@@ -730,10 +731,10 @@ hide empty members
                           out += "\n" if i > 1
                           out += d[:out]
                           relations += d[:relations]
-                          all_references << property[:references] 
+                          all_references << property[:references]
                         end
-                        out += "\n}\n"                        
-                        out = {out: out, relations: relations}
+                        out += "\n}\n"
+                        out = { out: out, relations: relations }
                       end
                     end
 

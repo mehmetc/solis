@@ -10,7 +10,7 @@ schema:Person a owl:Class;
 
 t: a owl:Ontology;
   <dc11:creator> "Mehmet Celik";
-  <dc11:date> "2021-10-24 15:16:27 +0200";
+  <dc11:date> "2022-03-17 09:32:31 +0100";
   <dc11:description> "Template for the SOLIS gem";
   <dc11:title> "SOLIS template";
   owl:versionInfo 0.1 .
@@ -49,12 +49,11 @@ t:Skill a owl:Class;
 t:Student a owl:Class;
   rdfs:label "Student";
   rdfs:comment "A student taking a course";
-  rdfs:subClassOf [
+  rdfs:subClassOf t:Person, [
     a owl:Restriction;
     owl:minCardinality 1;
     owl:onProperty t:age
-  ],
-    t:Person, [
+  ], [
     a owl:Restriction;
     owl:maxCardinality 1;
     owl:onProperty t:age
@@ -63,12 +62,11 @@ t:Student a owl:Class;
 t:Teacher a owl:Class;
   rdfs:label "Teacher";
   rdfs:comment "Name of a teacher";
-  rdfs:subClassOf [
+  rdfs:subClassOf t:Person, [
     a owl:Restriction;
     owl:minCardinality 1;
     owl:onProperty t:skill
-  ],
-    t:Person .
+  ] .
 
 t:age a rdf:Property;
   rdfs:label "age";
@@ -76,11 +74,53 @@ t:age a rdf:Property;
   rdfs:domain t:Student;
   rdfs:range xsd:integer .
 
+t:base64_dt a rdf:Property;
+  rdfs:label "base64_dt";
+  rdfs:comment "base64 encoded datatype";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:base64Binary .
+
+t:boolean_dt a rdf:Property;
+  rdfs:label "boolean_dt";
+  rdfs:comment "";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:boolean .
+
 t:course_name a rdf:Property;
   rdfs:label "course_name";
   rdfs:comment "name of a course";
   rdfs:domain t:Course;
   rdfs:range rdf:langString .
+
+t:date_dt a rdf:Property;
+  rdfs:label "date_dt";
+  rdfs:comment "a date time type";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:date .
+
+t:datetime_dt a rdf:Property;
+  rdfs:label "datetime_dt";
+  rdfs:comment "";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:dateTime .
+
+t:day_dt a rdf:Property;
+  rdfs:label "day_dt";
+  rdfs:comment "";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:gDay .
+
+t:double_dt a rdf:Property;
+  rdfs:label "double_dt";
+  rdfs:comment "";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:double .
+
+t:duration_dt a rdf:Property;
+  rdfs:label "duration_dt";
+  rdfs:comment "";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:duration .
 
 t:end_date a rdf:Property;
   rdfs:label "end_date";
@@ -94,17 +134,59 @@ t:first_name a rdf:Property;
   rdfs:domain t:Person;
   rdfs:range xsd:string .
 
+t:float_dt a rdf:Property;
+  rdfs:label "float_dt";
+  rdfs:comment "";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:float .
+
+t:hex_dt a rdf:Property;
+  rdfs:label "hex_dt";
+  rdfs:comment "";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:hexBinary .
+
+t:integer_dt a rdf:Property;
+  rdfs:label "integer_dt";
+  rdfs:comment "an integer value";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:integer .
+
+t:json_dt a rdf:Property;
+  rdfs:label "json_dt";
+  rdfs:comment "";
+  rdfs:domain t:EveryDataType;
+  rdfs:range rdf:JSON .
+
 t:label a rdf:Property;
   rdfs:label "label";
   rdfs:comment "prefered display label";
   rdfs:domain t:CodeTable;
   rdfs:range xsd:string .
 
+t:lang_string_dt a rdf:Property;
+  rdfs:label "lang_string_dt";
+  rdfs:comment "";
+  rdfs:domain t:EveryDataType;
+  rdfs:range rdf:langString .
+
 t:last_name a rdf:Property;
   rdfs:label "last_name";
   rdfs:comment "Person's last name";
   rdfs:domain t:Person;
   rdfs:range xsd:string .
+
+t:month_day_dt a rdf:Property;
+  rdfs:label "month_day_dt";
+  rdfs:comment "--MM-DD like --12-24";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:gMonthDay .
+
+t:month_dt a rdf:Property;
+  rdfs:label "month_dt";
+  rdfs:comment "--MM like --05 with an optional timezone --11Z, --11+02:00";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:gMonth .
 
 t:short_label a rdf:Property;
   rdfs:label "short_label";
@@ -118,11 +200,41 @@ t:start_date a rdf:Property;
   rdfs:domain t:Schedule;
   rdfs:range xsd:date .
 
+t:string_dt a rdf:Property;
+  rdfs:label "string_dt";
+  rdfs:comment "a string value NO language specified";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:string .
+
 t:teacher a rdf:Property;
   rdfs:label "teacher";
   rdfs:comment "schedule belongs to";
   rdfs:domain t:Schedule;
   rdfs:range t:Teacher .
+
+t:time_dt a rdf:Property;
+  rdfs:label "time_dt";
+  rdfs:comment "";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:time .
+
+t:uri_dt a rdf:Property;
+  rdfs:label "uri_dt";
+  rdfs:comment "";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:anyURI .
+
+t:year_dt a rdf:Property;
+  rdfs:label "year_dt";
+  rdfs:comment "just a year of a date";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:gYear .
+
+t:year_month_dt a rdf:Property;
+  rdfs:label "year_month_dt";
+  rdfs:comment "YYYY-MM like 2001-10";
+  rdfs:domain t:EveryDataType;
+  rdfs:range xsd:gYearMonth .
 
 t:Course a owl:Class;
   rdfs:label "Course";
@@ -133,12 +245,12 @@ t:Course a owl:Class;
     owl:onProperty t:id
   ], [
     a owl:Restriction;
-    owl:minCardinality 1;
-    owl:onProperty t:course_name
-  ], [
-    a owl:Restriction;
     owl:maxCardinality 1;
     owl:onProperty t:id
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 1;
+    owl:onProperty t:course_name
   ], [
     a owl:Restriction;
     owl:maxCardinality 1;
@@ -154,8 +266,8 @@ t:CodeTable a owl:Class;
     owl:onProperty t:id
   ], [
     a owl:Restriction;
-    owl:minCardinality 1;
-    owl:onProperty t:label
+    owl:maxCardinality 1;
+    owl:onProperty t:id
   ], [
     a owl:Restriction;
     owl:minCardinality 0;
@@ -163,15 +275,15 @@ t:CodeTable a owl:Class;
   ], [
     a owl:Restriction;
     owl:maxCardinality 1;
-    owl:onProperty t:id
+    owl:onProperty t:short_label
   ], [
     a owl:Restriction;
-    owl:maxCardinality 1;
+    owl:minCardinality 1;
     owl:onProperty t:label
   ], [
     a owl:Restriction;
     owl:maxCardinality 1;
-    owl:onProperty t:short_label
+    owl:onProperty t:label
   ] .
 
 t:Person a owl:Class;
@@ -180,23 +292,23 @@ t:Person a owl:Class;
   rdfs:subClassOf [
     a owl:Restriction;
     owl:minCardinality 1;
+    owl:onProperty t:id
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:id
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 1;
+    owl:onProperty t:first_name
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
     owl:onProperty t:first_name
   ], [
     a owl:Restriction;
     owl:minCardinality 1;
     owl:onProperty t:last_name
-  ], [
-    a owl:Restriction;
-    owl:minCardinality 1;
-    owl:onProperty t:id
-  ], [
-    a owl:Restriction;
-    owl:maxCardinality 1;
-    owl:onProperty t:first_name
-  ], [
-    a owl:Restriction;
-    owl:maxCardinality 1;
-    owl:onProperty t:id
   ], [
     a owl:Restriction;
     owl:maxCardinality 1;
@@ -209,19 +321,15 @@ t:Schedule a owl:Class;
   rdfs:subClassOf [
     a owl:Restriction;
     owl:minCardinality 1;
-    owl:onProperty t:start_date
+    owl:onProperty t:id
   ], [
     a owl:Restriction;
-    owl:minCardinality 1;
+    owl:maxCardinality 1;
     owl:onProperty t:id
   ], [
     a owl:Restriction;
     owl:minCardinality 1;
     owl:onProperty t:teacher
-  ], [
-    a owl:Restriction;
-    owl:maxCardinality 1;
-    owl:onProperty t:end_date
   ], [
     a owl:Restriction;
     owl:maxCardinality 1;
@@ -236,8 +344,12 @@ t:Schedule a owl:Class;
     owl:onProperty t:course
   ], [
     a owl:Restriction;
+    owl:minCardinality 1;
+    owl:onProperty t:start_date
+  ], [
+    a owl:Restriction;
     owl:maxCardinality 1;
-    owl:onProperty t:id
+    owl:onProperty t:start_date
   ], [
     a owl:Restriction;
     owl:minCardinality 1;
@@ -245,15 +357,181 @@ t:Schedule a owl:Class;
   ], [
     a owl:Restriction;
     owl:maxCardinality 1;
-    owl:onProperty t:start_date
+    owl:onProperty t:end_date
   ] .
 
 t:id a rdf:Property;
   rdfs:label "id";
-  rdfs:comment "systeem UUID";
-  rdfs:domain t:Schedule,
-    t:CodeTable,
-    t:Skill,
+  rdfs:comment "unique record identifier";
+  rdfs:domain t:CodeTable,
     t:Course,
-    t:Person;
+    t:Person,
+    t:Schedule,
+    t:Skill,
+    t:EveryDataType;
   rdfs:range xsd:string .
+
+t:EveryDataType a owl:Class;
+  rdfs:label "EveryDataType";
+  rdfs:comment "All allowed datatypes";
+  rdfs:subClassOf [
+    a owl:Restriction;
+    owl:minCardinality 1;
+    owl:onProperty t:id
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:id
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:integer_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:integer_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:string_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:string_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:date_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:date_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:year_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:year_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:duration_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:duration_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:json_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:json_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:uri_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:uri_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:lang_string_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:lang_string_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:boolean_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:boolean_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:float_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:float_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:double_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:double_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:datetime_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:datetime_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:time_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:time_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:year_month_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:year_month_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:month_day_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:month_day_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:day_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:day_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:month_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:month_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:hex_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:hex_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:base64_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:base64_dt
+  ] .

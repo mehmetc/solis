@@ -45,11 +45,4 @@ class SolisTest < Minitest::Test
     refute_nil ::Solis::VERSION
   end
 
-  def test_get_teacher_schedule
-    schedule = @solis.shape_as_resource('Schedule').all({stats: {total: :count}})
-
-    pp schedule.data
-    pp schedule.data.to_ttl
-  end
-
 end

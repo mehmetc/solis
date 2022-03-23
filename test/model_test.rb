@@ -26,8 +26,8 @@ class ModelTest < Minitest::Test
   def test_schema
     schema = Graphiti::Schema.generate
 
-    assert_equal(schema[:resources].length, 7)
-    assert_equal(schema[:endpoints].length, 7)
+    assert_equal(8, schema[:resources].length)
+    assert_equal(8, schema[:endpoints].length)
     assert_includes(schema[:endpoints], :"/courses")
     assert_includes(schema[:endpoints], :"/schedules")
 
@@ -48,7 +48,12 @@ class ModelTest < Minitest::Test
   def test_after_create_hook
     Skill.model_before_create do |model,graph|
       puts "---------BEFORE"
-      puts graph.dump(:jsonld)
+      pp model
+      pp graph
+
+      assert_nil(graph)
+      assert_instance_of(Skill, model)
+      assert_equal(5, model.id)
       puts model.to_json
     end
 
