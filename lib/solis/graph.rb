@@ -283,7 +283,7 @@ module Solis
                     remote_resources = remote_resources.map do |remote_resource|
                       resource_id = remote_resource.id =~ /^http/ ? remote_resource.id.split('/').last : remote_resource.id
                       #"/#{key.tableize}/#{resource_id}"
-                      "/#{belongs_to_resource_name.tableize}/#{resource_id}"
+                      "/#{belongs_to_resource.name.tableize}/#{resource_id}"
                     end
 
                     # return remote_resources.length == 1 ? remote_resources.first : remote_resources
@@ -299,7 +299,7 @@ module Solis
                   remote_resources = remote_resources.map do |remote_resource|
                     resource_id = remote_resource.id =~ /^http/ ? remote_resource.id.split('/').last : remote_resource.id
                     #"/#{key.tableize}/#{resource_id}"
-                    "/#{has_many_resource_name.tableize}/#{resource_id}"
+                    "/#{remote_resource.name.tableize}/#{resource_id}"
                   end
 
                   #return remote_resources.length == 1 ? remote_resources.first : remote_resources

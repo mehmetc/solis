@@ -58,7 +58,15 @@ Graphiti::Types[:json] = {
   params: Dry::Types["coercible.string"],
   read: Graphiti::Types.create(::JSON){|i|
     i = JSON.parse(i) if i.is_a?(String)
-    Dry::Types["strict.array"][i]
+
+    # case i
+    # when i.is_a?(Array)
+    #   Dry::Types["strict.array"][i]
+    # when i.is_a?(Hash)
+    #   Dry::Types["strict.hash"][i]
+    # end
+
+    i
   },
   write: Dry::Types["coercible.string"],
   kind: "scalar",
