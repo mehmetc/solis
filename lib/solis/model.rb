@@ -4,7 +4,7 @@ require_relative 'query'
 module Solis
   class Model
 
-    class_attribute :before_create_proc, :after_create_proc, :before_update_proc, :after_update_proc, :before_delete_proc, :after_delete_proc
+    class_attribute :before_read_proc, :after_read_proc, :before_create_proc, :after_create_proc, :before_update_proc, :after_update_proc, :before_delete_proc, :after_delete_proc
 
     def initialize(attributes = {})
       @model_name = self.class.name
@@ -42,7 +42,10 @@ module Solis
     def query
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
 
-      Solis::Query.new(self)
+      before_read_proc&.call(self)
+      result = Solis::Query.new(self)
+      after_read_proc&.call(result)
+      result
     end
 
     def to_ttl(resolve_all=true)
@@ -226,6 +229,14 @@ module Solis
       end
 
       m
+    end
+
+    def self.model_before_read(&blk)
+      self.before_read_proc = blk
+    end
+
+    def self.model_after_read(&blk)
+      self.after_read_proc = blk
     end
 
     def self.model_before_create(&blk)

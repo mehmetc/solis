@@ -2,6 +2,7 @@
 
 require 'moneta'
 require 'solis/query/filter'
+require 'solis/query/construct'
 
 module Solis
   class Query
@@ -63,90 +64,15 @@ module Solis
       self
     end
 
-    def filter2(params)
-      #FILTER(LANG(?label) = "" || LANGMATCHES(LANG(?label), "fr"))
-      #
-      #
-      #
-      @filter = ''
-      if params.key?(:filters)
-        filters = params[:filters]
-        if filters.is_a?(String)
-          contains = filters.split(',').map { |m| "CONTAINS(LCASE(str(?__search)), LCASE(\"#{m}\"))" }.join(' || ')
-          @filter = "?concept (#{@metadata[:attributes].map { |_, m| "(<#{m[:path]}>)" }.join('|')}) ?__search FILTER CONTAINS(LCASE(str(?__search)), LCASE(\"#{contains}\")) ."
-        else
-          i = 0
-          filters.each do |key, value|
-            if  @metadata[:attributes].key?(key.to_s) && @metadata[:attributes][key.to_s][:node_kind] && @metadata[:attributes][key.to_s][:node_kind]&.vocab == RDF::Vocab::SH
-              values_model = @model.class.graph.shape_as_model(@metadata[:attributes][key.to_s][:datatype].to_s)&.new
-              @filter += "VALUES ?filter_by_id{#{value.split(',').map {|v| target_class_by_model(values_model, v)}.join(' ')}}\n" if values_model
-              filter_predicate = URI.parse(@metadata[:attributes][key.to_s][:path])
-              filter_predicate.path = "/#{key.to_s.downcase}"
-
-              @filter += "?concept <#{filter_predicate.to_s}> ?filter_by_id ."
-            else
-              unless value.is_a?(Hash) && value.key?(:value)
-                #TODO: only handles 'eq' for now
-                value = { value: value.first, operator: '=', is_not: false }
-              end
-
-              if value[:value].is_a?(String)
-                contains = value[:value].split(',').map { |m| "CONTAINS(LCASE(str(?__search#{i})), LCASE(\"#{m}\"))" }.join(' || ')
-              else
-                value[:value] = [value[:value]] unless value[:value].is_a?(Array)
-                value[:value].flatten!
-                contains = value[:value].map { |m| "CONTAINS(LCASE(str(?__search#{i})), LCASE(\"#{m}\"))" }.join(' || ')
-              end
-
-              metadata = @metadata[:attributes][key.to_s]
-              if metadata
-                if metadata[:path] =~ %r{/id$}
-                  if value[:value].is_a?(String)
-                    contains = value[:value].split(',').map { |m| "\"#{m}\"" }.join(',')
-                  else
-                    value[:value].flatten!
-                    contains = value[:value].map { |m| "\"#{m}\"" }.join(',')
-                  end
-                  if value[:is_not]
-                    value[:value].each do |v|
-                      @filter += "filter( !exists {?concept <#{@model.class.graph_name}id> \"#{v}\"})"
-                    end
-                  else
-                    @filter += "?concept <#{@model.class.graph_name}id> ?__search FILTER (?__search IN(#{contains})) .\n"
-                  end
-                else
-                  if ["=", "<", ">"].include?(value[:operator])
-                    not_operator = value[:is_not] ? '!' : ''
-                    value[:value].each do |v|
-                      @filter += "?concept <#{metadata[:path]}> ?__search#{i} FILTER(?__search#{i} #{not_operator}#{value[:operator]} \"#{v}\") .\n"
-                    end
-                  else
-                    @filter += "?concept <#{metadata[:path]}> ?__search#{i} FILTER(#{contains.empty? ? '""' : contains}) .\n"
-                  end
-                end
-              end
-              i += 1
-            end
-          end
-        end
-      end
-
-      self
-    rescue StandardError => e
-      LOGGER.error(e.message)
-      LOGGER.error(e.backtrace.join("\n"))
-      raise Error::GeneralError, e.message
-    end
-
     def count
       sparql_client = @sparql_client
       if model_construct?
-        sparql_client = run_construct
+        sparql_client = Solis::Query::Construct.new(@model).run
       end
 
       relationship = ''
       core_query = core_query(relationship)
-      count_query = core_query.gsub(/SELECT .* WHERE/, 'SELECT COUNT(distinct ?concept) as ?count WHERE')
+      count_query = core_query.gsub(/SELECT .* WHERE/, 'SELECT (COUNT(distinct ?concept) as ?count) WHERE')
 
       result = sparql_client.query(count_query)
       solution = result.first
@@ -157,44 +83,6 @@ module Solis
 
     def model_construct?
       File.exist?("#{ConfigFile.path}/constructs/#{@model.name.tableize.singularize}.sparql")
-    end
-
-    def load_construct
-      File.read("#{ConfigFile.path}/constructs/#{@model.name.tableize.singularize}.sparql")
-      # query.gsub!('##filter##', @filter)
-    end
-
-    def run_construct
-      created_at = nil
-      parsed_graph_name = URI.parse(@model.class.graph_name)
-      construct_graph_name = "#{parsed_graph_name.scheme}://#{@model.name.underscore}.#{parsed_graph_name.host}/"
-
-      #check construct validity
-      #result = @sparql_client.query("clear graph <#{construct_graph_name}>")
-      result = @sparql_client.query("select * from <#{construct_graph_name}> where {<#{construct_graph_name}_metadata> <#{construct_graph_name}created_at> ?_created_at}")
-      unless result.empty?
-        created_at = result[0]._created_at.object
-      end
-
-      if created_at.nil? || (Time.now - created_at) > 1.day
-        #result = @sparql_client.query("with <#{construct_graph_name}> delete {?s ?p ?o} where{?s ?p ?o}")
-        result = @sparql_client.query("clear graph <#{construct_graph_name}>")
-        LOGGER.info(result[0]['callret-0'].value)
-
-        begin
-          construct_query = load_construct
-          result = @sparql_client.query(construct_query)
-          LOGGER.info(result[0]['callret-0'].value)
-        rescue Solis::Error::QueryError => e
-          raise e
-        else
-          result = @sparql_client.query("insert into <#{construct_graph_name}> { <#{construct_graph_name}_metadata> <#{construct_graph_name}created_at> \"#{Time.now.xmlschema}\"^^xsd:dateTime}")
-          LOGGER.info(result[0]['callret-0'].value)
-        end
-
-      end
-
-      SPARQL::Client.new(@sparql_endpoint, { graph: construct_graph_name })
     end
 
     def target_class
@@ -219,7 +107,7 @@ module Solis
       limit = @limit || 10
       offset = @offset || 0
 
-      sparql_client = model_construct? ? run_construct : @sparql_client
+      sparql_client = model_construct? ? Solis::Query::Construct.new(@model).run : @sparql_client
       #sparql_client = model_construct? ? SPARQL::Client.new(run_construct) : @sparql_client
 
       relationship = ''
@@ -252,6 +140,7 @@ order by ?s
       graph_to_object(sparql_client.query(query))
     rescue StandardError => e
       Solis::LOGGER.error(e.message)
+      Solis::LOGGER.error(e.backtrace.join("\n"))
     end
 
     def core_query(relationship)
@@ -366,61 +255,5 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
       # result << solution_model.new(data) unless data.empty?
       result
     end
-
-    # def graph_to_json(graph)
-    #   parsed_json = ::JSON.parse(graph.dump(:jsonld))
-    #   result = []
-    #   parsed_json.map do |m|
-    #     result << build_object(m)
-    #   end
-    #   result
-    # end
-    #
-    # def build_object(m)
-    #   klass_metadata = @shapes.select do |_, v|
-    #     if m.key?('@type')
-    #       m['@type'].first.eql?(v[:target_class].value)
-    #     else
-    #       m.keys.select { |s| s =~ /^http/ }.first.eql?(v[:target_class].value)
-    #     end
-    #   end.first || nil
-    #   if klass_metadata.nil?
-    #     klass_metadata = @shapes.select { |_, v| @model.class.metadata[:target_class].value.eql?(v[:target_class].value) }.to_a.flatten
-    #   end
-    #
-    #   if klass_metadata
-    #     klass_name = klass_metadata[0]
-    #     data = {}
-    #     klass_metadata[1][:attributes].each do |attribute, metadata|
-    #       if metadata.key?(:node_kind) && !metadata[:node_kind].nil?
-    #         internal_result = []
-    #         next unless m.key?(metadata[:path])
-    #
-    #         m[metadata[:path]].map { |s| s.transform_keys { |k| k.gsub(/^@/, '') } }.select { |s| s.keys.first.eql?('id') }.map { |m| m['id'] }.each do |id|
-    #           if metadata[:node_kind].nil?
-    #             internal_result << @model.class.graph.shape_as_model(attribute.classify).new({ id: id.split('/').last })
-    #             # internal_result << @model.class.graph.shape_as_model(attribute.classify).new.query.filter({ filters: { id: id.split('/').last } }).find_all.map { |a| a }
-    #           else
-    #             internal_result << @model.class.graph.shape_as_model(metadata[:datatype].to_s).new({ id: id.split('/').last })
-    #             # internal_result << @model.class.graph.shape_as_model(metadata[:datatype].to_s).new.query.filter({ filters: { id: id.split('/').last } }).find_all.map { |a| a }
-    #           end
-    #         end
-    #         data[attribute] = internal_result.flatten
-    #       elsif m.key?(metadata[:path])
-    #         data_attribute = m[metadata[:path]].map { |s| s['@value'] }.compact
-    #         data_attribute = data_attribute.size == 1 ? data_attribute.first : data_attribute
-    #         data[attribute] = data_attribute
-    #       end
-    #     end
-    #     data['id'] = begin
-    #                    m[klass_metadata[1][:attributes]['id'][:path]].map { |s| s['@value'] }.first
-    #                  rescue StandardError
-    #                    m['@id']
-    #                  end
-    #   end
-    #
-    #   data&.delete_if { |_k, v| v.nil? || v.try(:empty?) }
-    #   @model.class.graph.shape_as_model(klass_name).new(data)
-    # end
   end
 end

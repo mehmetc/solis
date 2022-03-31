@@ -10,7 +10,7 @@ require_relative 'resource'
 module Solis
   class Graph
 
-    attr_accessor :default_before_create, :default_after_create, :default_before_update, :default_after_update, :default_before_delete, :default_after_delete
+    attr_accessor :default_before_read, :default_after_read, :default_before_create, :default_after_create, :default_before_update, :default_after_update, :default_before_delete, :default_after_delete
 
     def initialize(graph, options = {})
       cloned_options = options.clone
@@ -22,6 +22,17 @@ module Solis
 
       if cloned_options.key?(:hooks)
         hooks = cloned_options[:hooks]
+
+        if hooks.key?(:read)
+          if hooks[:read].key?(:before)
+            @default_before_read = hooks[:read][:before]
+          end
+
+          if hooks[:read].key?(:after)
+            @default_after_read = hooks[:read][:after]
+          end
+        end
+
         if hooks.key?(:create)
           if hooks[:create].key?(:before)
             @default_before_create = hooks[:create][:before]
@@ -157,6 +168,14 @@ module Solis
       end
       model.sparql_endpoint = @sparql_endpoint
       model.graph = self
+
+      model.model_before_read do |original_class|
+        @default_before_read.call(original_class)
+      end if @default_before_read
+
+      model.model_after_read do |persisted_class|
+        @default_after_read.call(persisted_class)
+      end if @default_after_read
 
       model.model_before_create do |original_class|
         @default_before_create.call(original_class)
@@ -331,8 +350,5 @@ module Solis
       true
     end
 
-    def model_hooks(hooks = nil)
-
-    end
   end
 end
