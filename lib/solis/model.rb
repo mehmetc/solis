@@ -325,7 +325,9 @@ module Solis
             #                     model.new(d)
             #                  end
 
-            model_instance = model.new(d)
+            # model_instance = model.new(d)
+            model_instance = model.descendants.map{|m| m&.new(d) rescue nil}.compact.first || nil
+            model_instance = model.new(d) if model_instance.nil?
 
             if resolve_all
               d = build_ttl_objekt(graph, model_instance, hierarchy, false)

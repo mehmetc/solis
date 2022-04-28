@@ -27,16 +27,18 @@ module Solis
           result.each {|s| repository << [s[:s], s[:p], s[:o]]}
           return SPARQL::Client.new(repository)
         elsif construct_query && construct_query =~ /insert/
-          if created_at.nil? || (Time.now - created_at) > 1.day
+          if created_at.nil? || (Time.now - created_at) > ( ConfigFile[:solis][:construct][:ttl].to_i.day || 1.day)
             clear_construct
             result = @sparql_client.query(construct_query)
             LOGGER.info(result[0]['callret-0'].value) unless result.empty?
-            set_metadata
+            set_metadata unless result[0]['callret-0'].value =~ /0 triples/
           end
-          return SPARQL::Client.new(@sparql_endpoint, { graph: construct_graph_name, read_timeout: 120 })
+          return SPARQL::Client.new(@sparql_endpoint, { read_timeout: 120 })
+          #return SPARQL::Client.new(@sparql_endpoint, { graph: construct_graph_name, read_timeout: 120 })
         end
 
-        SPARQL::Client.new(@sparql_endpoint, graph: @model.class.graph_name, read_timeout: 120)
+        #SPARQL::Client.new(@sparql_endpoint, graph: @model.class.graph_name, read_timeout: 120)
+        SPARQL::Client.new(@sparql_endpoint, read_timeout: 120)
       end
 
       private

@@ -23,6 +23,7 @@ module Solis
 
     def each(&block)
       data = query
+      return unless data.methods.include?(:each)
       data.each(&block)
     rescue StandardError => e
       message = "Unable to get next record: #{e.message}"
@@ -216,9 +217,13 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
                 attribute = candidates.first unless candidates.empty?
               end
 
-              unless solution_model.metadata[:attributes][attribute][:node_kind].nil?
-                node_class = solution_model.metadata[:attributes][attribute][:class].value.split('/').last
-                object = solution_model.graph.shape_as_model(node_class).new({ id: object.split('/').last })
+              begin
+                unless solution_model.metadata[:attributes][attribute][:node_kind].nil?
+                  node_class = solution_model.metadata[:attributes][attribute][:class].value.split('/').last
+                  object = solution_model.graph.shape_as_model(node_class).new({ id: object.split('/').last })
+                end
+              rescue StandardError => e
+                puts e.message
               end
 
               if data.key?(attribute) # attribute exists
