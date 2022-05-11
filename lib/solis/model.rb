@@ -42,9 +42,9 @@ module Solis
     def query
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
 
-      before_read_proc&.call(self)
+      #before_read_proc&.call(self)
       result = Solis::Query.new(self)
-      after_read_proc&.call(result)
+      #after_read_proc&.call(result)
       result
     end
 

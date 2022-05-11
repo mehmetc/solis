@@ -66,4 +66,16 @@ class ModelTest < Minitest::Test
 
     s.save
   end
+
+  def test_after_read_hook
+    Skill.model_after_read do |model|
+      puts "read after"
+    end
+
+    s = Skill.new({id:5, short_label: 'a short label', label: 'a label'})
+    s.save
+    skill_resource = @solis.shape_as_resource('Skill')
+    t = skill_resource.all.to_jsonapi
+    puts t
+  end
 end

@@ -84,10 +84,21 @@ module Solis
               filter = "?concept <#{@model.class.graph_name}id> ?__search FILTER (?__search IN(#{contains})) .\n"
             end
           else
+            datatype = ''
+            datatype = "^^<http://www.w3.org/2001/XMLSchema#boolean>" if metadata[:datatype].eql?(:boolean)
+
             if ["=", "<", ">"].include?(value[:operator])
               not_operator = value[:is_not] ? '!' : ''
               value[:value].each do |v|
-                filter = "?concept <#{metadata[:path]}> ?__search#{i} FILTER(?__search#{i} #{not_operator}#{value[:operator]} \"#{v}\") .\n"
+                filter = "?concept <#{metadata[:path]}> ?__search#{i} FILTER(?__search#{i} #{not_operator}#{value[:operator]} \"#{v}\"#{datatype}) .\n"
+
+                if metadata[:datatype_rdf].eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString')
+                    filter  = "?concept <#{metadata[:path]}> ?__search#{i} "
+                    filter += "FILTER(langMatches( lang(?__search#{i}), \"*\" )). "
+                    filter += "FILTER(str(?__search#{i}) #{not_operator}#{value[:operator]} \"#{v}\"#{datatype}) .\n"
+                end
+
+
               end
             else
               filter = "?concept <#{metadata[:path]}> ?__search#{i} FILTER(#{contains.empty? ? '""' : contains}) .\n"

@@ -180,11 +180,12 @@ module Solis
     # end
 
     def resolve(scope)
+      self.resource.model.before_read_proc&.call(scope)
       query = self.resource.model.new().query.paging(scope).filter(scope).sort(scope)
       data = query.find_all.map { |m|
         m
       }
-
+      self.resource.model.after_read_proc&.call(data)
       data
     end
 
