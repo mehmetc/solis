@@ -310,6 +310,7 @@ module Solis
         model = klass.class.graph.shape_as_model(klass.class.metadata[:attributes][attribute][:datatype].to_s) unless klass.class.metadata[:attributes][attribute][:node_kind].nil?
 
         data.each do |d|
+          original_d = d
           if model
             target_node = model.metadata[:target_node].value.split('/').last.gsub(/Shape$/, '')
             if model.ancestors[0..model.ancestors.find_index(Solis::Model) - 1].map { |m| m.name }.include?(target_node)

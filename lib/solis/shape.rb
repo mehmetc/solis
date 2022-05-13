@@ -47,6 +47,8 @@ module Solis
               :float
             when /http:\/\/www.w3.org\/2001\/XMLSchema#double/
               :double
+            when /http:\/\/www.w3.org\/2006\/time#DateTimeInterval/
+              :datetime_interval
             else
               puts datatype.split('#').last.to_sym
               :string

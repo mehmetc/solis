@@ -56,7 +56,7 @@ module Solis
         filter = ''
         unless value.is_a?(Hash) && value.key?(:value)
           #TODO: only handles 'eq' for now
-          value = { value: value.first, operator: '=', is_not: false }
+          value = { value: value.is_a?(Array) ? value.first : value, operator: '=', is_not: false }
         end
 
         if value[:value].is_a?(String)

@@ -1,3 +1,4 @@
+require 'iso8601'
 # Graphiti::Types[:year] = {
 #   canonical_name: :year,
 #   params: Graphiti::Types.create(::Integer) { |input|
@@ -139,4 +140,38 @@ Graphiti::Types[:year] = {
   write: write_year,
   kind: "scalar",
   description: "contains only the year of a date"
+}
+
+datetime_interval_definition = Dry::Types['strict.string']
+read_datetime_interval_type = datetime_interval_definition.constructor do |i|
+  if i.is_a?(Array)
+    i.map{|m| ISO8601::TimeInterval.parse(m) }
+  elsif i.is_a?(String)
+    ISO8601::TimeInterval.parse(i)
+  end
+rescue StandardError => e
+  i
+end
+
+write__datetime_interval_type = datetime_interval_definition.constructor do |i|
+  i
+end
+
+
+Graphiti::Types[:datetime_interval] = {
+  canonical_name: :datetime_interval,
+  params: read_datetime_interval_type,
+  read: read_datetime_interval_type,
+  write: write__datetime_interval_type,
+  kind: "scalar",
+  description: "contains a time interval"
+}
+
+Graphiti::Types[:array_of_datetime_interval] = {
+  canonical_name: :datetime_interval,
+  params: Dry::Types["strict.array"].of(Graphiti::Types[:datetime_interval]),
+  read: Dry::Types["strict.array"].of(Graphiti::Types[:datetime_interval]),
+  write: Dry::Types["strict.array"].of(Graphiti::Types[:datetime_interval]),
+  kind: "array",
+  description: "contains a list of datetime intervals"
 }
