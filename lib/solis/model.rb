@@ -94,10 +94,10 @@ module Solis
 
     def update(data, validate_dependencies=true)
       raise Solis::Error::GeneralError, "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
-      raise Solis::Error::InvalidAttributeError,"data must contain attributes" unless data.keys.include?('attributes')
-      raise Solis::Error::GeneralError,"data must have a type" unless data.keys.include?('type')
+      #raise Solis::Error::InvalidAttributeError,"data must contain attributes" unless data.keys.include?('attributes')
+      #raise Solis::Error::GeneralError,"data must have a type" unless data.keys.include?('type')
 
-      attributes = data['attributes']
+      attributes = data.include?('attributes') ? data['attributes'] : data
       raise "id is mandatory in attributes" unless attributes.keys.include?('id')
 
       id = attributes.delete('id')
@@ -271,6 +271,56 @@ module Solis
       id = build_ttl_objekt(graph, klass, [], resolve_all)
 
       graph
+    end
+
+    def build_ttl_objekt2(graph, klass, hierarchy = [], resolve_all = true)
+      hierarchy.push("#{klass.name}(#{klass.instance_variables.include?(:@id) ? klass.instance_variable_get("@id") : ''})")
+      graph_name = self.class.graph_name
+      klass_name = klass.class.name
+      klass_metadata = klass.class.metadata
+      uuid = klass.instance_variable_get("@id") || SecureRandom.uuid
+      id = RDF::URI("#{graph_name}#{klass_name.tableize}/#{uuid}")
+
+      graph << [id, RDF::RDFV.type, klass_metadata[:target_class]]
+
+      klass_metadata[:attributes].each do |attribute, metadata|
+        data = klass.instance_variable_get("@#{attribute}")
+        case metadata[:datatype_rdf]
+        when 'http://www.w3.org/2001/XMLSchema#boolean'
+          data = false if data.nil?
+        when 'http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON'
+          data = data.to_json
+        end
+
+        # skip if nil or an object that is empty
+        next if data.nil? || ([Hash, Array, String].include?(data.class) && data&.empty?)
+        #make it an object
+        unless metadata[:node_kind].nil?
+          model = self.class.graph.shape_as_model(metadata[:datatype].to_s)
+          #          if defined?(data.name) && self.class.graph.shape?(data.name)
+          #  data = data
+          if data.is_a?(Hash)
+            data = model.new(data)
+          end
+        end
+
+        data = [data] unless data.is_a?(Array)
+
+        data.each do |d|
+          if defined?(d.name) && self.class.graph.shape?(d.name)
+            d = build_ttl_objekt2(graph, d, hierarchy, resolve_all)
+          end
+
+          if d.is_a?(Array) && d.length == 1
+            d = d.first
+          end
+
+          graph << [id, RDF::URI("#{metadata[:path]}"), d]
+        end
+      end
+
+      hierarchy.pop
+      id
     end
 
     def build_ttl_objekt(graph, klass, hierarchy = [], resolve_all = true)

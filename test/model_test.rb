@@ -78,4 +78,16 @@ class ModelTest < Minitest::Test
     t = skill_resource.all.to_jsonapi
     puts t
   end
+
+  def test_graph
+    skill = Skill.new({id: '1', short_label: 'a short label', label: 'a label'})
+    teacher3 = Teacher.new({id:3,
+                            first_name: 'John',
+                            last_name: 'Doe',
+                            skill: skill
+                           })
+
+
+    puts teacher3.to_graph.dump(:ttl)
+  end
 end

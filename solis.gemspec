@@ -35,6 +35,8 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'json', '~> 2.5'
   spec.add_runtime_dependency 'hashdiff', '~> 1.0'
   spec.add_runtime_dependency  'iso8601', '~> 0.13.0'
+  spec.add_runtime_dependency  'connection_pool', '~> 2.2.5'
+
   spec.add_development_dependency 'rake', '~> 12.0'
   spec.add_development_dependency  'minitest', '~> 5.15.0'
 
