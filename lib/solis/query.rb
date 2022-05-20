@@ -187,6 +187,7 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
             begin
               record_uri = statement.s.value
               attribute = statement.p.value.split('/').last.underscore
+
               if statement.o.valid?
                 object = statement.o.canonicalize.object
               else

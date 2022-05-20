@@ -78,6 +78,7 @@ module Solis
             end
             if value[:is_not]
               value[:value].each do |v|
+                v=normalize_string(v)
                 filter = "filter( !exists {?concept <#{@model.class.graph_name}id> \"#{v}\"})"
               end
             else
@@ -90,6 +91,7 @@ module Solis
             if ["=", "<", ">"].include?(value[:operator])
               not_operator = value[:is_not] ? '!' : ''
               value[:value].each do |v|
+                v=normalize_string(v)
                 filter = "?concept <#{metadata[:path]}> ?__search#{i} FILTER(?__search#{i} #{not_operator}#{value[:operator]} \"#{v}\"#{datatype}) .\n"
 
                 if metadata[:datatype_rdf].eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString')
@@ -107,6 +109,11 @@ module Solis
         end
 
         filter
+      end
+
+      def normalize_string(string)
+        #.gsub(/\b/,'\b')
+        string.gsub(/\t/, '\t').gsub(/\n/,'\n').gsub(/\r/,'\r').gsub(/\f/,'\f').gsub(/"/,'\"').gsub(/'/,'\'').gsub(/\\/,'\\')
       end
 
     end

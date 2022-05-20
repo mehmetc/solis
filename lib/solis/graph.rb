@@ -264,7 +264,7 @@ module Solis
         end)
 
         relations.each do |key, value|
-          next if value[:datatype].to_s.classify.eql?(shape_name)
+          #          next if value[:datatype].to_s.classify.eql?(shape_name) #why skip self relations...
           if (value[:mincount] && value[:mincount] > 1 || value[:mincount].nil?) || (value[:maxcount] && value[:maxcount] > 1 || value[:maxcount].nil?)
             belongs_to_resource_name = value[:datatype].nil? ? value[:class].value.gsub(self.model.graph_name, '') : value[:datatype].to_s.tableize.classify
             LOGGER.info "\t\t\t#{resource_name}(#{resource_name.gsub('Resource','').tableize.singularize}) belongs_to #{belongs_to_resource_name}(#{key})"
