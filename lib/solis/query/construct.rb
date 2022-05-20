@@ -1,3 +1,5 @@
+require 'uuidtools'
+
 module Solis
   class Query
     class Construct
@@ -5,40 +7,54 @@ module Solis
         @model = model
         @sparql_endpoint = @model.class.sparql_endpoint
         @sparql_client = SPARQL::Client.new(@sparql_endpoint, graph: @model.class.graph_name, read_timeout: 120)
+        @construct_cache = File.absolute_path(Solis::ConfigFile[:solis][:cache])
+        @moneta = Moneta.new(:File, dir: @construct_cache, expires: Solis::ConfigFile[:solis][:cache_expire])
       end
 
       def exists?
-        File.exist?("#{ConfigFile.path}/constructs/#{@model.name.tableize.singularize}.sparql")
+        File.exist?(file_path)
       end
 
       def load
-        construct_path = "#{ConfigFile.path}/constructs/#{@model.name.tableize.singularize}.sparql"
+        construct_path = file_path
         raise Solis::Error::NotFoundError, "Construct not found at #{construct_path} " unless exists?
         File.read(construct_path)
       end
 
+      def file_path
+        "#{ConfigFile.path}/constructs/#{@model.name.tableize.singularize}.sparql"
+      end
+
+      def file_path_hash
+        UUIDTools::UUID.sha1_create(UUIDTools::UUID_URL_NAMESPACE, file_path).to_s
+      end
+
       def run
         construct_query = load
+        sparql_repository = @sparql_endpoint
 
         if construct_query && construct_query =~ /construct/
-          @sparql_client = SPARQL::Client.new(@sparql_endpoint, read_timeout: 120)
-          result = @sparql_client.query(construct_query)
-          repository=RDF::Repository.new
-          result.each {|s| repository << [s[:s], s[:p], s[:o]]}
-          return SPARQL::Client.new(repository)
+          if @moneta.key?(file_path_hash)
+            sparql_repository = @moneta[file_path_hash]
+          else
+            @sparql_client = SPARQL::Client.new(@sparql_endpoint, read_timeout: 120)
+            result = @sparql_client.query(construct_query)
+            repository=RDF::Repository.new
+            result.each {|s| repository << [s[:s], s[:p], s[:o]]}
+            sparql_repository = repository
+            @moneta.store(file_path_hash, repository, expires: ConfigFile[:solis][:cache_expire] || 86400)
+          end
         elsif construct_query && construct_query =~ /insert/
-          if created_at.nil? || (Time.now - created_at) > ( ConfigFile[:solis][:construct][:ttl].to_i.day || 1.day)
+          unless @moneta.key?(file_path_hash)
             clear_construct
             result = @sparql_client.query(construct_query)
             LOGGER.info(result[0]['callret-0'].value) unless result.empty?
-            set_metadata unless result[0]['callret-0'].value =~ /0 triples/
+            @moneta.store(file_path_hash, repository, expires: ConfigFile[:solis][:cache_expire] || 86400) unless result[0]['callret-0'].value =~ /0 triples/
           end
-          return SPARQL::Client.new(@sparql_endpoint, { read_timeout: 120 })
-          #return SPARQL::Client.new(@sparql_endpoint, { graph: construct_graph_name, read_timeout: 120 })
         end
 
         #SPARQL::Client.new(@sparql_endpoint, graph: @model.class.graph_name, read_timeout: 120)
-        SPARQL::Client.new(@sparql_endpoint, read_timeout: 120)
+        SPARQL::Client.new(sparql_repository, read_timeout: 120)
       end
 
       private

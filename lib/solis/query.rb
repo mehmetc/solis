@@ -18,7 +18,6 @@ module Solis
       @filter = {values: ["VALUES ?type {#{target_class}}"], concepts: ['?concept a ?type .'] }
       @sort = 'ORDER BY ?s'
       @sort_select = ''
-      @moneta = Moneta.new(:File, dir: @construct_cache, expires: Solis::ConfigFile[:solis][:query_cache_expire])
     end
 
     def each(&block)
