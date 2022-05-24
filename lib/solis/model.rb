@@ -161,6 +161,8 @@ module Solis
       Solis::LOGGER.error(e.message)
       Solis::LOGGER.error original_graph.dump(:ttl)
       sparql.insert_data(original_graph, graph: original_graph.name)
+
+      raise e
     end
 
     def self.metadata
@@ -302,17 +304,20 @@ module Solis
       uuid = klass.instance_variable_get("@id") || SecureRandom.uuid
       id = RDF::URI("#{graph_name}#{klass_name.tableize}/#{uuid}")
 
+      graph << [id, RDF::RDFV.type, klass_metadata[:target_class]]
+
       #load existing object and overwrite
       original_klass = klass.query.filter({ filters: { id: [uuid] } }).find_all { |f| f.id == uuid }.first || nil
-
-      graph << [id, RDF::RDFV.type, klass_metadata[:target_class]]
 
       if original_klass.nil?
         original_klass = klass
       else
-        klass_metadata[:attributes].each do |attribute, metadata|
+        klass.instance_variables.map{|m| m.to_s.gsub(/^@/,'')}
+             .select{|s| !["model_name", "model_plural_name"]
+             .include?(s)}.each do |attribute, value|
           data = klass.instance_variable_get("@#{attribute}")
-          original_klass.instance_variable_set("@#{attribute}", data) if data
+          original_data = original_klass.instance_variable_get("@#{attribute.to_s}")
+          original_klass.instance_variable_set("@#{attribute}", data) unless original_data.eql?(data)
         end
       end
 
