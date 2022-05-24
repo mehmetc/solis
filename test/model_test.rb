@@ -90,4 +90,14 @@ class ModelTest < Minitest::Test
 
     puts teacher3.to_graph.dump(:ttl)
   end
+
+  def test_validate
+    skill = Skill.new({id: '1', short_label: 'a short label', label: 'a label'})
+
+    assert_equal(true, skill.valid?)
+
+    fail_skill = Skill.new({id: '2'})
+
+    assert_equal(false, fail_skill.valid?)
+  end
 end

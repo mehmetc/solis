@@ -62,6 +62,21 @@ module Solis
       as_graph(self, resolve_all)
     end
 
+    def valid?
+      begin
+        graph = as_graph(self, false)
+      rescue Solis::Error::InvalidAttributeError => e
+        Solis::LOGGER.error(e.message)
+      end
+
+      shacl = SHACL.get_shapes(self.class.graph.instance_variable_get(:"@graph"))
+      report = shacl.execute(graph)
+
+      report.conform?
+    rescue StandardError => e
+      false
+    end
+
     def destroy
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
       before_delete_proc&.call(self)
@@ -141,6 +156,11 @@ module Solis
 
       after_update_proc&.call(updated_klass, data)
       data
+    rescue StandardError => e
+      original_graph = as_graph(original_klass, false)
+      Solis::LOGGER.error(e.message)
+      Solis::LOGGER.error original_graph.dump(:ttl)
+      sparql.insert_data(original_graph, graph: original_graph.name)
     end
 
     def self.metadata
@@ -268,23 +288,43 @@ module Solis
     def as_graph(klass = self, resolve_all = true)
       graph = RDF::Graph.new
       graph.name = RDF::URI(self.class.graph_name)
-      id = build_ttl_objekt(graph, klass, [], resolve_all)
+      id = build_ttl_objekt2(graph, klass, [], resolve_all)
 
       graph
     end
 
     def build_ttl_objekt2(graph, klass, hierarchy = [], resolve_all = true)
       hierarchy.push("#{klass.name}(#{klass.instance_variables.include?(:@id) ? klass.instance_variable_get("@id") : ''})")
+
       graph_name = self.class.graph_name
       klass_name = klass.class.name
       klass_metadata = klass.class.metadata
       uuid = klass.instance_variable_get("@id") || SecureRandom.uuid
       id = RDF::URI("#{graph_name}#{klass_name.tableize}/#{uuid}")
 
+      #load existing object and overwrite
+      original_klass = klass.query.filter({ filters: { id: [uuid] } }).find_all { |f| f.id == uuid }.first || nil
+
       graph << [id, RDF::RDFV.type, klass_metadata[:target_class]]
 
+      make_graph(graph, hierarchy, id, original_klass, klass_metadata, resolve_all) unless original_klass.nil?
+      make_graph(graph, hierarchy, id, klass, klass_metadata, resolve_all)
+
+      hierarchy.pop
+      id
+    end
+
+    def make_graph(graph, hierarchy, id, klass, klass_metadata, resolve_all)
       klass_metadata[:attributes].each do |attribute, metadata|
         data = klass.instance_variable_get("@#{attribute}")
+
+
+        raise Solis::Error::InvalidAttributeError,
+              "#{hierarchy.join('.')}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}" if data.nil? && metadata[:mincount] > 0
+
+        # skip if nil or an object that is empty
+        next if data.nil? || ([Hash, Array, String].include?(data.class) && data&.empty?)
+
         case metadata[:datatype_rdf]
         when 'http://www.w3.org/2001/XMLSchema#boolean'
           data = false if data.nil?
@@ -292,15 +332,13 @@ module Solis
           data = data.to_json
         end
 
-        # skip if nil or an object that is empty
-        next if data.nil? || ([Hash, Array, String].include?(data.class) && data&.empty?)
         #make it an object
         unless metadata[:node_kind].nil?
           model = self.class.graph.shape_as_model(metadata[:datatype].to_s)
-          #          if defined?(data.name) && self.class.graph.shape?(data.name)
-          #  data = data
           if data.is_a?(Hash)
             data = model.new(data)
+          elsif data.is_a?(Array)
+            data = data.map{|m| m.is_a?(Hash) ? model.new(m) : m}
           end
         end
 
@@ -315,12 +353,22 @@ module Solis
             d = d.first
           end
 
+
+          d = if metadata[:datatype_rdf].eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString')
+                RDF::Literal.new(d, language: self.class.language)
+              else
+                if metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#anyURI') || metadata[:node].is_a?(RDF::URI)
+                  RDF::URI(d)
+                else
+                  datatype = RDF::Vocabulary.find_term(metadata[:datatype_rdf])
+                  datatype = metadata[:node] if datatype.nil?
+                  RDF::Literal.new(d, datatype: datatype)
+                end
+              end
+
           graph << [id, RDF::URI("#{metadata[:path]}"), d]
         end
       end
-
-      hierarchy.pop
-      id
     end
 
     def build_ttl_objekt(graph, klass, hierarchy = [], resolve_all = true)

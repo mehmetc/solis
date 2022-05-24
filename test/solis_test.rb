@@ -36,9 +36,10 @@ class SolisTest < Minitest::Test
   def test_course_returns_ttl
     course_name='Algebra 101'
     course = Course.new({id:1, course_name: course_name})
-    file_course = File.read('./test/resources/course_1.ttl')
+    file_course = File.read('./test/resources/course_1.ttl').gsub("\n", '').gsub(/ */, ' ')
+    dump_course = course.to_ttl.gsub("\n", '').gsub(/ */, ' ')
 
-    assert_match(file_course, course.to_ttl)
+    assert_equal(file_course, dump_course)
   end
 
   def test_that_it_has_a_version_number

@@ -5,7 +5,6 @@ class ResourceTest < Minitest::Test
   def setup
     Solis::ConfigFile.path = './test/resources' #'./test/resources'
     Solis::ConfigFile.init
-    pp Solis::ConfigFile[:solis]
 
     environment = Marshal.load(Marshal.dump(Solis::ConfigFile[:solis][:env]))
     @solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), environment)
@@ -27,6 +26,7 @@ class ResourceTest < Minitest::Test
 
 
   def test_belongs_to_relationship_load
+    @solis.flush_all('http://solis.template/')
     algebra_skill = Skill.new({id: '1', label: 'Algebra'})
     logic_skill = Skill.new({id: '2', label: 'Description Logic'})
 
@@ -44,7 +44,7 @@ class ResourceTest < Minitest::Test
 
     expected= JSON.parse('{"data":[{"id":"3","last_name":"Doe","first_name":"John","skill":{"id":"2","label":"Description Logic","short_label":null}}],"meta":{"stats":{"total":{"count":1}}}}')
 
-    #assert_equal(expected['data'].first['skill']['label'], t.data.first.skill.first.label)
+    #    s = SkillResource.find({id: t.first.skill.first.id})
 
     assert_includes(t.data.first.skill.map{|m| m.label}, expected['data'].first['skill']['label'])
 

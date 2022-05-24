@@ -135,10 +135,6 @@ module Solis
       LOGGER.info("Creating model #{shape_name}")
       attributes = @shapes[shape_name][:attributes].keys.map { |m| m.to_sym }
 
-      # attributes << :id unless attributes.include?(:id)
-      # attributes << :updated_at unless attributes.include?(:id)
-      # attributes << :created_at unless attributes.include?(:id)
-
       model = nil
       parent_model = nil
       if @shapes[shape_name].key?(:target_node) && @shapes[shape_name][:target_node].value =~ /^#{@graph_name}(.*)Shape$/
