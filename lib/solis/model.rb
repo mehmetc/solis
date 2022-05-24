@@ -307,8 +307,16 @@ module Solis
 
       graph << [id, RDF::RDFV.type, klass_metadata[:target_class]]
 
-      make_graph(graph, hierarchy, id, original_klass, klass_metadata, resolve_all) unless original_klass.nil?
-      make_graph(graph, hierarchy, id, klass, klass_metadata, resolve_all)
+      if original_klass.nil?
+        original_klass = klass
+      else
+        klass_metadata[:attributes].each do |attribute, metadata|
+          data = klass.instance_variable_get("@#{attribute}")
+          original_klass.instance_variable_set("@#{attribute}", data) if data
+        end
+      end
+
+      make_graph(graph, hierarchy, id, original_klass, klass_metadata, resolve_all)
 
       hierarchy.pop
       id
@@ -320,7 +328,9 @@ module Solis
 
 
         raise Solis::Error::InvalidAttributeError,
-              "#{hierarchy.join('.')}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}" if data.nil? && metadata[:mincount] > 0
+              "#{hierarchy.join('.')}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}" if data.nil? &&
+                          metadata[:mincount] > 0 &&
+                          graph.query(RDF::Query.new({attribute.to_sym => {RDF.type => metadata[:node]}})).size == 0
 
         # skip if nil or an object that is empty
         next if data.nil? || ([Hash, Array, String].include?(data.class) && data&.empty?)
@@ -346,13 +356,16 @@ module Solis
 
         data.each do |d|
           if defined?(d.name) && self.class.graph.shape?(d.name)
-            d = build_ttl_objekt2(graph, d, hierarchy, resolve_all)
+            if resolve_all
+              d = build_ttl_objekt2(graph, d, hierarchy, false)
+            else
+              d = "#{klass.class.graph_name}#{attribute.tableize}/#{d.id}"
+            end
           end
 
           if d.is_a?(Array) && d.length == 1
             d = d.first
           end
-
 
           d = if metadata[:datatype_rdf].eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString')
                 RDF::Literal.new(d, language: self.class.language)
