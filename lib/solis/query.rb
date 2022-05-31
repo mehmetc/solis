@@ -60,7 +60,7 @@ module Solis
     end
 
     def language(language = nil)
-      @language = language || ConfigFile[:solis][:env][:language] || 'en'
+      @language = language || Graphiti.context[:object]&.language || Solis::ConfigFile[:solis][:language] || 'en'
       self
     end
 
@@ -194,7 +194,6 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
                 object = Float(statement.o.value) if object.nil? && Float(statement.o.value) rescue nil
                 object = statement.o.value if object.nil?
               end
-
 
               begin
                 datatype = RDF::Vocabulary.find_term(@model.class.metadata[:attributes][attribute][:datatype_rdf])

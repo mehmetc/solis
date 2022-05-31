@@ -35,9 +35,13 @@ module Solis
         @metadata[:attributes].key?(key.to_s) && @metadata[:attributes][key.to_s][:node_kind] && @metadata[:attributes][key.to_s][:node_kind]&.vocab == RDF::Vocab::SH
       end
 
-      def values_for(key, value)
+      def values_for(key, value, i=0)
         values_model = @model.class.graph.shape_as_model(@metadata[:attributes][key.to_s][:datatype].to_s)&.new
-        "VALUES ?filter_by_#{key}_id{#{value.split(',').map {|v| target_class_by_model(values_model, v)}.join(' ')}}" if values_model
+        if value.is_a?(Hash)
+          other_stuff(key, value, i)
+        else
+          "VALUES ?filter_by_#{key}_id{#{value.split(',').map {|v| target_class_by_model(values_model, v)}.join(' ')}}" if values_model
+        end
       end
 
       def concepts_for(key)
@@ -64,7 +68,7 @@ module Solis
         else
           value[:value] = [value[:value]] unless value[:value].is_a?(Array)
           value[:value].flatten!
-          contains = value[:value].map { |m| "CONTAINS(LCASE(str(?__search#{i})), LCASE(\"#{m}\"))" }.join(' || ')
+          contains = value[:value].map { |m| m.is_a?(String) ? "CONTAINS(LCASE(str(?__search#{i})), LCASE(\"#{m}\"))" : next }.join(' || ')
         end
 
         metadata = @metadata[:attributes][key.to_s]
@@ -91,13 +95,15 @@ module Solis
             if ["=", "<", ">"].include?(value[:operator])
               not_operator = value[:is_not] ? '!' : ''
               value[:value].each do |v|
-                v=normalize_string(v)
-                filter = "?concept <#{metadata[:path]}> ?__search#{i} FILTER(?__search#{i} #{not_operator}#{value[:operator]} \"#{v}\"#{datatype}) .\n"
-
                 if metadata[:datatype_rdf].eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString')
                     filter  = "?concept <#{metadata[:path]}> ?__search#{i} "
-                    filter += "FILTER(langMatches( lang(?__search#{i}), \"*\" )). "
-                    filter += "FILTER(str(?__search#{i}) #{not_operator}#{value[:operator]} \"#{v}\"#{datatype}) .\n"
+                    filter += "FILTER(langMatches( lang(?__search#{i}), \"#{v[:"@language"]}\" )). "
+                    search_for = v[:"@value"].is_a?(Array) ? v[:"@value"].first : v[:"@value"]
+                    search_for = normalize_string(search_for)
+                    filter += "FILTER(str(?__search#{i}) #{not_operator}#{value[:operator]} \"#{search_for}\"#{datatype}) .\n"
+                else
+                  v=normalize_string(v)
+                  filter = "?concept <#{metadata[:path]}> ?__search#{i} FILTER(?__search#{i} #{not_operator}#{value[:operator]} \"#{v}\"#{datatype}) .\n"
                 end
 
 
@@ -112,8 +118,11 @@ module Solis
       end
 
       def normalize_string(string)
-        #.gsub(/\b/,'\b')
-        string.gsub(/\t/, '\t').gsub(/\n/,'\n').gsub(/\r/,'\r').gsub(/\f/,'\f').gsub(/"/,'\"').gsub(/'/,'\'').gsub(/\\/,'\\')
+        if string.is_a?(String)
+          string.gsub(/\t/, '\t').gsub(/\n/,'\n').gsub(/\r/,'\r').gsub(/\f/,'\f').gsub(/"/,'\"').gsub(/'/,'\'').gsub(/\\/,'\\')
+        else
+          string
+        end
       end
 
     end

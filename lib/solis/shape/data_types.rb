@@ -1,4 +1,6 @@
 require 'iso8601'
+require 'dry-struct'
+
 # Graphiti::Types[:year] = {
 #   canonical_name: :year,
 #   params: Graphiti::Types.create(::Integer) { |input|
@@ -175,3 +177,54 @@ Graphiti::Types[:array_of_datetime_interval] = {
   kind: "array",
   description: "contains a list of datetime intervals"
 }
+
+lang_string_definition = Dry::Types['hash'].schema(:"@value" => Dry::Types['coercible.string'], :"@language" => Dry::Types['strict.string'])
+read_lang_string_type = lang_string_definition.constructor do |i|
+
+  i = i.symbolize_keys if i.is_a?(Hash)
+  i = i.is_a?(String) ? {:"@value" => i, :"@language" => Graphit.context[:object].language || 'en'} : i
+
+  if i[:"@value"].is_a?(Array)
+    i[:"@value"] = i[:"@value"].first
+  end
+
+  i
+rescue StandardError => e
+  i
+end
+
+write_lang_string_type = lang_string_definition.constructor do |i|
+  i
+end
+
+lang_string_array_definition = Dry::Types['hash'].schema(:"@value" => Dry::Types['strict.array'], :"@language" => Dry::Types['strict.string'])
+read_lang_string_array_type = lang_string_array_definition.constructor do |i|
+  language = Graphiti.context[:object]&.language || Solis::ConfigFile[:solis][:language] || 'en'
+  i = i.symbolize_keys if i.is_a?(Hash)
+  i = i.is_a?(String) ? {:"@value" => i, :"@language" => language} : i
+  i[:"@value"]=[i[:"@value"]] unless i[:"@value"].is_a?(Array)
+
+  i
+rescue StandardError => e
+  i
+end
+
+
+Graphiti::Types[:lang_string] = {
+  canonical_name: :lang_string,
+  params: read_lang_string_type,
+  read: read_lang_string_type,
+  write: write_lang_string_type,
+  kind: "scalar",
+  description: "contains an object that defines a value and language"
+}
+
+Graphiti::Types[:array_of_lang_strings] = {
+  canonical_name: :lang_string,
+  params: read_lang_string_array_type, #Dry::Types["strict.array"].of(Graphiti::Types[:lang_string]),
+  read: read_lang_string_array_type,# Dry::Types["strict.array"].of(Graphiti::Types[:lang_string]),
+  write: read_lang_string_array_type, #Dry::Types["strict.array"].of(Graphiti::Types[:lang_string]),
+  kind: "array",
+  description: "contains a list of objects that defines a value and language"
+}
+

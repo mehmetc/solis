@@ -7,7 +7,7 @@ skinparam componentStyle uml2
 skinparam wrapMessageWidth 100
 skinparam ArrowColor #Maroon
 
-title SOLIS template - 0.1 - 2022-03-17 09:32:31 +0100
+title SOLIS template - 0.1 - 2022-05-27 18:55:45 +0200
               
 package t {
 
@@ -71,6 +71,7 @@ class EveryDataType{
 	{field} rdf:JSON : json_dt 
 	{field} xsd:anyURI : uri_dt 
 	{field} rdf:langString : lang_string_dt 
+	{field} rdf:langString : lang_string_array_dt 
 	{field} xsd:boolean : boolean_dt 
 	{field} xsd:float : float_dt 
 	{field} xsd:double : double_dt 

@@ -38,6 +38,7 @@ module Solis
     def self.default_operators
       {
         string: [:eq, :not_eq, :contains],
+        lang_string: [:eq, :not_eq, :contains],
         integer: [:eq, :not_eq, :gt, :lt],
         float: [:eq, :not_eq, :gt, :lt],
         big_decimal: [:eq, :not_eq, :gt, :lt],
@@ -65,6 +66,7 @@ module Solis
     alias :filter_uuid_eq :filter
     alias :filter_enum_eq :filter
     alias :filter_datetime_eq :filter
+    alias :filter_lang_string_eq :filter
 
     def filter_not_eq(scope, attribute, value)
       filter_eq(scope, attribute, value, true, '=')
@@ -79,12 +81,14 @@ module Solis
     alias :filter_uuid_not_eq :filter_not_eq
     alias :filter_enum_not_eq :filter_not_eq
     alias :filter_datetime_not_eq :filter_not_eq
+    alias :filter_lang_string_not_eq :filter_not_eq
 
     def filter_contains(scope, attribute, value)
       filter_eq(scope, attribute, value, false, '~')
     end
 
     alias :filter_string_contains :filter_contains
+    alias :filter_lang_string_contains :filter_contains
 
     def filter_gt(scope, attribute, value)
       filter_eq(scope, attribute, value, false, '>')

@@ -9,6 +9,7 @@ module Solis
     def initialize(attributes = {})
       @model_name = self.class.name
       @model_plural_name = @model_name.pluralize
+      @language = Graphiti.context[:object]&.language || Solis::ConfigFile[:solis][:language] || 'en'
 
       raise "Please look at /#{@model_name.tableize}/model for structure to supply" if attributes.nil?
 
@@ -18,7 +19,12 @@ module Solis
             raise Solis::Error::InvalidAttributeError, "'#{@model_name}.#{attribute}' must be an object"
           end
 
+          value = {
+            "@language" => @language,
+            "@value" => value
+          } if self.class.metadata[:attributes][attribute.to_s][:datatype_rdf].eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString')
           value = value.first if value.is_a?(Array) && (attribute.eql?('id') || attribute.eql?(:id))
+
           instance_variable_set("@#{attribute}", value)
         else
           raise Solis::Error::InvalidAttributeError, "'#{attribute}' is not part of the definition of #{@model_name}"
@@ -373,7 +379,19 @@ module Solis
           end
 
           d = if metadata[:datatype_rdf].eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString')
-                RDF::Literal.new(d, language: self.class.language)
+                if d.is_a?(Hash) && (d.keys - ["@language", "@value"]).size == 0
+                  if d['@value'].is_a?(Array)
+                    d_r = []
+                    d['@value'].each do |v|
+                      d_r << RDF::Literal.new(v, language: d['@language'])
+                    end
+                    d_r
+                  else
+                    RDF::Literal.new(d['@value'], language: d['@language'])
+                  end
+                else
+                  RDF::Literal.new(d, language: self.class.language)
+                end
               else
                 if metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#anyURI') || metadata[:node].is_a?(RDF::URI)
                   RDF::URI(d)
@@ -384,7 +402,13 @@ module Solis
                 end
               end
 
-          graph << [id, RDF::URI("#{metadata[:path]}"), d]
+          if d.is_a?(Array)
+            d.each do |v|
+              graph << [id, RDF::URI("#{metadata[:path]}"), v]
+            end
+          else
+            graph << [id, RDF::URI("#{metadata[:path]}"), d]
+          end
         end
       end
     end

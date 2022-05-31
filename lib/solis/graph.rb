@@ -70,7 +70,7 @@ module Solis
 
       @inflections = cloned_options.delete(:inflections) || nil
       @shapes = Solis::Shape.from_graph(graph)
-      @language = cloned_options.delete(:language) || 'nl'
+      @language = cloned_options.delete(:language) || 'en'
 
       unless @inflections.nil?
         raise "Inflection file not found #{File.absolute_path(@inflections)}" unless File.exist?(@inflections)
@@ -324,9 +324,14 @@ module Solis
             end
           end
 
-          resource.filter :"#{key}_id", :string, single: true, only: [:eq] do
+          resource.filter :"#{key}_id", :string, single: true, only: [:eq, :not_eq] do
             eq do |scope, filter_value|
               scope[:filters][key.to_sym] = filter_value
+              scope
+            end
+
+            not_eq do |scope, filter_value|
+              scope[:filters][key.to_sym] = {value: [filter_value], operator: '=', is_not: true}
               scope
             end
           end

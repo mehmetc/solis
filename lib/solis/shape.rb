@@ -58,7 +58,7 @@ module Solis
           elsif datatype =~ /^http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns/
             case datatype
             when /http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns#langString/
-              :string
+              :lang_string
             when /http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns#JSON/
               :json
             else
