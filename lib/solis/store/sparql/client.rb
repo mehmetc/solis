@@ -1,3 +1,4 @@
+require 'http'
 require 'connection_pool'
 require 'sparql'
 require_relative 'client/query'

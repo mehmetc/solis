@@ -3,11 +3,17 @@
 require 'moneta'
 require 'solis/query/filter'
 require 'solis/query/construct'
+require 'solis/query/run'
 
 module Solis
   class Query
     include Enumerable
     include Solis::QueryFilter
+
+    def self.run(entity, query)
+      Solis::Query::Runner.run(entity, query)
+    end
+
     def initialize(model)
       @construct_cache = File.absolute_path(Solis::ConfigFile[:solis][:cache])
       @model = model
@@ -37,7 +43,9 @@ module Solis
         i = 0
         params[:sort].each do |attribute, direction|
           path = @model.class.metadata[:attributes][attribute.to_s][:path]
+          @sort_select += "optional {\n" if @model.class.metadata[:attributes][attribute.to_s][:mincount] == 0
           @sort_select += "?concept <#{path}> ?__#{attribute} . "
+          @sort_select += "}\n" if @model.class.metadata[:attributes][attribute.to_s][:mincount] == 0
           @sort += ',' if i.positive?
           @sort += "#{direction.to_s.upcase}(?__#{attribute})"
           i += 1
@@ -76,7 +84,7 @@ module Solis
 
       result = sparql_client.query(count_query)
       solution = result.first
-      solution[:count].object || 0
+      solution.nil? ? 0 : solution[:count].object || 0
     end
 
     private
