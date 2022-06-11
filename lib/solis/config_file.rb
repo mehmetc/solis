@@ -9,7 +9,7 @@ class ConfigFile
   @config_file_name = 'config.yml'
 
   def self.version
-    "0.0.3"
+    "0.0.4"
   end
 
   def self.name
@@ -62,6 +62,7 @@ class ConfigFile
   end
 
   def self.discover_config_file_path
+    @config_file_path = ENV['CONFIG_FILE_PATH'] || ''
     if @config_file_path.nil? || @config_file_path.empty?
       if File.exist?(@config_file_name)
         @config_file_path = '.'
@@ -69,6 +70,8 @@ class ConfigFile
         @config_file_path = 'config'
       end
     end
+
+    puts "#{@config_file_name} found at #{@config_file_path}"
   end
 
   def self.process(config)
