@@ -4,6 +4,7 @@ require 'moneta'
 require 'solis/query/filter'
 require 'solis/query/construct'
 require 'solis/query/run'
+require 'uuidtools'
 
 module Solis
   class Query
@@ -12,6 +13,44 @@ module Solis
 
     def self.run(entity, query)
       Solis::Query::Runner.run(entity, query)
+    end
+
+    def self.run_construct_with_file(filename, id_name, entity, ids)
+      f = File.read(filename)
+      run_construct(f, id_name, entity, ids)
+    end
+
+    def self.uuid(key)
+      UUIDTools::UUID.sha1_create(UUIDTools::UUID_URL_NAMESPACE, key).to_s
+    end
+
+    def self.run_construct(query, id_name, entity, ids, from_cache = '1')
+      raise 'Please supply one or more uuid\'s' if ids.nil? || ids.empty?
+
+      result = {}
+
+      key = uuid("#{entity}-#{ids}")
+
+      if result.nil? || result.empty? || (from_cache.eql?('0'))
+        ids = ids.split(',') if ids.is_a?(String)
+        ids = [ids] unless ids.is_a?(Array)
+        ids = ids.map do |m|
+          if URI(m).class.is_a?(URI::Generic)
+            "<#{Solis::ConfigFile[:solis][:graph_name]}#{entity.tableize}/#{m}>"
+          else
+            "<#{m}>"
+          end
+        end
+        ids = ids.join(" ")
+
+        q = query.gsub('{{VALUES}}', "VALUES ?#{id_name} { #{ids} }")
+
+        result = Solis::Query.run(entity, q)
+      end
+      result
+    rescue StandardError => e
+      puts e.message
+      raise e
     end
 
     def initialize(model)

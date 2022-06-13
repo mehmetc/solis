@@ -71,7 +71,7 @@ class ConfigFile
       end
     end
 
-    puts "#{@config_file_name} found at #{@config_file_path}"
+    #puts "#{@config_file_name} found at #{@config_file_path}"
   end
 
   def self.process(config)

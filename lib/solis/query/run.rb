@@ -1,4 +1,5 @@
 require 'solis/store/sparql/client'
+require 'solis/config_file'
 
 class Solis::Query::Runner
     def self.run(entity, query)
@@ -6,7 +7,7 @@ class Solis::Query::Runner
       context = JSON.parse %(
 {
     "@context": {
-        "@vocab": "#{ConfigFile[:solis][:graph_name]}",
+        "@vocab": "#{Solis::ConfigFile[:solis][:graph_name]}",
         "id": "@id"
     },
     "@type": "#{entity}",
@@ -14,7 +15,7 @@ class Solis::Query::Runner
 }
    )
 
-      c = Solis::Store::Sparql::Client.new(ConfigFile[:solis][:sparql_endpoint], ConfigFile[:solis][:graph_name])
+      c = Solis::Store::Sparql::Client.new(Solis::ConfigFile[:solis][:sparql_endpoint], Solis::ConfigFile[:solis][:graph_name])
       r = c.query(query)
       if r.is_a?(SPARQL::Client)
         g = RDF::Graph.new
