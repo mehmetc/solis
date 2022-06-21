@@ -1,9 +1,8 @@
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "solis"
 Solis::ConfigFile.path = './test/resources'
-require "minitest/autorun"
-#require 'webmock/minitest'
 
+require "minitest/autorun"
 
 def build_data(solis)
   solis.flush_all('http://solis.template/')

@@ -2,7 +2,7 @@ require "test_helper"
 
 class DatatypeTest < Minitest::Test
   def setup
-    @solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), Solis::ConfigFile[:solis][:env])
+    @solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), Solis::ConfigFile[:solis])
   end
 
   def test_lang_string

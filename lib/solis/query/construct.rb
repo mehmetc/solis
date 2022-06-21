@@ -7,8 +7,8 @@ module Solis
         @model = model
         @sparql_endpoint = @model.class.sparql_endpoint
         @sparql_client = SPARQL::Client.new(@sparql_endpoint, graph: @model.class.graph_name, read_timeout: 120)
-        @construct_cache = File.absolute_path(Solis::ConfigFile[:solis][:cache])
-        @moneta = Moneta.new(:File, dir: @construct_cache, expires: Solis::ConfigFile[:solis][:cache_expire])
+        @construct_cache = File.absolute_path(Solis::Options.instance.get[:cache])
+        @moneta = Moneta.new(:File, dir: @construct_cache, expires: Solis::Options.instance.get[:cache_expire])
       end
 
       def exists?

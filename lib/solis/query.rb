@@ -35,8 +35,8 @@ module Solis
         ids = ids.split(',') if ids.is_a?(String)
         ids = [ids] unless ids.is_a?(Array)
         ids = ids.map do |m|
-          if URI(m).class.is_a?(URI::Generic)
-            "<#{Solis::ConfigFile[:solis][:graph_name]}#{entity.tableize}/#{m}>"
+          if URI(m).class.eql?(URI::Generic)
+            "<#{Solis::Options.instance.get[:graph_name]}#{entity.tableize}/#{m}>"
           else
             "<#{m}>"
           end
@@ -54,7 +54,7 @@ module Solis
     end
 
     def initialize(model)
-      @construct_cache = File.absolute_path(Solis::ConfigFile[:solis][:cache])
+      @construct_cache = File.absolute_path(Solis::Options.instance.get[:cache])
       @model = model
       @shapes = @model.class.shapes
       @metadata = @model.class.metadata
@@ -107,7 +107,7 @@ module Solis
     end
 
     def language(language = nil)
-      @language = language || Graphiti.context[:object]&.language || Solis::ConfigFile[:solis][:language] || 'en'
+      @language = language || Graphiti.context[:object]&.language || Solis::Options.instance.get[:language] || 'en'
       self
     end
 

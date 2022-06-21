@@ -199,7 +199,7 @@ end
 
 lang_string_array_definition = Dry::Types['hash'].schema(:"@value" => Dry::Types['strict.array'], :"@language" => Dry::Types['strict.string'])
 read_lang_string_array_type = lang_string_array_definition.constructor do |i|
-  language = Graphiti.context[:object]&.language || Solis::ConfigFile[:solis][:language] || 'en'
+  language = Graphiti.context[:object]&.language || Solis::Options.instance.get[:language] || 'en'
   i = i.symbolize_keys if i.is_a?(Hash)
   i = i.is_a?(String) ? {:"@value" => i, :"@language" => language} : i
   i[:"@value"]=[i[:"@value"]] unless i[:"@value"].is_a?(Array)

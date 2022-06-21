@@ -9,7 +9,7 @@ module Solis
     def initialize(attributes = {})
       @model_name = self.class.name
       @model_plural_name = @model_name.pluralize
-      @language = Graphiti.context[:object]&.language || Solis::ConfigFile[:solis][:language] || 'en'
+      @language = Graphiti.context[:object]&.language || Solis::Options.instance.get[:language] || 'en'
 
       raise "Please look at /#{@model_name.tableize}/model for structure to supply" if attributes.nil?
 

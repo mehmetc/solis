@@ -6,21 +6,25 @@ require 'uri'
 require_relative 'shape'
 require_relative 'model'
 require_relative 'resource'
+require_relative 'options'
 
 module Solis
   class Graph
-
-    attr_accessor :default_before_read, :default_after_read, :default_before_create, :default_after_create, :default_before_update, :default_after_update, :default_before_delete, :default_after_delete
+    attr_accessor :options, :default_before_read, :default_after_read, :default_before_create, :default_after_create, :default_before_update, :default_after_update, :default_before_delete, :default_after_delete
 
     def initialize(graph, options = {})
+      raise "Please provide a graph_name, graph_prefix and sparql_endpoint option" if options.nil? || options.empty?
       cloned_options = options.clone
+
+      Solis::Options.instance.set = options
+
       @global_resource_stack = []
       @graph = graph
       @graph_name = cloned_options.delete(:graph_name) || '/'
       @graph_prefix = cloned_options.delete(:graph_prefix) || 'pf0'
       @sparql_endpoint = cloned_options.delete(:sparql_endpoint) || nil
 
-      if cloned_options.key?(:hooks)
+      if cloned_options&.key?(:hooks) && cloned_options[:hooks].is_a?(Hash)
         hooks = cloned_options[:hooks]
 
         if hooks.key?(:read)
