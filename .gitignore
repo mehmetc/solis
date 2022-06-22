@@ -13,3 +13,6 @@ config.yml
 examples/data
 .vscode
 *.gem
+lib/solis/entity
+cache
+Gemfile.lock
