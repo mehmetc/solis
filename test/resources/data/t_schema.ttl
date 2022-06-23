@@ -10,7 +10,7 @@ schema:Person a owl:Class;
 
 t: a owl:Ontology;
   <dc11:creator> "Mehmet Celik";
-  <dc11:date> "2022-05-27 18:55:45 +0200";
+  <dc11:date> "2022-06-23 21:51:13 +0200";
   <dc11:description> "Template for the SOLIS gem";
   <dc11:title> "SOLIS template";
   owl:versionInfo 0.1 .
@@ -109,6 +109,12 @@ t:datetime_dt a rdf:Property;
   rdfs:comment "";
   rdfs:domain t:EveryDataType;
   rdfs:range xsd:dateTime .
+
+t:datetimeinterval_dt a rdf:Property;
+  rdfs:label "datetimeinterval_dt";
+  rdfs:comment "";
+  rdfs:domain t:EveryDataType;
+  rdfs:range <http://www.w3.org/2000/10/swap/time#DateTimeInterval> .
 
 t:day_dt a rdf:Property;
   rdfs:label "day_dt";
@@ -217,6 +223,12 @@ t:teacher a rdf:Property;
   rdfs:comment "schedule belongs to";
   rdfs:domain t:Schedule;
   rdfs:range t:Teacher .
+
+t:temporal_coverage_dt a rdf:Property;
+  rdfs:label "temporal_coverage_dt";
+  rdfs:comment "";
+  rdfs:domain t:EveryDataType;
+  rdfs:range <schema:temporalCoverage> .
 
 t:time_dt a rdf:Property;
   rdfs:label "time_dt";
@@ -544,4 +556,20 @@ t:EveryDataType a owl:Class;
     a owl:Restriction;
     owl:maxCardinality 1;
     owl:onProperty t:base64_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:datetimeinterval_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:datetimeinterval_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:temporal_coverage_dt
+  ], [
+    a owl:Restriction;
+    owl:maxCardinality 1;
+    owl:onProperty t:temporal_coverage_dt
   ] .

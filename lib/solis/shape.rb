@@ -47,10 +47,24 @@ module Solis
               :float
             when /http:\/\/www.w3.org\/2001\/XMLSchema#double/
               :double
+            else
+              #puts datatype.split('#').last.to_sym
+              :string
+            end
+          elsif datatype =~ /http:\/\/schema.org\//
+            case datatype
+            when /http:\/\/schema.org\/temporalCoverage/
+              :temporal_coverage
+            else
+              #puts datatype.split('#').last.to_sym
+              :string
+            end
+          elsif datatype =~ /http:\/\/www.w3.org\/2006\/time/
+            case datatype
             when /http:\/\/www.w3.org\/2006\/time#DateTimeInterval/
               :datetime_interval
             else
-              puts datatype.split('#').last.to_sym
+              #puts datatype.split('#').last.to_sym
               :string
             end
           elsif datatype.nil? && node.is_a?(RDF::URI)
@@ -93,6 +107,7 @@ module Solis
           shape[:target_class] = shape_rdf
           shape[:target_node] = shape_node
           shape[:comment] = comment
+
           shape[:attributes][attribute_name] = {
             path: attribute_rdf,
             datatype_rdf: attribute_datatype_rdf,

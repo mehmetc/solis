@@ -42,7 +42,8 @@ module Solis
       # if id.nil? || (id.is_a?(String) && id&.empty?)
       #   instance_variable_set("@id", SecureRandom.uuid)
       # end
-    rescue StandardError
+    rescue StandardError => e
+      Solis::LOGGER.error(e.message)
       raise Solis::Error::GeneralError, "Unable to create entity #{@model_name}"
     end
 
@@ -120,6 +121,9 @@ module Solis
       result = sparql.insert_data(graph, graph: graph.name)
       after_create_proc&.call(result)
       result
+    rescue StandardError => e
+      Solis::LOGGER.error e.message
+      raise e
     end
 
     def update(data, validate_dependencies=true)
@@ -418,6 +422,8 @@ module Solis
                   RDF::Literal.new(d, datatype: datatype)
                 end
               end
+
+          #raise Solis::Error::InvalidDatatypeError unless d.valid?
 
           if d.is_a?(Array)
             d.each do |v|

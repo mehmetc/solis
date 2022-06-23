@@ -29,4 +29,24 @@ class DatatypeTest < Minitest::Test
     puts r.to_jsonapi
   end
 
+  def test_temporalCoverage_dt
+    @solis.flush_all('http://solis.template/')
+
+    assert_raises(Graphiti::Errors::TypecastFailed) do
+      e = EveryDataType.new({id: '1', temporal_coverage_dt: 'abc'})
+      e.save
+    end
+
+
+    # r = EveryDataTypeResource.all({filter:{id: '1'}})
+    #
+    # a = r.data.first.temporal_coverage_dt
+    #
+    # puts r.to_jsonapi
+
+
+
+    # puts r.to_jsonapi
+  end
+
 end

@@ -7,7 +7,7 @@ class ResourceTest < Minitest::Test
     Solis::ConfigFile.init
 
     environment = Marshal.load(Marshal.dump(Solis::ConfigFile[:solis][:env]))
-    @solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), environment)
+    @solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), Solis::ConfigFile[:solis])
 
     #   @solis.flush_all('http://solis.template/')
   end

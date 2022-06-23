@@ -3,7 +3,7 @@ require "test_helper"
 class SolisTest < Minitest::Test
   def setup
     #    Solis::ConfigFile.path = './test/resources'
-    @solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), Solis::ConfigFile[:solis][:env])
+    @solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), Solis::ConfigFile[:solis])
   end
 
   def test_should_have_a_course_entity
@@ -30,7 +30,7 @@ class SolisTest < Minitest::Test
     course = Course.new({course_name: course_name})
 
     assert_kind_of(Course, course)
-    assert_equal(course.course_name, course_name)
+    assert_equal(course.course_name["@value"], course_name)
   end
 
   def test_course_returns_ttl

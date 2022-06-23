@@ -8,6 +8,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix time: <http://www.w3.org/2006/time#> .
 
                 t:CodeTableShape
     a               sh:NodeShape ;
@@ -334,6 +335,20 @@
                  sh:name "base64_dt";
                  sh:description "base64 encoded datatype" ;
                  sh:datatype xsd:base64Binary ;
+                 sh:minCount 0 ;
+                 sh:maxCount 1 ;
+    ] ;
+    sh:property [sh:path t:datetimeinterval_dt ;
+                 sh:name "datetimeinterval_dt";
+                 sh:description "" ;
+                 sh:datatype time:DateTimeInterval ;
+                 sh:minCount 0 ;
+                 sh:maxCount 1 ;
+    ] ;
+    sh:property [sh:path t:temporal_coverage_dt ;
+                 sh:name "temporal_coverage_dt";
+                 sh:description "" ;
+                 sh:datatype schema:temporalCoverage ;
                  sh:minCount 0 ;
                  sh:maxCount 1 ;
     ] ;

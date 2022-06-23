@@ -147,12 +147,13 @@ Graphiti::Types[:year] = {
 datetime_interval_definition = Dry::Types['strict.string']
 read_datetime_interval_type = datetime_interval_definition.constructor do |i|
   if i.is_a?(Array)
-    i.map{|m| ISO8601::TimeInterval.parse(m) }
+    i.map{|m| ISO8601::TimeInterval.parse(m).to_s }
   elsif i.is_a?(String)
-    ISO8601::TimeInterval.parse(i)
+    ISO8601::TimeInterval.parse(i).to_s
   end
 rescue StandardError => e
-  i
+  Solis::LOGGER.error(e.message)
+  raise Solis::Error::InvalidDatatypeError, e.message
 end
 
 write__datetime_interval_type = datetime_interval_definition.constructor do |i|
@@ -169,11 +170,11 @@ Graphiti::Types[:datetime_interval] = {
   description: "contains a time interval"
 }
 
-Graphiti::Types[:array_of_datetime_interval] = {
+Graphiti::Types[:array_of_datetime_intervals] = {
   canonical_name: :datetime_interval,
-  params: Dry::Types["strict.array"].of(Graphiti::Types[:datetime_interval]),
-  read: Dry::Types["strict.array"].of(Graphiti::Types[:datetime_interval]),
-  write: Dry::Types["strict.array"].of(Graphiti::Types[:datetime_interval]),
+  params: Dry::Types["strict.array"].of(Graphiti::Types[:datetime_interval][:params]),
+  read: Dry::Types["strict.array"].of(Graphiti::Types[:datetime_interval][:read]),
+  write: Dry::Types["strict.array"].of(Graphiti::Types[:datetime_interval][:write]),
   kind: "array",
   description: "contains a list of datetime intervals"
 }
@@ -182,7 +183,7 @@ lang_string_definition = Dry::Types['hash'].schema(:"@value" => Dry::Types['coer
 read_lang_string_type = lang_string_definition.constructor do |i|
 
   i = i.symbolize_keys if i.is_a?(Hash)
-  i = i.is_a?(String) ? {:"@value" => i, :"@language" => Graphit.context[:object].language || 'en'} : i
+  i = i.is_a?(String) ? {:"@value" => i, :"@language" => Graphiti.context[:object]&.language || 'en'} : i
 
   if i[:"@value"].is_a?(Array)
     i[:"@value"] = i[:"@value"].first
@@ -228,3 +229,38 @@ Graphiti::Types[:array_of_lang_strings] = {
   description: "contains a list of objects that defines a value and language"
 }
 
+
+temporal_coverage_definition = Dry::Types['strict.string']
+read_temporal_coverage_type = temporal_coverage_definition.constructor do |i|
+  if i.is_a?(Array)
+    i.map{|m| ISO8601::TimeInterval.parse(m).to_s }
+  elsif i.is_a?(String)
+    ISO8601::TimeInterval.parse(i).to_s
+  end
+rescue StandardError => e
+  Solis::LOGGER.error(e.message)
+  raise Solis::Error::InvalidDatatypeError, e.message
+end
+
+write__temporal_coverage_type = temporal_coverage_definition.constructor do |i|
+  i
+end
+
+
+Graphiti::Types[:temporal_coverage] = {
+  canonical_name: :temporal_coverage,
+  params: read_temporal_coverage_type,
+  read: read_temporal_coverage_type,
+  write: write__temporal_coverage_type,
+  kind: "scalar",
+  description: "contains a time interval"
+}
+
+Graphiti::Types[:array_of_temporal_coverages] = {
+  canonical_name: :temporal_coverage,
+  params: Dry::Types["strict.array"].of(Graphiti::Types[:temporal_coverage][:params]),
+  read: Dry::Types["strict.array"].of(Graphiti::Types[:temporal_coverage][:read]),
+  write: Dry::Types["strict.array"].of(Graphiti::Types[:temporal_coverage][:write]),
+  kind: "array",
+  description: "contains a list of temporal coverage"
+}

@@ -3,7 +3,7 @@ require "test_helper"
 class QueryTest < Minitest::Test
   def setup
     #    Solis::ConfigFile.path = './test/resources'
-    @solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), Solis::ConfigFile[:solis][:env])
+    @solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), Solis::ConfigFile[:solis])
     build_data(@solis)
   end
 
