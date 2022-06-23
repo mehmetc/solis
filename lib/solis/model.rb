@@ -19,10 +19,16 @@ module Solis
             raise Solis::Error::InvalidAttributeError, "'#{@model_name}.#{attribute}' must be an object"
           end
 
+          if self.class.metadata[:attributes][attribute.to_s][:node_kind].is_a?(RDF::URI) && value.is_a?(Hash)
+            inner_model = self.class.graph.shape_as_model(self.class.metadata[:attributes][attribute.to_s][:datatype].to_s)
+            value = inner_model.new(value)
+          end
+
           value = {
             "@language" => @language,
             "@value" => value
           } if self.class.metadata[:attributes][attribute.to_s][:datatype_rdf].eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString')
+
           value = value.first if value.is_a?(Array) && (attribute.eql?('id') || attribute.eql?(:id))
 
           instance_variable_set("@#{attribute}", value)
@@ -31,10 +37,13 @@ module Solis
         end
       end
 
-      id = instance_variable_get("@id")
-      if id.nil? || (id.is_a?(String) && id&.empty?)
-        instance_variable_set("@id", SecureRandom.uuid)
-      end
+      self.class.make_id_for(self)
+      # id = instance_variable_get("@id")
+      # if id.nil? || (id.is_a?(String) && id&.empty?)
+      #   instance_variable_set("@id", SecureRandom.uuid)
+      # end
+    rescue StandardError
+      raise Solis::Error::GeneralError, "Unable to create entity #{@model_name}"
     end
 
     def name(plural = false)
@@ -169,6 +178,14 @@ module Solis
       sparql.insert_data(original_graph, graph: original_graph.name)
 
       raise e
+    end
+
+    def self.make_id_for(model)
+      id = model.instance_variable_get("@id")
+      if id.nil? || (id.is_a?(String) && id&.empty?)
+        model.instance_variable_set("@id", SecureRandom.uuid)
+      end
+      model
     end
 
     def self.metadata
@@ -411,6 +428,8 @@ module Solis
           end
         end
       end
+    rescue StandardError => e
+      Solis::LOGGER.error(e.message)
     end
 
     def build_ttl_objekt(graph, klass, hierarchy = [], resolve_all = true)
