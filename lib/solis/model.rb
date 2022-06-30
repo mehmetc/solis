@@ -149,8 +149,11 @@ module Solis
       before_update_proc&.call(original_klass, updated_klass)
 
       delete_graph = as_graph(original_klass, false)
-      where_graph = RDF::Graph.new
-      where_graph.name = RDF::URI(self.class.graph_name)
+      # where_graph = RDF::Graph.new
+      # where_graph.name = RDF::URI(self.class.graph_name)
+
+      where_graph = RDF::Graph.new(graph_name: RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{id}"), data: RDF::Repository.new)
+
       if id.is_a?(Array)
         id.each do |i|
           where_graph << [RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{i}"), :p, :o]
@@ -159,14 +162,22 @@ module Solis
         where_graph << [RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{id}"), :p, :o]
       end
 
-      insert_graph = as_graph(updated_klass, validate_dependencies)
+      insert_graph = as_graph(updated_klass, false)
 
-      Solis::LOGGER.info delete_graph.dump(:ttl) if ConfigFile[:debug]
-      Solis::LOGGER.info insert_graph.dump(:ttl) if ConfigFile[:debug]
-      Solis::LOGGER.info where_graph.dump(:ttl) if ConfigFile[:debug]
+      #Solis::LOGGER.info delete_graph.dump(:ttl) if ConfigFile[:debug]
+      #Solis::LOGGER.info insert_graph.dump(:ttl) if ConfigFile[:debug]
+      #Solis::LOGGER.info where_graph.dump(:ttl) if ConfigFile[:debug]
 
+      #if ConfigFile[:debug]
+        delete_insert_query=SPARQL::Client::Update::DeleteInsert.new(delete_graph, insert_graph, where_graph, graph: insert_graph.name).to_s
+        delete_insert_query.gsub!('_:p', '?p')
+        Solis::LOGGER.info delete_insert_query
+        data = sparql.query(delete_insert_query)
+        pp data
+      #end
 
-      sparql.delete_insert(delete_graph, insert_graph, where_graph, graph: insert_graph.name)
+#      sparql.delete_insert(delete_graph, insert_graph, where_graph, graph: insert_graph.name)
+
       data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
       if data.nil?
         sparql.insert_data(insert_graph, graph: insert_graph.name)

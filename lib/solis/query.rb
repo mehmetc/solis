@@ -43,7 +43,8 @@ module Solis
         end
         ids = ids.join(" ")
 
-        q = query.gsub('{{VALUES}}', "VALUES ?#{id_name} { #{ids} }")
+        #q = query.gsub('{{VALUES}}', "VALUES ?#{id_name} { #{ids} }")
+        q = query.gsub(/{ ?{ ?VALUES ?} ?}/, "VALUES ?#{id_name} { #{ids} }")
 
         result = Solis::Query.run(entity, q)
       end
