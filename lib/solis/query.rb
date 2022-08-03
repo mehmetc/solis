@@ -15,9 +15,9 @@ module Solis
       Solis::Query::Runner.run(entity, query)
     end
 
-    def self.run_construct_with_file(filename, id_name, entity, ids)
+    def self.run_construct_with_file(filename, id_name, entity, ids, from_cache = '1')
       f = File.read(filename)
-      run_construct(f, id_name, entity, ids)
+      run_construct(f, id_name, entity, ids, from_cache)
     end
 
     def self.uuid(key)
@@ -43,7 +43,7 @@ module Solis
         end
         ids = ids.join(" ")
 
-        #q = query.gsub('{{VALUES}}', "VALUES ?#{id_name} { #{ids} }")
+
         q = query.gsub(/{ ?{ ?VALUES ?} ?}/, "VALUES ?#{id_name} { #{ids} }")
 
         result = Solis::Query.run(entity, q)

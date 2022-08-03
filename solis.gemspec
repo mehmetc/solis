@@ -27,7 +27,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_runtime_dependency 'activesupport', '~> 7.0'
+  spec.add_runtime_dependency 'activesupport', '~> 6.1'
   spec.add_runtime_dependency 'http', '~> 5.1'
   spec.add_runtime_dependency 'graphiti', '~> 1.3'
   spec.add_runtime_dependency 'moneta', '~> 1.4'
