@@ -59,6 +59,8 @@ class Solis::Query::Runner
                   value = v['@value']
                   case type
                   when "http://www.w3.org/2001/XMLSchema#dateTime"
+                    value = DateTime.parse(value)
+                  when "http://www.w3.org/2001/XMLSchema#date"
                     value = Date.parse(value)
                   end
                   v = value

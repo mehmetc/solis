@@ -55,6 +55,15 @@ Graphiti::Types[:time] = {
   description: "time type"
 }
 
+Graphiti::Types[:datetime] = {
+  canonical_name: :datetime,
+  params: Graphiti::Types::PresentParamsDateTime,
+  read: Graphiti::Types::ReadDateTime,
+  write: Graphiti::Types::WriteDateTime,
+  kind: "scalar",
+  description: "datetime type"
+}
+
 
 Graphiti::Types[:json] = {
   canonical_name: :json,
