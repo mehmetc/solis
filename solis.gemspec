@@ -39,6 +39,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency  'connection_pool', '~> 2.2.5'
   spec.add_runtime_dependency  'uuidtools', '~> 2.2.0'
   spec.add_runtime_dependency  'dry-struct', '~> 1.2'
+  spec.add_runtime_dependency  'psych', '< 4'
 
   spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency  'minitest', '~> 5.15.0'

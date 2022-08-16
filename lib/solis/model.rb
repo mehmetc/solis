@@ -24,10 +24,11 @@ module Solis
             value = inner_model.new(value)
           end
 
-          value = {
-            "@language" => @language,
-            "@value" => value
-          } if self.class.metadata[:attributes][attribute.to_s][:datatype_rdf].eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString')
+          # switched off. currently language query parameters returns the value
+          # value = {
+          #   "@language" => @language,
+          #   "@value" => value
+          # } if self.class.metadata[:attributes][attribute.to_s][:datatype_rdf].eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString')
 
           value = value.first if value.is_a?(Array) && (attribute.eql?('id') || attribute.eql?(:id))
 
@@ -64,17 +65,17 @@ module Solis
       result
     end
 
-    def to_ttl(resolve_all=true)
+    def to_ttl(resolve_all = true)
       graph = as_graph(self, resolve_all)
       graph.dump(:ttl)
     end
 
-    def dump(format=:ttl, resolve_all=true)
+    def dump(format = :ttl, resolve_all = true)
       graph = as_graph(self, resolve_all)
       graph.dump(format)
     end
 
-    def to_graph(resolve_all=true)
+    def to_graph(resolve_all = true)
       as_graph(self, resolve_all)
     end
 
@@ -98,7 +99,7 @@ module Solis
       before_delete_proc&.call(self)
 
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
-      graph = as_graph(klass=self, resolve_all=false)
+      graph = as_graph(klass = self, resolve_all = false)
       Solis::LOGGER.info graph.dump(:ttl) if ConfigFile[:debug]
 
       result = sparql.delete_data(graph, graph: graph.name)
@@ -106,7 +107,7 @@ module Solis
       result
     end
 
-    def save(validate_dependencies=true)
+    def save(validate_dependencies = true)
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
 
       before_create_proc&.call(self)
@@ -123,13 +124,12 @@ module Solis
       result
     rescue StandardError => e
       Solis::LOGGER.error e.message
+      Solis::LOGGER.error e.message
       raise e
     end
 
-    def update(data, validate_dependencies=true)
+    def update(data, validate_dependencies = true)
       raise Solis::Error::GeneralError, "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
-      #raise Solis::Error::InvalidAttributeError,"data must contain attributes" unless data.keys.include?('attributes')
-      #raise Solis::Error::GeneralError,"data must have a type" unless data.keys.include?('type')
 
       attributes = data.include?('attributes') ? data['attributes'] : data
       raise "id is mandatory in attributes" unless attributes.keys.include?('id')
@@ -138,7 +138,7 @@ module Solis
 
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
 
-      original_klass = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
+      original_klass = self.query.filter({language: nil, filters: { id: [id] } }).find_all.map { |m| m }&.first
       raise Solis::Error::NotFoundError if original_klass.nil?
       updated_klass = original_klass.deep_dup
 
@@ -169,14 +169,14 @@ module Solis
       #Solis::LOGGER.info where_graph.dump(:ttl) if ConfigFile[:debug]
 
       #if ConfigFile[:debug]
-        delete_insert_query=SPARQL::Client::Update::DeleteInsert.new(delete_graph, insert_graph, where_graph, graph: insert_graph.name).to_s
-        delete_insert_query.gsub!('_:p', '?p')
-        Solis::LOGGER.info delete_insert_query
-        data = sparql.query(delete_insert_query)
-        pp data
+      delete_insert_query = SPARQL::Client::Update::DeleteInsert.new(delete_graph, insert_graph, where_graph, graph: insert_graph.name).to_s
+      delete_insert_query.gsub!('_:p', '?p')
+      Solis::LOGGER.info delete_insert_query
+      data = sparql.query(delete_insert_query)
+      pp data
       #end
 
-#      sparql.delete_insert(delete_graph, insert_graph, where_graph, graph: insert_graph.name)
+      #      sparql.delete_insert(delete_graph, insert_graph, where_graph, graph: insert_graph.name)
 
       data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
       if data.nil?
@@ -252,7 +252,7 @@ module Solis
     end
 
     def self.language
-      @language
+      Graphiti.context[:object]&.language || Solis::Options.instance.get[:language] || @language || 'en'
     end
 
     def self.language=(language)
@@ -350,9 +350,9 @@ module Solis
       if original_klass.nil?
         original_klass = klass
       else
-        klass.instance_variables.map{|m| m.to_s.gsub(/^@/,'')}
-             .select{|s| !["model_name", "model_plural_name"]
-             .include?(s)}.each do |attribute, value|
+        klass.instance_variables.map { |m| m.to_s.gsub(/^@/, '') }
+             .select { |s| !["model_name", "model_plural_name"]
+                              .include?(s) }.each do |attribute, value|
           data = klass.instance_variable_get("@#{attribute}")
           original_data = original_klass.instance_variable_get("@#{attribute.to_s}")
           original_klass.instance_variable_set("@#{attribute}", data) unless original_data.eql?(data)
@@ -369,11 +369,10 @@ module Solis
       klass_metadata[:attributes].each do |attribute, metadata|
         data = klass.instance_variable_get("@#{attribute}")
 
-
         raise Solis::Error::InvalidAttributeError,
               "#{hierarchy.join('.')}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}" if data.nil? &&
-                          metadata[:mincount] > 0 &&
-                          graph.query(RDF::Query.new({attribute.to_sym => {RDF.type => metadata[:node]}})).size == 0
+          metadata[:mincount] > 0 &&
+          graph.query(RDF::Query.new({ attribute.to_sym => { RDF.type => metadata[:node] } })).size == 0
 
         # skip if nil or an object that is empty
         next if data.nil? || ([Hash, Array, String].include?(data.class) && data&.empty?)
@@ -391,7 +390,7 @@ module Solis
           if data.is_a?(Hash)
             data = model.new(data)
           elsif data.is_a?(Array)
-            data = data.map{|m| m.is_a?(Hash) ? model.new(m) : m}
+            data = data.map { |m| m.is_a?(Hash) ? model.new(m) : m }
           end
         end
 
@@ -422,19 +421,17 @@ module Solis
                     RDF::Literal.new(d['@value'], language: d['@language'])
                   end
                 else
-                  RDF::Literal.new(d, language: self.class.language)
+                  RDF::Literal.new(d, language: @language)
                 end
+              elsif metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#anyURI') || metadata[:node].is_a?(RDF::URI)
+                RDF::URI(d)
               else
-                if metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#anyURI') || metadata[:node].is_a?(RDF::URI)
-                  RDF::URI(d)
-                else
-                  datatype = RDF::Vocabulary.find_term(metadata[:datatype_rdf])
-                  datatype = metadata[:node] if datatype.nil?
-                  RDF::Literal.new(d, datatype: datatype)
-                end
+                datatype = RDF::Vocabulary.find_term(metadata[:datatype_rdf])
+                datatype = metadata[:node] if datatype.nil?
+                RDF::Literal.new(d, datatype: datatype)
               end
 
-          #raise Solis::Error::InvalidDatatypeError unless d.valid?
+          raise Solis::Error::InvalidDatatypeError unless d.valid?
 
           if d.is_a?(Array)
             d.each do |v|
@@ -503,7 +500,7 @@ module Solis
             #                  end
 
             # model_instance = model.new(d)
-            model_instance = model.descendants.map{|m| m&.new(d) rescue nil}.compact.first || nil
+            model_instance = model.descendants.map { |m| m&.new(d) rescue nil }.compact.first || nil
             model_instance = model.new(d) if model_instance.nil?
 
             if resolve_all

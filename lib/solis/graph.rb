@@ -158,7 +158,7 @@ module Solis
       model.graph_prefix = @graph_prefix
       model.shapes = @shapes
       model.metadata = @shapes[shape_name]
-      model.language = @language
+      #model.language = Graphiti.context[:object]&.language || Solis::Options.instance.get[:language] || @language || 'en'
       unless parent_model.nil?
         parent_model.metadata[:attributes].each do |k, v|
           unless model.metadata[:attributes].key?(k)

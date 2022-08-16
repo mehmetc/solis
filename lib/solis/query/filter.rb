@@ -1,6 +1,10 @@
 module Solis
     module QueryFilter
       def filter(params)
+        if params.key?(:language)
+          @language = params[:language].nil? || params[:language].blank? ? nil : params[:language]
+        end
+
         parsed_filters = {values: ["VALUES ?type {#{target_class}}"], concepts: ['?concept a ?type .'] }
         if params.key?(:filters)
           filters = params[:filters]

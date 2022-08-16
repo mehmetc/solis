@@ -30,7 +30,7 @@ class SolisTest < Minitest::Test
     course = Course.new({course_name: course_name})
 
     assert_kind_of(Course, course)
-    assert_equal(course.course_name["@value"], course_name)
+    assert_equal(course.course_name, course_name)
   end
 
   def test_course_returns_ttl

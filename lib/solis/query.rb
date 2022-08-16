@@ -64,6 +64,7 @@ module Solis
       @filter = {values: ["VALUES ?type {#{target_class}}"], concepts: ['?concept a ?type .'] }
       @sort = 'ORDER BY ?s'
       @sort_select = ''
+      @language = Graphiti.context[:object]&.language || Solis::Options.instance.get[:language] || 'en'
     end
 
     def each(&block)
@@ -104,11 +105,6 @@ module Solis
       @offset = 0
       @offset = current_page * per_page if current_page > 1
       @limit = per_page
-      self
-    end
-
-    def language(language = nil)
-      @language = language || Graphiti.context[:object]&.language || Solis::Options.instance.get[:language] || 'en'
       self
     end
 
@@ -179,6 +175,7 @@ SELECT ?s ?p ?o WHERE {
 {
   #{core_query}
 }
+#{language_filter}
 }
 order by ?s
 )
@@ -189,6 +186,22 @@ order by ?s
     rescue StandardError => e
       Solis::LOGGER.error(e.message)
       Solis::LOGGER.error(e.backtrace.join("\n"))
+    end
+
+    def language_filter
+      if @language.nil?
+        ''
+      else
+        %(
+        filter (
+            !isLiteral(?o) ||
+            langmatches(lang(?o), "#{@language}")
+            || (langmatches(lang(?o), "") && not exists {
+                    ?s ?p ?other.
+                    filter(isLiteral(?other) && langmatches(lang(?other), "#{@language}"))
+                }))
+        )
+      end
     end
 
     def core_query(relationship)

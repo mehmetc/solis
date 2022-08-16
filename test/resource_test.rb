@@ -44,7 +44,7 @@ class ResourceTest < Minitest::Test
 
     expected= JSON.parse('{"data":[{"id":"3","last_name":"Doe","first_name":"John","skill":{"id":"2","label":"Description Logic","short_label":null}}],"meta":{"stats":{"total":{"count":1}}}}')
 
-    #    s = SkillResource.find({id: t.first.skill.first.id})
+    sleep 2
 
     assert_includes(t.data.first.skill.map{|m| m.label}, expected['data'].first['skill']['label'])
 
@@ -80,6 +80,7 @@ class ResourceTest < Minitest::Test
     teacher4.save
 
     t = TeacherResource.all({"filter"=>{"skill_id"=>{"eq"=>"1"}}, "include"=>"skill"})
+    sleep 2
     assert_equal(1, t.data.length)
     assert_equal('John', t.data.first.first_name)
   end
