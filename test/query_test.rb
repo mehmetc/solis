@@ -19,7 +19,7 @@ class QueryTest < Minitest::Test
     #           "stats"=>{"total"=>:count}}
 
     params = {"page"=>{"number"=>"0", "size"=>"5"},
-              "include"=>"teacher,students",
+              "include"=>"teacher,students,course",
               "filter"=>
                 {"teacher_id"=>{"eq"=>"3"},
                  "course_id"=>{"eq"=>"8"}},
@@ -29,7 +29,8 @@ class QueryTest < Minitest::Test
 
     s = ScheduleResource.all(params)
     puts s.to_jsonapi
-
+    assert_equal(2, s.data.first.students.size)
+    assert_equal('Algebra', s.data.first.course.first.course_name)
   end
 
 end

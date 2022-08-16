@@ -188,15 +188,16 @@ Graphiti::Types[:array_of_datetime_intervals] = {
   description: "contains a list of datetime intervals"
 }
 
-lang_string_definition = Dry::Types['hash'].schema(:"@value" => Dry::Types['coercible.string'], :"@language" => Dry::Types['strict.string'])
+#lang_string_definition = Dry::Types['hash'].schema(:"@value" => Dry::Types['coercible.string'], :"@language" => Dry::Types['strict.string'])
+lang_string_definition = Dry::Types['coercible.string']
 read_lang_string_type = lang_string_definition.constructor do |i|
 
-  i = i.symbolize_keys if i.is_a?(Hash)
-  i = i.is_a?(String) ? {:"@value" => i, :"@language" => Graphiti.context[:object]&.language || 'en'} : i
-
-  if i[:"@value"].is_a?(Array)
-    i[:"@value"] = i[:"@value"].first
-  end
+  # i = i.symbolize_keys if i.is_a?(Hash)
+  # i = i.is_a?(String) ? {:"@value" => i, :"@language" => Graphiti.context[:object]&.language || 'en'} : i
+  #
+  # if i[:"@value"].is_a?(Array)
+  #   i[:"@value"] = i[:"@value"].first
+  # end
 
   i
 rescue StandardError => e
@@ -207,12 +208,14 @@ write_lang_string_type = lang_string_definition.constructor do |i|
   i
 end
 
-lang_string_array_definition = Dry::Types['hash'].schema(:"@value" => Dry::Types['strict.array'], :"@language" => Dry::Types['strict.string'])
+#lang_string_array_definition = Dry::Types['hash'].schema(:"@value" => Dry::Types['strict.array'], :"@language" => Dry::Types['strict.string'])
+lang_string_array_definition = Dry::Types['array'].of(Dry::Types['strict.string'])
+#.of(Graphiti::Types[:lang_string])
 read_lang_string_array_type = lang_string_array_definition.constructor do |i|
   language = Graphiti.context[:object]&.language || Solis::Options.instance.get[:language] || 'en'
-  i = i.symbolize_keys if i.is_a?(Hash)
-  i = i.is_a?(String) ? {:"@value" => i, :"@language" => language} : i
-  i[:"@value"]=[i[:"@value"]] unless i[:"@value"].is_a?(Array)
+  # i = i.symbolize_keys if i.is_a?(Hash)
+  # i = i.is_a?(String) ? {:"@value" => i, :"@language" => language} : i
+  # i[:"@value"]=[i[:"@value"]] unless i[:"@value"].is_a?(Array)
 
   i
 rescue StandardError => e
