@@ -64,7 +64,6 @@ Graphiti::Types[:datetime] = {
   description: "datetime type"
 }
 
-
 Graphiti::Types[:json] = {
   canonical_name: :json,
   params: Dry::Types["coercible.string"],
@@ -166,7 +165,10 @@ rescue StandardError => e
 end
 
 write__datetime_interval_type = datetime_interval_definition.constructor do |i|
-  i
+  ISO8601::TimeInterval.parse(i).to_s
+rescue StandardError => e
+  Solis::LOGGER.error(e.message)
+  raise Solis::Error::InvalidDatatypeError, e.message
 end
 
 

@@ -1,4 +1,5 @@
 require 'securerandom'
+require 'iso8601'
 require_relative 'query'
 
 module Solis
@@ -425,9 +426,17 @@ module Solis
                 end
               elsif metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#anyURI') || metadata[:node].is_a?(RDF::URI)
                 RDF::URI(d)
+              elsif metadata[:datatype_rdf].eql?('http://www.w3.org/2006/time#DateTimeInterval')
+                begin
+                  datatype = metadata[:datatype_rdf]
+                  RDF::Literal.new(ISO8601::TimeInterval.parse(d).to_s, datatype: datatype)
+                rescue StandardError => e
+                  raise Solis::Error::InvalidDatatypeError, "#{hierarchy.join('.')}.#{attribute}: #{e.message}"
+                end
               else
                 datatype = RDF::Vocabulary.find_term(metadata[:datatype_rdf])
                 datatype = metadata[:node] if datatype.nil?
+                datatype = metadata[:datatype_rdf] if datatype.nil?
                 RDF::Literal.new(d, datatype: datatype)
               end
 
@@ -444,6 +453,7 @@ module Solis
       end
     rescue StandardError => e
       Solis::LOGGER.error(e.message)
+      raise e
     end
 
     def build_ttl_objekt(graph, klass, hierarchy = [], resolve_all = true)
