@@ -351,6 +351,7 @@ module Solis
       if original_klass.nil?
         original_klass = klass
       else
+        resolve_all = false
         klass.instance_variables.map { |m| m.to_s.gsub(/^@/, '') }
              .select { |s| !["model_name", "model_plural_name"]
                               .include?(s) }.each do |attribute, value|
@@ -399,8 +400,10 @@ module Solis
 
         data.each do |d|
           if defined?(d.name) && self.class.graph.shape?(d.name)
-            if resolve_all
-              d = build_ttl_objekt2(graph, d, hierarchy, false)
+            if self.class.graph.shape_as_model(d.name.to_s).metadata[:attributes].select{|_,v| v[:node_kind].is_a?(RDF::URI)}.size > 0 &&
+              hierarchy.select{|s| s =~ /^#{d.name.to_s}/}.size == 0
+              internal_resolve = false
+              d = build_ttl_objekt2(graph, d, hierarchy, internal_resolve)
             else
               d = "#{klass.class.graph_name}#{attribute.tableize}/#{d.id}"
             end
