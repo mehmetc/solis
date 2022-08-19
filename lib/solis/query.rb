@@ -249,7 +249,11 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
               attribute = statement.p.value.split('/').last.underscore
 
               if statement.o.valid?
-                object = statement.o.canonicalize.object
+                if statement.o.is_a?(RDF::URI)
+                  object = statement.o.canonicalize.value
+                else
+                  object = statement.o.canonicalize.object
+                end
               else
                 object = Integer(statement.o.value) if Integer(statement.o.value) rescue nil
                 object = Float(statement.o.value) if object.nil? && Float(statement.o.value) rescue nil
@@ -258,8 +262,12 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
 
               begin
                 datatype = RDF::Vocabulary.find_term(@model.class.metadata[:attributes][attribute][:datatype_rdf])
-                if statement.o.datatype != datatype
-                  object = RDF::Literal.new(statement.o.canonicalize.object, datatype: datatype).object
+                if RDF::Literal(statement.o).datatype.value != datatype
+                  if statement.o.is_a?(RDF::URI)
+                    object = RDF::Literal.new(statement.o.canonicalize.value, datatype: RDF::URI).object
+                  else
+                    object = RDF::Literal.new(statement.o.canonicalize.object, datatype: datatype).object
+                  end
                 end
               rescue StandardError => e
                 if object.is_a?(Hash)

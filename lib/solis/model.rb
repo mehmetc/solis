@@ -443,7 +443,9 @@ module Solis
                 RDF::Literal.new(d, datatype: datatype)
               end
 
-          raise Solis::Error::InvalidDatatypeError unless d.valid?
+          unless d.valid?
+            LOGGER.warn("Invalid datatype for #{hierarchy.join('.')}.#{attribute}")
+          end
 
           if d.is_a?(Array)
             d.each do |v|
