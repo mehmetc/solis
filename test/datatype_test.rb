@@ -77,4 +77,17 @@ class DatatypeTest < Minitest::Test
     pp a
   end
 
+  def test_datering_systematisch_array
+    dt = ["1956-12-31T23:00:00.000Z/1977-12-31T23:00:00.000Z", "1956/1958"]
+    @solis.flush_all('http://solis.template/')
+
+    e = EveryDataType.new({id: '1', datetimeinterval_array_dt: dt})
+    e.save
+
+    r = EveryDataTypeResource.all({filter: {id: '1'}})
+    a = r.data.first
+
+    pp a
+  end
+
 end

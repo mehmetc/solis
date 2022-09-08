@@ -10,7 +10,7 @@ schema:Person a owl:Class;
 
 t: a owl:Ontology;
   <dc11:creator> "Mehmet Celik";
-  <dc11:date> "2022-06-23 21:51:13 +0200";
+  <dc11:date> "2022-09-05 14:24:33 +0200";
   <dc11:description> "Template for the SOLIS gem";
   <dc11:title> "SOLIS template";
   owl:versionInfo 0.1 .
@@ -20,6 +20,12 @@ t:course a rdf:Property;
   rdfs:comment "course within schedule";
   rdfs:domain t:Schedule;
   rdfs:range t:Course .
+
+t:datetimeinterval_array_dt a rdf:Property;
+  rdfs:label "datetimeinterval_array_dt";
+  rdfs:comment "";
+  rdfs:domain t:EveryDataType;
+  rdfs:range <http://www.w3.org/2000/10/swap/time#DateTimeInterval> .
 
 t:lang_string_array_dt a rdf:Property;
   rdfs:label "lang_string_array_dt";
@@ -556,6 +562,10 @@ t:EveryDataType a owl:Class;
     a owl:Restriction;
     owl:maxCardinality 1;
     owl:onProperty t:base64_dt
+  ], [
+    a owl:Restriction;
+    owl:minCardinality 0;
+    owl:onProperty t:datetimeinterval_array_dt
   ], [
     a owl:Restriction;
     owl:minCardinality 0;

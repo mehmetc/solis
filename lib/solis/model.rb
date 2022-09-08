@@ -163,7 +163,7 @@ module Solis
         where_graph << [RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{id}"), :p, :o]
       end
 
-      insert_graph = as_graph(updated_klass, false)
+      insert_graph = as_graph(updated_klass, true)
 
       #Solis::LOGGER.info delete_graph.dump(:ttl) if ConfigFile[:debug]
       #Solis::LOGGER.info insert_graph.dump(:ttl) if ConfigFile[:debug]
@@ -402,6 +402,9 @@ module Solis
           if defined?(d.name) && self.class.graph.shape?(d.name)
             if self.class.graph.shape_as_model(d.name.to_s).metadata[:attributes].select{|_,v| v[:node_kind].is_a?(RDF::URI)}.size > 0 &&
               hierarchy.select{|s| s =~ /^#{d.name.to_s}/}.size == 0
+              internal_resolve = false
+              d = build_ttl_objekt2(graph, d, hierarchy, internal_resolve)
+            elsif self.class.graph.shape_as_model(d.name.to_s) && hierarchy.select{|s| s =~ /^#{d.name.to_s}/}.size == 0
               internal_resolve = false
               d = build_ttl_objekt2(graph, d, hierarchy, internal_resolve)
             else

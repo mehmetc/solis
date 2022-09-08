@@ -7,7 +7,7 @@ skinparam componentStyle uml2
 skinparam wrapMessageWidth 100
 skinparam ArrowColor #Maroon
 
-title SOLIS template - 0.1 - 2022-06-23 21:51:13 +0200
+title SOLIS template - 0.1 - 2022-09-05 14:24:33 +0200
               
 package t {
 
@@ -83,6 +83,7 @@ class EveryDataType{
 	{field} xsd:gMonth : month_dt 
 	{field} xsd:hexBinary : hex_dt 
 	{field} xsd:base64Binary : base64_dt 
+	{field} time:DateTimeInterval : datetimeinterval_array_dt 
 	{field} time:DateTimeInterval : datetimeinterval_dt 
 	{field} schema:temporalCoverage : temporal_coverage_dt 
 }

@@ -65,6 +65,7 @@ module Solis
       @sort = 'ORDER BY ?s'
       @sort_select = ''
       @language = Graphiti.context[:object]&.language || Solis::Options.instance.get[:language] || 'en'
+      @query_cache = Moneta.new(:HashFile, dir: @construct_cache)
     end
 
     def each(&block)
@@ -182,7 +183,21 @@ order by ?s
 
       Solis::LOGGER.info(query) if ConfigFile[:debug]
 
-      graph_to_object(sparql_client.query(query))
+      query_key = "#{@model.name}-#{Digest::MD5.hexdigest(query)}"
+
+      result = nil
+
+      from_cache = Graphiti.context[:object].from_cache || '1'
+      if @query_cache.key?(query_key) && from_cache.eql?('1')
+        result = @query_cache[query_key]
+        Solis::LOGGER.info("CACHE: from #{query_key}")# if ConfigFile[:debug]
+      else
+        result = graph_to_object(sparql_client.query(query))
+        @query_cache[query_key] = result unless result.nil? || result.empty?
+        Solis::LOGGER.info("CACHE: to #{query_key}")# if ConfigFile[:debug]
+      end
+
+      result
     rescue StandardError => e
       Solis::LOGGER.error(e.message)
       Solis::LOGGER.error(e.backtrace.join("\n"))

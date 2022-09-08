@@ -338,6 +338,12 @@
                  sh:minCount 0 ;
                  sh:maxCount 1 ;
     ] ;
+    sh:property [sh:path t:datetimeinterval_array_dt ;
+                 sh:name "datetimeinterval_array_dt";
+                 sh:description "" ;
+                 sh:datatype time:DateTimeInterval ;
+                 sh:minCount 0 ;
+    ] ;
     sh:property [sh:path t:datetimeinterval_dt ;
                  sh:name "datetimeinterval_dt";
                  sh:description "" ;

@@ -11,7 +11,7 @@ module Solis
           @endpoint = endpoint
           @graph_name = graph_name
 
-          @pool = ConnectionPool.new(size:5, timeout: 30) do
+          @pool = ConnectionPool.new(size:5, timeout: 60) do
             SPARQL::Client.new(@endpoint, graph: @graph_name)
             #SPARQL::Client.new(@endpoint)
           end

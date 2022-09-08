@@ -8,7 +8,7 @@ module Solis
         @sparql_endpoint = @model.class.sparql_endpoint
         @sparql_client = SPARQL::Client.new(@sparql_endpoint, graph: @model.class.graph_name, read_timeout: 120)
         @construct_cache = File.absolute_path(Solis::Options.instance.get[:cache])
-        @moneta = Moneta.new(:File, dir: @construct_cache, expires: Solis::Options.instance.get[:cache_expire])
+        @moneta = Moneta.new(:File, dir: "#{@construct_cache}/construct", expires: Solis::Options.instance.get[:cache_expire])
       end
 
       def exists?
@@ -33,8 +33,9 @@ module Solis
         construct_query = load
         sparql_repository = @sparql_endpoint
 
+        from_cache = Graphiti.context[:object].from_cache || '1'
         if construct_query && construct_query =~ /construct/
-          if @moneta.key?(file_path_hash)
+          if @moneta.key?(file_path_hash) && from_cache.eql?('1')
             sparql_repository = @moneta[file_path_hash]
           else
             @sparql_client = SPARQL::Client.new(@sparql_endpoint, read_timeout: 120)
