@@ -62,13 +62,23 @@ class Solis::Query::Runner
                     value = DateTime.parse(value)
                   when "http://www.w3.org/2001/XMLSchema#date"
                     value = Date.parse(value)
+                  when "http://www.w3.org/2006/time#DateTimeInterval"
+                    value = ISO8601::TimeInterval.parse(value)
                   end
                   v = value
                 end
                 v = sanitize_result(v) if v.is_a?(Hash)
               end
+              new_d[k] = v.class.method_defined?(:value) ? v.value : v
+            elsif v.is_a?(Array) #todo: make recursive
+              new_d[k] = []
+              v.each do |vt|
+                new_d[k] << (vt.is_a?(Hash) ? vt['@value'] : vt)
+              end
+              new_d[k].flatten!
+            else
+              new_d[k] = v.class.method_defined?(:value) ? v.value : v
             end
-            new_d[k] = v.class.method_defined?(:value) ? v.value : v
           end
           d = new_d
         end
