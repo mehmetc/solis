@@ -77,10 +77,10 @@ class Solis::Query::Runner
                   if vt.key?('@value')
                     new_d[k] << vt['@value']
                   else
-                    new_d[k] << sanitize_result(vt)
+                    new_d[k] << vt.is_a?(String) ? vt : sanitize_result(vt)
                   end
                 else
-                  new_d[k] << sanitize_result(vt)
+                  new_d[k] << vt.is_a?(String) ? vt : sanitize_result(vt)
                 end
               end
               new_d[k].flatten!
