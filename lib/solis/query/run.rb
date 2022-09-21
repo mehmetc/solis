@@ -73,7 +73,15 @@ class Solis::Query::Runner
             elsif v.is_a?(Array) #todo: make recursive
               new_d[k] = []
               v.each do |vt|
-                new_d[k] << (vt.is_a?(Hash) ? vt['@value'] : vt)
+                if vt.is_a?(Hash)
+                  if vt.key?('@value')
+                    new_d[k] << vt['@value']
+                  else
+                    new_d[k] << sanitize_result(vt)
+                  end
+                else
+                  new_d[k] << sanitize_result(vt)
+                end
               end
               new_d[k].flatten!
             else
