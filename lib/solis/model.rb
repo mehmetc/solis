@@ -408,7 +408,8 @@ module Solis
               internal_resolve = false
               d = build_ttl_objekt2(graph, d, hierarchy, internal_resolve)
             else
-              d = "#{klass.class.graph_name}#{attribute.tableize}/#{d.id}"
+              #d = "#{klass.class.graph_name}#{attribute.tableize}/#{d.id}"
+              d = "#{klass.class.graph_name}#{d.name.tableize}/#{d.id}"
             end
           end
 

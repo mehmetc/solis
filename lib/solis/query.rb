@@ -187,7 +187,7 @@ order by ?s
 
       result = nil
 
-      from_cache = Graphiti.context[:object].from_cache || '1'
+      from_cache = Graphiti.context[:object]&.from_cache || '1'
       if @query_cache.key?(query_key) && from_cache.eql?('1')
         result = @query_cache[query_key]
         Solis::LOGGER.info("CACHE: from #{query_key}")# if ConfigFile[:debug]
