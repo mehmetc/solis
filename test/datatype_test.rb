@@ -85,9 +85,36 @@ class DatatypeTest < Minitest::Test
     e.save
 
     r = EveryDataTypeResource.all({filter: {id: '1'}})
-    a = r.data.first
+    data = r.data.first
 
-    pp a
+    assert_equal(2, data.datetimeinterval_array_dt.size)
+  end
+
+  def test_delete_from_datering_systematisch_array
+    dt = ["0999-12-31T23:43:00.000Z/2999-12-31T23:00:00.000Z", "1999-12-31T23:43:00.000Z/2999-12-31T23:00:00.000Z"]
+    @solis.flush_all('http://solis.template/')
+
+    # c=Solis::Store::Sparql::Client.new(Solis::ConfigFile[:solis][:sparql_endpoint], Solis::ConfigFile[:solis][:graph_name])
+    # c.query()
+
+    e = EveryDataType.new({id: '2', datetimeinterval_array_dt: dt})
+    e.save
+
+    r = EveryDataTypeResource.all({filter: {id: '2'}})
+    data = r.data.first
+    pp data.datetimeinterval_array_dt
+    assert_equal(2, data.datetimeinterval_array_dt.size)
+    assert_equal(data.datetimeinterval_array_dt, dt)
+
+
+    data.datetimeinterval_array_dt.delete_at(1)
+
+    e = EveryDataType.new.update({id: data.id, datetimeinterval_array_dt: data.datetimeinterval_array_dt}.with_indifferent_access)
+    r = EveryDataTypeResource.all({filter: {id: '2'}})
+    data = r.data.first
+
+    assert_equal(1, data.datetimeinterval_array_dt.size)
+    assert_includes(dt, data.datetimeinterval_array_dt.first)
   end
 
 end

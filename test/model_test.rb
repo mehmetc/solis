@@ -28,8 +28,8 @@ class ModelTest < Minitest::Test
 
     assert_equal(8, schema[:resources].length)
     assert_equal(8, schema[:endpoints].length)
-    assert_includes(schema[:endpoints], :"/courses")
-    assert_includes(schema[:endpoints], :"/schedules")
+    assert_includes(schema[:endpoints], :"http://solis.template/courses")
+    assert_includes(schema[:endpoints], :"http://solis.template/schedules")
 
     schema_resource = schema[:resources].select{|s| s[:name].eql?('CourseResource')}
     refute_empty(schema_resource)
@@ -53,7 +53,7 @@ class ModelTest < Minitest::Test
 
       assert_nil(graph)
       assert_instance_of(Skill, model)
-      assert_equal(1, model.id)
+      assert_equal(5, model.id)
       puts model.to_json
     end
 
