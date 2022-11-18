@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Mehmet Celik']
   spec.email         = ['mehmet@celik.be']
 
-  spec.summary       = 'Creates a SHACL, RDF, PlantUML file from a Google sheet and a layer ontop of a data store(RDBMS, Triple store)'
+  spec.summary       = 'Turn any SHACL file into an API, ORM, documentation, ...'
   spec.description   = 'The SUN in latin or is it SILOS spelled backwards. Creates a SHACL, RDF, PlantUML file from a Google sheet and a layer ontop of a data store(RDBMS, Triple store)'
   spec.homepage      = 'https://github.com/mehmetc/solis'
   spec.license       = 'MIT'

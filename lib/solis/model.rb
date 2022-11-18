@@ -26,9 +26,12 @@ module Solis
           elsif self.class.metadata[:attributes][attribute.to_s][:node_kind].is_a?(RDF::URI) && value.is_a?(Array)
             new_value = []
             value.each do |v|
-              next unless v.class.is_a?(Hash)
-              inner_model = self.class.graph.shape_as_model(self.class.metadata[:attributes][attribute.to_s][:datatype].to_s)
-              new_value << inner_model.new(v)
+              if v.is_a?(Hash)
+                inner_model = self.class.graph.shape_as_model(self.class.metadata[:attributes][attribute.to_s][:datatype].to_s)
+                new_value << inner_model.new(v)
+              else
+                new_value << v
+              end
             end
             value = new_value
           end
@@ -147,7 +150,7 @@ module Solis
 
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
 
-      original_klass = self.query.filter({language: nil, filters: { id: [id] } }).find_all.map { |m| m }&.first
+      original_klass = self.query.filter({ language: nil, filters: { id: [id] } }).find_all.map { |m| m }&.first
       raise Solis::Error::NotFoundError if original_klass.nil?
       updated_klass = original_klass.deep_dup
 
@@ -408,11 +411,11 @@ module Solis
 
         data.each do |d|
           if defined?(d.name) && self.class.graph.shape?(d.name)
-            if self.class.graph.shape_as_model(d.name.to_s).metadata[:attributes].select{|_,v| v[:node_kind].is_a?(RDF::URI)}.size > 0 &&
-              hierarchy.select{|s| s =~ /^#{d.name.to_s}/}.size == 0
+            if self.class.graph.shape_as_model(d.name.to_s).metadata[:attributes].select { |_, v| v[:node_kind].is_a?(RDF::URI) }.size > 0 &&
+              hierarchy.select { |s| s =~ /^#{d.name.to_s}/ }.size == 0
               internal_resolve = false
               d = build_ttl_objekt2(graph, d, hierarchy, internal_resolve)
-            elsif self.class.graph.shape_as_model(d.name.to_s) && hierarchy.select{|s| s =~ /^#{d.name.to_s}/}.size == 0
+            elsif self.class.graph.shape_as_model(d.name.to_s) && hierarchy.select { |s| s =~ /^#{d.name.to_s}/ }.size == 0
               internal_resolve = false
               d = build_ttl_objekt2(graph, d, hierarchy, internal_resolve)
             else

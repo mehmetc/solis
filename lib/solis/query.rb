@@ -321,7 +321,11 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
                 end
               else
                 if solution_model.metadata[:attributes][attribute][:maxcount].nil? || solution_model.metadata[:attributes][attribute][:maxcount] > 1
-                  data[attribute] = [object]
+                  if data.include?(attribute)
+                    data[attribute] << object
+                  else
+                    data[attribute] = [object]
+                  end
                 else
                   data[attribute] = object
                 end

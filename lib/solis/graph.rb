@@ -277,14 +277,14 @@ module Solis
                   remote_resources = [remote_resources] unless remote_resources.is_a?(Array)
                   remote_resources = remote_resources.map do |remote_resource|
                     resource_id = remote_resource.id =~ /^http/ ? remote_resource.id.split('/').last : remote_resource.id
-                    #"/#{key.tableize}/#{resource_id}"
+
                     "#{resource.class.graph_name.gsub(/\/$/,'')}/#{belongs_to_resource_name.tableize}/#{resource_id}"
                   end
 
-                  #    return remote_resources.length == 1 ? remote_resources.first : remote_resources
                 end
 
-                remote_resources.first if remote_resources #belongs_to
+
+                remote_resources.join(',') if remote_resources #belongs_to
               end
             end
           else
@@ -323,7 +323,7 @@ module Solis
 
                   #return remote_resources.length == 1 ? remote_resources.first : remote_resources
                 end
-                remote_resources.first if remote_resources
+                remote_resources.join(',') if remote_resources
               end
             end
           end
