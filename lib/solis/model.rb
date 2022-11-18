@@ -23,6 +23,14 @@ module Solis
           if self.class.metadata[:attributes][attribute.to_s][:node_kind].is_a?(RDF::URI) && value.is_a?(Hash)
             inner_model = self.class.graph.shape_as_model(self.class.metadata[:attributes][attribute.to_s][:datatype].to_s)
             value = inner_model.new(value)
+          elsif self.class.metadata[:attributes][attribute.to_s][:node_kind].is_a?(RDF::URI) && value.is_a?(Array)
+            new_value = []
+            value.each do |v|
+              next unless v.class.is_a?(Hash)
+              inner_model = self.class.graph.shape_as_model(self.class.metadata[:attributes][attribute.to_s][:datatype].to_s)
+              new_value << inner_model.new(v)
+            end
+            value = new_value
           end
 
           # switched off. currently language query parameters returns the value
