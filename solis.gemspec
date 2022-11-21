@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.email         = ['mehmet@celik.be']
 
   spec.summary       = 'Turn any SHACL file into an API, ORM, documentation, ...'
-  spec.description   = 'The SUN in latin or is it SILOS spelled backwards. Creates a SHACL, RDF, PlantUML file from a Google sheet and a layer ontop of a data store(RDBMS, Triple store)'
+  spec.description   = 'The SUN in latin or is it SILOS spelled backwards. Turn any SHACL file or Google sheet into an API, ORM, documentation on top of a data store'
   spec.homepage      = 'https://github.com/mehmetc/solis'
   spec.license       = 'MIT'
   spec.required_ruby_version = Gem::Requirement.new('>= 2.3.0')

@@ -275,16 +275,13 @@ module Solis
                 remote_resources = resource.instance_variable_get("@#{key}")
                 if remote_resources
                   remote_resources = [remote_resources] unless remote_resources.is_a?(Array)
-                  remote_resources = remote_resources.map do |remote_resource|
-                    resource_id = remote_resource.id =~ /^http/ ? remote_resource.id.split('/').last : remote_resource.id
-
-                    "#{resource.class.graph_name.gsub(/\/$/,'')}/#{belongs_to_resource_name.tableize}/#{resource_id}"
+                  resource_ids = remote_resources.map do |remote_resource|
+                    remote_resource.id =~ /^http/ ? remote_resource.id.split('/').last : remote_resource.id
                   end
 
                 end
 
-
-                remote_resources.join(',') if remote_resources #belongs_to
+                "#{resource.class.graph_name.gsub(/\/$/,'')}/#{belongs_to_resource_name.tableize}?filter[id]=#{resource_ids.join(',')}" unless remote_resources.nil? || resource_ids.empty?
               end
             end
           else
@@ -296,18 +293,15 @@ module Solis
 
               belongs_to_resource.belongs_to(resource.model.name.tableize.singularize, foreign_key: :id, primary_key: :id, resource: graph.shape_as_resource(resource.model.name)) do
                 link do |resource|
+                  ids=[]
                   remote_resources = resource.instance_variable_get("@#{shape_name.tableize.singularize}")
                   if remote_resources
                     remote_resources = [remote_resources] unless remote_resources.is_a?(Array)
-                    remote_resources = remote_resources.map do |remote_resource|
-                      resource_id = remote_resource.id =~ /^http/ ? remote_resource.id.split('/').last : remote_resource.id
-                      #"/#{key.tableize}/#{resource_id}"
-                      "#{resource.class.graph_name.gsub(/\/$/,'')}/#{belongs_to_resource.name.tableize}/#{resource_id}"
+                    resource_ids = remote_resources.map do |remote_resource|
+                      remote_resource.id =~ /^http/ ? remote_resource.id.split('/').last : remote_resource.id
                     end
-
-                    # return remote_resources.length == 1 ? remote_resources.first : remote_resources
                   end
-                  remote_resources if remote_resources #has_many_belongs_to
+                  "#{resource.class.graph_name.gsub(/\/$/,'')}/#{belongs_to_resource.name.tableize}?filter[id]=#{resource_ids.join(',')}" unless remote_resources.nil? || resource_ids.empty?
                 end
               end
               #
@@ -315,15 +309,12 @@ module Solis
                 remote_resources = resource.instance_variable_get("@#{key}")
                 if remote_resources
                   remote_resources = [remote_resources] unless remote_resources.is_a?(Array)
-                  remote_resources = remote_resources.map do |remote_resource|
-                    resource_id = remote_resource.id =~ /^http/ ? remote_resource.id.split('/').last : remote_resource.id
-                    #"/#{key.tableize}/#{resource_id}"
-                    "#{resource.class.graph_name.gsub(/\/$/,'')}/#{remote_resource.name.tableize}/#{resource_id}"
+                  resource_ids = remote_resources.map do |remote_resource|
+                    remote_resource.id =~ /^http/ ? remote_resource.id.split('/').last : remote_resource.id
                   end
 
-                  #return remote_resources.length == 1 ? remote_resources.first : remote_resources
                 end
-                remote_resources.join(',') if remote_resources
+                "#{resource.class.graph_name.gsub(/\/$/,'')}/#{remote_resources.first.name.tableize}?filter[id]=#{resource_ids.join(',')}" unless remote_resources.nil? || resource_ids.empty?
               end
             end
           end
