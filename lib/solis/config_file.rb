@@ -51,12 +51,17 @@ class ConfigFile
     @config
   end
 
+  def self.keys
+    init
+    @config.keys
+  end
+
   private
 
   def self.init
     discover_config_file_path
     if @config.empty?
-      config = YAML::load_file("#{path}/#{name}")
+      config = YAML::load_file("#{path}/#{name}", aliases: true)
       @config = process(config)
     end
   end

@@ -27,22 +27,22 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_runtime_dependency 'activesupport', '~> 6.1'
+  spec.add_runtime_dependency 'activesupport', '~> 7.0'
   spec.add_runtime_dependency 'http', '~> 5.1'
   spec.add_runtime_dependency 'graphiti', '~> 1.3'
-  spec.add_runtime_dependency 'moneta', '~> 1.4'
-  spec.add_runtime_dependency 'linkeddata', '~> 3.2'
+  spec.add_runtime_dependency 'moneta', '~> 1.6'
+  spec.add_runtime_dependency 'linkeddata', '~> 3.3'
   spec.add_runtime_dependency 'google_drive', '~> 3.0'
-  spec.add_runtime_dependency 'json', '~> 2.5'
+  spec.add_runtime_dependency 'json', '~> 2.6'
   spec.add_runtime_dependency 'hashdiff', '~> 1.0'
   spec.add_runtime_dependency  'iso8601', '~> 0.13.0'
-  spec.add_runtime_dependency  'connection_pool', '~> 2.2.5'
+  spec.add_runtime_dependency  'connection_pool', '~> 2.4'
   spec.add_runtime_dependency  'uuidtools', '~> 2.2.0'
-  spec.add_runtime_dependency  'dry-struct', '~> 1.2'
-  spec.add_runtime_dependency  'psych', '< 4'
+  spec.add_runtime_dependency  'dry-struct', '~> 1.6'
+  spec.add_runtime_dependency  'psych', '~> 5.1'
 
   spec.add_development_dependency 'rake', '~> 13.0'
-  spec.add_development_dependency  'minitest', '~> 5.15.0'
+  spec.add_development_dependency  'minitest', '~> 5.19'
 
   #  spec.add_development_dependency  'rubocop'
 

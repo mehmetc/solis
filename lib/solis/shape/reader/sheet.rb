@@ -11,33 +11,41 @@ module Solis
         def self.read(key, spreadsheet_id, options = {})
           class << self
             def validate(sheets)
-              raise "Please make sure the sheet contains '_PREFIXES', '_METADATA', '_ENTITIES' tabs" unless (%w[
-                _PREFIXES _METADATA _ENTITIES
-              ] - sheets.keys).length == 0
+              #raise "Please make sure the sheet contains '_PREFIXES', '_METADATA', '_ENTITIES' tabs" unless (%w[_PREFIXES _METADATA _ENTITIES] - sheets.keys).length == 0
 
               prefixes = sheets['_PREFIXES']
               metadata = sheets['_METADATA']
-              entities = sheets['_ENTITIES']
 
-              raise "_PREFIXES tab must have ['base', 'prefix', 'uri'] as a header at row 1" unless (%w[base prefix
-                                                                                                        uri] - prefixes.header).length == 0
-              raise "_METADATA tab must have ['key', 'value'] as a header at row 1" unless (%w[key
-                                                                                               value] - metadata.header).length == 0
-              raise "_ENTITIES tab must have ['name', 'nameplural', 'description', 'subclassof', 'sameas'] as a header at row 1" unless (%w[
-                name nameplural description subclassof sameas
-              ] - entities.header).length == 0
-
+              raise "_PREFIXES tab must have ['base', 'prefix', 'uri'] as a header at row 1" unless (%w[base prefix uri] - prefixes.header).length == 0
               raise '_PREFIXES.base can only have one base URI' if prefixes.map { |m| m['base'] }.grep(/\*/).count != 1
+
+              raise "_METADATA tab must have ['key', 'value'] as a header at row 1" unless (%w[key value] - metadata.header).length == 0
+
+              if sheets.key?('_ENTITIES')
+                entities = sheets['_ENTITIES']
+                raise "_ENTITIES tab must have ['name', 'nameplural', 'description', 'subclassof', 'sameas'] as a header at row 1" unless (%w[name nameplural description subclassof sameas] - entities.header).length == 0
+
+                entities.each do |entity|
+                  raise "Plural not found for #{entity['name']}" if entity['nameplural'].nil? || entity['nameplural'].empty?
+                end
+              end
+
+              if sheets.key?('_REFERENCES')
+                references = sheets['_REFERENCES']
+                raise "_REFERENCES tab must have ['sheeturl', 'description', 'entityrange'] as a header at row 1" unless (%w[sheeturl description entityrange] - references.header).length == 0
+              end
+
             end
 
             def read_sheets(key, spreadsheet_id, options)
               data = nil
 
-              cache_dir = ConfigFile.include?(:solis) && ConfigFile[:solis].include?(:cache) ? ConfigFile[:solis][:cache] : '/tmp'
+              cache_dir = ConfigFile.include?(:cache) ? ConfigFile[:cache] : '/tmp'
 
               if ::File.exist?("#{cache_dir}/#{spreadsheet_id}.json") && (options.include?(:from_cache) && options[:from_cache])
                 Solis::LOGGER.info("from cache #{cache_dir}/#{spreadsheet_id}.json")
                 data = JSON.parse(::File.read("#{cache_dir}/#{spreadsheet_id}.json"), { symbolize_names: true })
+                return data
               else
                 Solis::LOGGER.info("from source #{spreadsheet_id}")
                 session = SimpleSheets.new(key, spreadsheet_id)
@@ -49,66 +57,69 @@ module Solis
                 end
 
                 validate(sheets)
+              end
+              sheets
+            end
 
-                entities = {}
-                prefixes = {}
-                ontology_metadata = {}
+            def process_sheet(key, sheet_id, sheets, options = {follow: true})
+              entities = {}
+              prefixes = {}
+              ontology_metadata = {}
 
-                sheets['_PREFIXES'].each do |e|
-                  prefixes.store(e['prefix'].to_sym, { uri: e['uri'], base: e['base'].eql?('*') })
-                end
-                sheets['_METADATA'].each { |e| ontology_metadata.store(e['key'].to_sym, e['value']) }
+              sheets['_PREFIXES'].each do |e|
+                prefixes.store(e['prefix'].to_sym, { uri: e['uri'], base: e['base'].eql?('*') })
+              end
+              sheets['_METADATA'].each { |e| ontology_metadata.store(e['key'].to_sym, e['value']) }
 
-                base_uri = prefixes.select { |_k, v| v[:base] }.select { |s| !s.empty? }
+              base_uri = prefixes.select { |_k, v| v[:base] }.select { |s| !s.empty? }
 
-                graph_prefix = base_uri.keys.first
-                graph_name = base_uri.values.first[:uri]
+              graph_prefix = base_uri.keys.first
+              graph_name = base_uri.values.first[:uri]
 
-                sheets['_ENTITIES'].each do |e|
+              sheets['_ENTITIES'].each do |e|
 
-                  top_class = e['name'].to_s
-                  # subclassof = e['subclassof'].empty? ? nil : e['subclassof'].split(':').last
-                  # while subclassof                                        
-                  #   candidate_sco = sheets['_ENTITIES'].select{|t| t['name'].eql?(subclassof)}.first
-                  #   subclassof = candidate_sco['subclassof'].empty? ? nil : candidate_sco['subclassof'].split(':').last
-                  #   top_class = candidate_sco['name'].to_s if candidate_sco['subclassof'].empty?
-                  # end
+                top_class = e['name'].to_s
+                #if prefixes[graph_prefix][:data].nil? || prefixes[graph_prefix][:data].empty?
+                  entity_data = parse_entity_data(e['name'].to_s, graph_prefix, graph_name, sheets[top_class], { key: key, prefixes: prefixes, follow: options[:follow] })
+                #  prefixes[graph_prefix][:data] = entity_data
+                #else
+                #  entity_data = prefixes[graph_prefix][:data]
+                #end
 
-                  entity_data = parse_entity_data(e['name'].to_s, graph_prefix, graph_name, sheets[top_class])
-
-                  if entity_data.empty?
-                    entity_data[:id] = {
-                      datatype: 'xsd:string',
-                      path: "#{graph_prefix}:id",
-                      cardinality: { min: '1', max: '1' },
-                      same_as: '',
-                      description: 'systeem UUID'
-                    }
-                  end
-
-                  entities.store(e['name'].to_sym, { description: e['description'],
-                                                     plural: e['nameplural'],
-                                                     label: e['name'].to_s.strip,
-                                                     sub_class_of: e['subclassof'].nil? || e['subclassof'].empty? ? [] : [e['subclassof']],
-                                                     same_as: e['sameas'],
-                                                     properties: entity_data })
+                if entity_data.empty?
+                  entity_data[:id] = {
+                    datatype: 'xsd:string',
+                    path: "#{graph_prefix}:id",
+                    cardinality: { min: '1', max: '1' },
+                    same_as: '',
+                    description: 'systeem UUID'
+                  }
                 end
 
-                data = {
-                  entities: entities,
-                  ontologies: {
-                    all: prefixes,
-                    base: {
-                      prefix: graph_prefix,
-                      uri: graph_name
-                    }
-                  },
-                  metadata: ontology_metadata
-                }
+                entities.store(e['name'].to_sym, { description: e['description'],
+                                                   plural: e['nameplural'],
+                                                   label: e['name'].to_s.strip,
+                                                   sub_class_of: e['subclassof'].nil? || e['subclassof'].empty? ? [] : [e['subclassof']],
+                                                   same_as: e['sameas'],
+                                                   properties: entity_data })
+              end
 
-                ::File.open("#{::File.absolute_path(cache_dir)}/#{spreadsheet_id}.json", 'wb') do |f|
-                  f.puts data.to_json
-                end
+              data = {
+                entities: entities,
+                ontologies: {
+                  all: prefixes,
+                  base: {
+                    prefix: graph_prefix,
+                    uri: graph_name
+                  }
+                },
+                metadata: ontology_metadata
+              }
+
+              cache_dir = ConfigFile.include?(:cache) ? ConfigFile[:cache] : '/tmp'
+              # ::File.open("#{::File.absolute_path(cache_dir)}/#{spreadsheet_id}.json", 'wb') do |f|
+              ::File.open("#{::File.absolute_path(cache_dir)}/#{sheet_id}.json", 'wb') do |f|
+                f.puts data.to_json
               end
 
               data
@@ -116,11 +127,12 @@ module Solis
               raise Solis::Error::GeneralError, e.message
             end
 
-            def parse_entity_data(name, graph_prefix, _graph_name, e)
+            def parse_entity_data(entity_name, graph_prefix, _graph_name, e, options = {})
               properties = {}
               entity_data = e
               if entity_data && !entity_data.nil? && (entity_data.count > 0)
                 entity_data.each do |p|
+                  property_name = I18n.transliterate(p['name'].strip)
                   min_max = {}
 
                   %w[min max].each do |n|
@@ -130,24 +142,54 @@ module Solis
                                    ''
                                  end
                   end
-                  puts "#{name}.#{p['name']}"
+                  puts "#{entity_name}.#{property_name}"
                   unless p.key?('name')
+                    puts "No 'name' property found"
                     pp p
                   end
-                  properties[p['name'].strip] = {
-                    datatype: p['datatype'],
-                    path: "#{graph_prefix}:#{p['name'].to_s.classify}",
-                    cardinality: { min: min_max['min'], max: min_max['max'] },
-                    same_as: p['sameAs'],
-                    description: p['description']
-                  }
+
+                  if properties.key?(property_name)
+                    puts "Found #{entity_name}.#{property_name}"
+                  else
+                    datatype_prefix, datatype_name = p['datatype'].split(':')
+                    properties[property_name] = {
+                      datatype: p['datatype'],
+                      path: "#{graph_prefix}:#{property_name.to_s.classify}",
+                      cardinality: { min: min_max['min'], max: min_max['max'] },
+                      same_as: p['sameAs'],
+                      description: p['description']
+                    }
+
+                    # unless graph_prefix.eql?(datatype_prefix.to_sym)
+                    #   prefixes = options[:prefixes]
+                    #   if prefixes.key?(datatype_prefix.to_sym) && !prefixes[datatype_prefix.to_sym][:sheet_url].empty?
+                    #     tmp = URI(prefixes[datatype_prefix.to_sym][:sheet_url]).path.split('/')
+                    #     spreadsheet_id = tmp[tmp.index('d') + 1]
+                    #
+                    #     processed_remote_sheet = {}
+                    #     if prefixes[datatype_prefix.to_sym].key?(:data) && !prefixes[datatype_prefix.to_sym][:data].empty?
+                    #       processed_remote_sheet = prefixes[datatype_prefix.to_sym][:data]
+                    #     else
+                    #       if options[:follow]
+                    #         sleep 30
+                    #         remote_sheet = read_sheets(options[:key], spreadsheet_id, { from_cache: true })
+                    #         processed_remote_sheet = process_sheet(options[:key], remote_sheet, {follow: false})
+                    #         prefixes[datatype_prefix.to_sym][:data] = processed_remote_sheet
+                    #       end
+                    #     end
+                    #
+                    #     processed_remote_sheet
+                    #   end
+                    # end
+
+                  end
                 end
               end
 
               properties
             end
 
-            def build_plantuml(data)
+            def build_plantuml(datas)
               out = %(@startuml
 !pragma layout elk
 skinparam classFontSize 14
@@ -157,10 +199,11 @@ skinparam componentStyle uml2
 skinparam wrapMessageWidth 100
 skinparam ArrowColor #Maroon
 
-title #{data[:metadata][:title]} - #{data[:metadata][:version]} - #{Time.now}
+title #{datas.first[:metadata][:title]} - #{datas.first[:metadata][:version]} - #{Time.now}
               )
 
-              out += "\npackage #{data[:ontologies][:base][:prefix]} {\n"
+              out += "\npackage #{datas.first[:ontologies][:base][:prefix]} {\n"
+              datas.each do |data|
               data[:entities].each do |entity_name, metadata|
                 out += "\nclass #{entity_name}"
 
@@ -186,7 +229,7 @@ title #{data[:metadata][:title]} - #{data[:metadata][:version]} - #{Time.now}
                   out += "#{entity_name} --|> #{sub_class.split(':').last}\n" unless sub_class.empty?
                 end
               end
-
+              end
               out += %(
 hide circle
 hide methods
@@ -195,6 +238,8 @@ hide empty members
           )
 
               out
+            rescue StandardError => e
+              puts e.message
             end
 
             def datatype_lookup(datatype, as = :sql)
@@ -210,86 +255,14 @@ hide empty members
               datatypes[datatype][as]
             end
 
-            def build_plantuml_erd(data)
-              cardinality_min = { '0' => '|o', '' => '}o', '1' => '||' }
-              cardinality_max = { '0' => 'o|', '' => 'o{', '1' => '||' }
-
-              out = %(@startuml
-skinparam classFontSize 14
-!define LIGHTORANGE
-skinparam groupInheritance 1
-skinparam componentStyle uml2
-skinparam wrapMessageWidth 100
-skinparam ArrowColor #Maroon
-skinparam linetype ortho
-
-title #{data[:metadata][:title]} - #{data[:metadata][:version]} - #{Time.now}
-              )
-
-              out += "\npackage #{data[:ontologies][:base][:prefix]} {\n"
-              relations = []
-              data[:entities].each do |_entity_name, metadata|
-                table_name = metadata[:plural].to_s.underscore
-                # out += "\nentity \"#{entity_name}\" as #{table_name}"
-                out += "\nentity \"#{table_name}\" as #{table_name}"
-
-                properties = metadata[:properties]
-                # relations = []
-                unless properties.nil? || properties.empty?
-                  out += "{\n"
-                  properties.each do |property, property_metadata|
-                    if property.to_s.eql?('id')
-                      out += "\t *#{property} : #{datatype_lookup(property_metadata[:datatype], :sql)} <<generated>>\n"
-                      out += "--\n"
-                    else
-                      mandatory = property_metadata[:cardinality][:min].to_i > 0
-                      is_fk = property_metadata[:datatype].split(':').first.eql?(data[:ontologies][:base][:prefix].to_s) ? true : false
-                      out += "\t #{mandatory ? '*' : ''}#{property}#{is_fk ? '_id' : ''} : #{datatype_lookup(
-                        property_metadata[:datatype], :sql
-                      )} #{is_fk ? '<<FK>>' : ''} \n"
-                    end
-
-                    unless property_metadata[:datatype].split(':').first.eql?(data[:ontologies][:base][:prefix].to_s)
-                      next
-                    end
-
-                    cmin = cardinality_min[(property_metadata[:cardinality][:min]).to_s]
-                    cmax = cardinality_max[(property_metadata[:cardinality][:max]).to_s]
-
-                    # relations << " #{entity_name.to_s.underscore} #{cmin}--o{ #{property_metadata[:datatype].split(':').last.to_s.underscore} "
-                    # ref_table_name = property_metadata[:datatype].split(':').last.to_s.underscore
-                    ref_table_name = [property_metadata[:datatype].split(':').last.to_sym,
-                                      property_metadata[:path].split(':').last.classify.to_sym].map do |m|
-                      data[:entities][m].nil? ? nil : data[:entities][m][:plural].underscore
-                    end.compact.first
-
-                    relations << " #{table_name} #{cmin}--#{cmax} #{ref_table_name} "
-                  end
-                  out += "}\n"
-                end
-
-                out += "\n"
-                # out += "#{entity_name} }o-- #{metadata[:sub_class_of].split(':').last}\n" unless metadata[:sub_class_of].empty?
-              end
-              out += relations.join("\n")
-
-              out += %(
-hide circle
-hide methods
-hide empty members
-@enduml
-          )
-
-              out
-            end
-
-            def build_shacl(data)
-              shacl_prefix = data[:ontologies][:all].select { |_, v| v[:uri] =~ /shacl/ }.keys.first
+            def build_shacl(datas)
+              shacl_prefix = datas.first[:ontologies][:all].select { |_, v| v[:uri] =~ /shacl/ }.keys.first
               shacl_prefix = 'sh' if shacl_prefix.nil?
 
-              out = header(data)
+              out = header(datas.first)
 
-              data[:entities].each do |entity_name, metadata|
+              datas.each do |data|
+                data[:entities].each do |entity_name, metadata|
                 graph_prefix = data[:ontologies][:base][:prefix]
                 graph_name = data[:ontologies][:base][:uri]
 
@@ -301,7 +274,7 @@ hide empty members
                 if node && !node.empty?
                   node = node.first if node.is_a?(Array)
                   node = node.strip
-                  node += 'Shape' if node != /Shape$/ && node =~ /^#{graph_prefix}:/
+                  node += 'Shape' if node != /Shape$/ # && node =~ /^#{graph_prefix}:/
                 else
                   node = target_class
                 end
@@ -345,22 +318,25 @@ hide empty members
                 end
                 out += ".\n"
               end
-
+              end
               out
+            rescue StandardError => e
+              puts e.message
             end
 
-            def build_schema(data)
+            def build_schema(datas)
               classes = {}
               datatype_properties = {}
               object_properties = {}
 
               format = :ttl
-              graph_prefix = data[:ontologies][:base][:prefix]
-              graph_name = data[:ontologies][:base][:uri]
+              graph_prefix = datas.first[:ontologies][:base][:prefix]
+              graph_name = datas.first[:ontologies][:base][:uri]
 
               all_prefixes = {}
-              data[:ontologies][:all].each { |k, v| all_prefixes[k] = v[:uri] }
+              datas.first[:ontologies][:all].each { |k, v| all_prefixes[k] = v[:uri] }
 
+              datas.each do |data|
               data[:entities].each do |entity_name, metadata|
                 classes[entity_name] = {
                   comment: metadata[:description],
@@ -404,15 +380,16 @@ hide empty members
                   data[:entities][entity_name][:sub_class_of] = subclass_data
                 end
               end
+              end
 
               lp = RDF::StrictVocabulary(graph_name)
               o = ::Class.new(lp) do
                 ontology(graph_name.to_sym, {
-                  "dc11:title": data[:metadata][:title].freeze,
-                  "dc11:description": data[:metadata][:description].freeze,
+                  "dc11:title": datas.first[:metadata][:title].freeze,
+                  "dc11:description": datas.first[:metadata][:description].freeze,
                   "dc11:date": Time.now.to_s.freeze,
-                  "dc11:creator": data[:metadata][:author].freeze,
-                  "owl:versionInfo": data[:metadata][:version].freeze,
+                  "dc11:creator": datas.first[:metadata][:author].freeze,
+                  "owl:versionInfo": datas.first[:metadata][:version].freeze,
                   type: 'owl:Ontology'.freeze
                 })
 
@@ -433,6 +410,7 @@ hide empty members
               graph = RDF::Graph.new
               graph.graph_name = RDF::URI(graph_name)
 
+              datas.each do |data|
               data[:entities].select { |_k, v| !v[:same_as].empty? }.each do |k, v|
                 prefix, verb = v[:same_as].split(':')
                 rdf_vocabulary = RDF::Vocabulary.from_sym(prefix.upcase)
@@ -442,178 +420,27 @@ hide empty members
               rescue StandardError => e
                 puts e.message
               end
+              end
 
               graph << o.to_enum
 
               graph.dump(format, prefixes: all_prefixes)
+            rescue StandardError => e
+              puts e.message
             end
 
-            def build_inflections(data)
+            def build_inflections(datas)
               inflections = {}
+              datas.each do |data|
               data[:entities].each do |entity, metadata|
                 inflections[entity] = metadata[:plural]
                 inflections[entity.to_s.underscore.to_sym] = metadata[:plural].underscore
               end
+              end
 
               inflections.to_json
-            end
-
-            def build_sql(data)
-              graph_prefix = data[:ontologies][:base][:prefix]
-              out = "--\n-- #{data[:metadata][:title]} - #{data[:metadata][:version]} - #{Time.now}\n"
-              out += "-- description: #{data[:metadata][:description]}\n"
-              out += "-- author: #{data[:metadata][:author]}\n--\n\n"
-
-              out += %(CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-DROP SCHEMA IF EXISTS #{graph_prefix} CASCADE;
-CREATE SCHEMA #{graph_prefix};
-
-)
-              data[:entities].each do |entity_name, metadata|
-                table_name = metadata[:plural].to_s.underscore
-                out += "CREATE TABLE #{graph_prefix}.#{table_name}(\n"
-
-                properties = metadata[:properties]
-                properties.each_with_index do |(property, property_metadata), i|
-                  mandatory = property_metadata[:cardinality][:min].to_i > 0
-                  is_fk = property_metadata[:datatype].split(':').first.eql?(data[:ontologies][:base][:prefix].to_s) ? true : false
-                  if data[:entities][property_metadata[:datatype].split(':').last.to_sym].nil? && is_fk
-                    raise Solis::Error::NotFoundError,
-                          "#{entity_name}.#{property} Not found in _ENTITIES tab"
-                  end
-
-                  if is_fk
-                    references = data[:entities][property_metadata[:datatype].split(':').last.to_sym][:plural].to_s.underscore
-                  end
-
-                  out += ", \n" if i > 0
-                  if property.to_s.eql?('id')
-                    # out += "\t#{property} #{datatype_lookup(property_metadata[:datatype], :sql)}#{mandatory ? ' NOT NULL' : ''} PRIMARY KEY"
-                    out += "\t#{property} SERIAL#{mandatory ? ' NOT NULL' : ''} PRIMARY KEY"
-                  else
-                    out += "\t#{property}#{is_fk ? '_id' : ''} #{datatype_lookup(property_metadata[:datatype],
-                                                                                 :sql)}#{mandatory ? ' NOT NULL' : ''}#{is_fk ? " REFERENCES #{graph_prefix}.#{references}(id)" : ''}"
-                  end
-                end
-
-                out += ");\n\n"
-              end
-
-              out
-            end
-
-            def build_erd(data, type = :uml)
-              out = erd_header(data, type)
-              all_tables = {}
-              tables = {}
-              relations = []
-              references = {}
-              every_entity(data).each do |table|
-                case type
-                when :uml
-                  d = table[:table].call(type)
-                  out += d[:out]
-                  relations << d[:relations] unless d[:relations].empty?
-                  out += "\n\n"
-                  #references << d[:references]
-                when :sql
-                  all_tables[table[:name]] = table
-                  d = table[:table].call(type)
-                  tables[table[:name]] = d[:out]
-
-                  d[:references].each do |k, v|
-                    references[k] = (references.include?(k) ? references[k] : 0) + v
-                  end
-                end
-              end
-
-              references = references.sort_by { |k, v| -v }.to_h #each{|m| r[m[0]] = m[1]}
-
-              r = references.sort_by { |k, v|
-                k = k[0]
-                relation = all_tables.key?(k) ? all_tables[k][:properties].map { |s| s[:references] }.compact.first : nil
-
-                a = references.keys.index(k)
-                b = references.keys.index(relation)
-                b = 0 if b.nil?
-                a = 0 if a.nil?
-
-                b = a + b if b < a
-
-                b
-              }
-
-              references = r.to_h
-
-              if type.eql?(:sql)
-                all_keys = references.keys
-                t = tables.sort_by { |k, v| all_keys.include?(k) ? all_keys.index(k) : 0 }
-                out += t.map { |m| m[1] }.join("\n")
-              end
-
-              #              ::File.open("#{ConfigFile[:cache]}/test.json", 'wb') {|f| f.puts references.to_json}
-
-              out += relations.sort.uniq.join("\n")
-              out += erd_footer(data, type)
-
-              out
-            end
-
-            def erd_header(data, type)
-              header = ''
-
-              case type
-              when :uml
-                header = %(@startuml
-skinparam classFontSize 14
-!define LIGHTORANGE
-skinparam groupInheritance 1
-skinparam componentStyle uml2
-skinparam wrapMessageWidth 100
-skinparam ArrowColor #Maroon
-skinparam linetype ortho
-
-title #{data[:metadata][:title]} - #{data[:metadata][:version]} - #{Time.now}
-
-package #{data[:ontologies][:base][:prefix]} {
-)
-              when :sql
-                graph_prefix = data[:ontologies][:base][:prefix]
-                header = %(--
--- #{data[:metadata][:title]} - #{data[:metadata][:version]} - #{Time.now}
--- description: #{data[:metadata][:description]}
--- author: #{data[:metadata][:author]}
---
-
-
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-DROP SCHEMA IF EXISTS #{graph_prefix} CASCADE;
-CREATE SCHEMA #{graph_prefix};
-
-
-)
-              end
-
-              header
-            end
-
-            def erd_footer(_data, type = :uml)
-              footer = ''
-
-              case type
-              when :uml
-                footer = %(
-
-hide circle
-hide methods
-hide empty members
-@enduml
-)
-              when :sql
-                footer = ''
-              end
-
-              footer
+            rescue StandardError => e
+              puts e.message
             end
 
             def every_entity(data)
@@ -756,20 +583,53 @@ hide empty members
 
               "#{out}\n"
             end
+
+            def spreadsheet_id_from_url(sheet_url)
+              tmp = URI(sheet_url).path.split('/')
+              spreadsheet_id = tmp[tmp.index('d') + 1]
+            end
           end
 
-          data = read_sheets(key, spreadsheet_id, options)
+          sheet_data = read_sheets(key, spreadsheet_id, options)
 
-          shacl = build_shacl(data)
-          plantuml = build_plantuml(data)
-          #plantuml_erd = build_plantuml_erd(data)
-          plantuml_erd = build_erd(data, :uml)
-          schema = build_schema(data)
-          inflections = build_inflections(data)
-          sql = build_erd(data, :sql)
-          #erd = build_erd(data, :uml)
-          { inflections: inflections, shacl: shacl, schema: schema, plantuml: plantuml,
-            plantuml_erd: plantuml_erd, sql: sql }
+          if sheet_data.is_a?(Hash)
+            raise "No _REFERENCES sheet found" unless sheet_data.key?("_REFERENCES")
+          #read other ontologies
+            Solis::LOGGER.info('Reading referenced ontologies')
+            references = sheet_data['_REFERENCES'].map do |reference|
+              {sheet_url: reference['sheeturl'], description: reference['description']}
+            end
+
+            cache_dir = ConfigFile.include?(:cache) ? ConfigFile[:cache] : '/tmp'
+            ::File.open("#{::File.absolute_path(cache_dir)}/#{spreadsheet_id}.json", 'wb') do |f|
+              f.puts references.to_json
+            end
+          else
+            references = sheet_data
+          end
+
+          datas = []
+          references.each do |v|
+            sheet_id = spreadsheet_id_from_url(v[:sheet_url])
+
+            sheet_data = read_sheets(key, sheet_id, options)
+            if sheet_data.key?("_PREFIXES")
+              datas << process_sheet(key, sheet_id, sheet_data)
+              sleep 30
+            else
+              datas << sheet_data
+            end
+          end
+
+          Solis::LOGGER.info('Generating SHACL')
+          shacl = build_shacl(datas)
+          Solis::LOGGER.info('Generating PLANTUML')
+          plantuml = build_plantuml(datas)
+          Solis::LOGGER.info('Generating SCHEMA')
+          schema = build_schema(datas)
+          Solis::LOGGER.info('Generating INFLECTIONS')
+          inflections = build_inflections(datas)
+          { inflections: inflections, shacl: shacl, schema: schema, plantuml: plantuml}
         end
       end
     end

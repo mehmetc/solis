@@ -69,6 +69,9 @@ module Solis
             end
           elsif datatype.nil? && node.is_a?(RDF::URI)
             node.value.split('/').last.gsub(/Shape$/, '').to_sym
+            # normalize ex."https://data.q.odis.be/person#Name" to Name
+            #node.value.split('/').last.gsub(/Shape$/, '').split('#').last.to_sym
+            #node.value.split('/').last.gsub(/Shape$/, '').gsub('#','').camelize.to_sym
           elsif datatype =~ /^http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns/
             case datatype
             when /http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns#langString/

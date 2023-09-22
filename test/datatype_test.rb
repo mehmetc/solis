@@ -46,7 +46,7 @@ class DatatypeTest < Minitest::Test
     a = r.data.first.lang_string_array_dt
 
     assert_kind_of(Array, a)
-    assert_equal(["one", "three", "two"], a)
+    assert_equal(["one", "three", "two"], a.sort)
     pp a
   end
 

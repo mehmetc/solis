@@ -79,6 +79,9 @@ module Solis
       unless @inflections.nil?
         raise "Inflection file not found #{File.absolute_path(@inflections)}" unless File.exist?(@inflections)
         JSON.parse(File.read(@inflections)).each do |s, p|
+          raise "No plural found" if s.nil? && p.nil?
+          raise "No plural found for #{p}" if s.nil?
+          raise "No plural found for #{s}" if p.nil?
           ActiveSupport::Inflector.inflections.irregular(s, p)
         end
       end
@@ -89,6 +92,7 @@ module Solis
           LOGGER.warn("Dangling entity found #{_[:target_class].to_s} removing")
           next
         end
+        #@shapes[shape_name][:attributes].select { |_, metadata| metadata.key?(:node_kind) && !metadata[:node_kind].nil? }.values.map { |m| m[:datatype].to_s.split('#').last }
         @shapes[shape_name][:attributes].select { |_, metadata| metadata.key?(:node_kind) && !metadata[:node_kind].nil? }.values.map { |m| m[:datatype].to_s }
       end
       shape_keys += @shapes.keys
@@ -221,6 +225,10 @@ module Solis
       relations.each_key do |k|
         next if relations[k][:node_kind].is_a?(RDF::URI) && relations[k][:class].value.gsub(@graph_name, '').gsub('Shape', '').eql?(shape_name)
         relation_shape = relations[k][:class].value.gsub(@graph_name, '').gsub('Shape', '')
+        if relation_shape =~ /\//
+          relation_shape = relations[k][:class].value.split('/').last.gsub('Shape','')
+        end
+
         shape_as_resource(relation_shape, stack_level << relation_shape) unless stack_level.include?(relation_shape)
       end
 
