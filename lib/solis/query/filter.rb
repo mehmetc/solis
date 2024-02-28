@@ -101,8 +101,13 @@ module Solis
               value[:value].each do |v|
                 if metadata[:datatype_rdf].eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString')
                     filter  = "?concept <#{metadata[:path]}> ?__search#{i} "
-                    filter += "FILTER(langMatches( lang(?__search#{i}), \"#{v[:"@language"]}\" )). "
-                    search_for = v[:"@value"].is_a?(Array) ? v[:"@value"].first : v[:"@value"]
+                    if v.is_a?(Hash)
+                      filter += "FILTER(langMatches( lang(?__search#{i}), \"#{v[:"@language"]}\" )). "
+                      search_for = v[:"@value"].is_a?(Array) ? v[:"@value"].first : v[:"@value"]
+                    else
+                      search_for = v
+                    end
+
                     search_for = normalize_string(search_for)
                     filter += "FILTER(str(?__search#{i}) #{not_operator}#{value[:operator]} \"#{search_for}\"#{datatype}) .\n"
                 else

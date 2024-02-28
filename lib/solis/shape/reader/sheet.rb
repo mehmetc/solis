@@ -156,7 +156,7 @@ module Solis
                       datatype: p['datatype'],
                       path: "#{graph_prefix}:#{property_name.to_s.classify}",
                       cardinality: { min: min_max['min'], max: min_max['max'] },
-                      same_as: p['sameAs'],
+                      same_as: p['sameas'],
                       description: p['description']
                     }
 
@@ -337,49 +337,49 @@ hide empty members
               datas.first[:ontologies][:all].each { |k, v| all_prefixes[k] = v[:uri] }
 
               datas.each do |data|
-              data[:entities].each do |entity_name, metadata|
-                classes[entity_name] = {
-                  comment: metadata[:description],
-                  label: entity_name.to_s,
-                  type: 'owl:Class',
-                  subClassOf: metadata[:sub_class_of]
-                }
-
-                metadata[:properties].each do |property, property_metadata|
-                  attribute = property.to_s.strip
-                  description = property_metadata[:description]
-                  path = "#{graph_name}#{attribute}"
-                  datatype = property_metadata[:datatype]
-
-                  schema_data = datatype_properties[attribute] || {}
-                  domain = schema_data[:domain] || []
-                  domain << "#{graph_name}#{entity_name}"
-                  datatype_properties[attribute] = {
-                    domain: domain,
-                    comment: description,
-                    label: attribute.to_s,
-                    range: datatype,
-                    type: 'rdf:Property'
+                data[:entities].each do |entity_name, metadata|
+                  classes[entity_name] = {
+                    comment: metadata[:description],
+                    label: entity_name.to_s,
+                    type: 'owl:Class',
+                    subClassOf: metadata[:sub_class_of]
                   }
-                  unless property_metadata[:same_as].nil? || property_metadata[:same_as].empty?
-                    datatype_properties[attribute]['owl:sameAs'] =
-                      property_metadata[:same_as]
-                  end
 
-                  subclass_data = data[:entities][entity_name][:sub_class_of] || []
-                  unless property_metadata[:cardinality][:min].empty?
-                    subclass_data << RDF::Vocabulary.term(type: 'owl:Restriction',
-                                                          onProperty: path,
-                                                          minCardinality: property_metadata[:cardinality][:min])
+                  metadata[:properties].each do |property, property_metadata|
+                    attribute = property.to_s.strip
+                    description = property_metadata[:description]
+                    path = "#{graph_name}#{attribute}"
+                    datatype = property_metadata[:datatype]
+
+                    schema_data = datatype_properties[attribute] || {}
+                    domain = schema_data[:domain] || []
+                    domain << "#{graph_name}#{entity_name}"
+                    datatype_properties[attribute] = {
+                      domain: domain,
+                      comment: description,
+                      label: attribute.to_s,
+                      range: datatype,
+                      type: 'rdf:Property'
+                    }
+                    unless property_metadata[:same_as].nil? || property_metadata[:same_as].empty?
+                      datatype_properties[attribute]['owl:sameAs'] =
+                        property_metadata[:same_as]
+                    end
+
+                    subclass_data = data[:entities][entity_name][:sub_class_of] || []
+                    unless property_metadata[:cardinality][:min].empty?
+                      subclass_data << RDF::Vocabulary.term(type: 'owl:Restriction',
+                                                            onProperty: path,
+                                                            minCardinality: property_metadata[:cardinality][:min])
+                    end
+                    unless property_metadata[:cardinality][:max].empty?
+                      subclass_data << RDF::Vocabulary.term(type: 'owl:Restriction',
+                                                            onProperty: path,
+                                                            maxCardinality: property_metadata[:cardinality][:max])
+                    end
+                    data[:entities][entity_name][:sub_class_of] = subclass_data
                   end
-                  unless property_metadata[:cardinality][:max].empty?
-                    subclass_data << RDF::Vocabulary.term(type: 'owl:Restriction',
-                                                          onProperty: path,
-                                                          maxCardinality: property_metadata[:cardinality][:max])
-                  end
-                  data[:entities][entity_name][:sub_class_of] = subclass_data
                 end
-              end
               end
 
               lp = RDF::StrictVocabulary(graph_name)

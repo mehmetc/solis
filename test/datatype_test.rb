@@ -113,6 +113,7 @@ class DatatypeTest < Minitest::Test
     r = EveryDataTypeResource.all({filter: {id: '2'}})
     data = r.data.first
 
+    puts data.to_ttl
     assert_equal(1, data.datetimeinterval_array_dt.size)
     assert_includes(dt, data.datetimeinterval_array_dt.first)
   end

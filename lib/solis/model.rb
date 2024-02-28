@@ -108,30 +108,49 @@ module Solis
 
     def destroy
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
-      before_delete_proc&.call(self)
-
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
-      graph = as_graph(klass = self, resolve_all = false)
-      Solis::LOGGER.info graph.dump(:ttl) if ConfigFile[:debug]
 
-      result = sparql.delete_data(graph, graph: graph.name)
+      raise Solis::Error::QueryError, "#{self.id} is still referenced, refusing to delete" if is_referenced?(sparql)
+      #sparql.query('delete{}')
+      before_delete_proc&.call(self)
+      #      graph = as_graph(self, false)
+      #      Solis::LOGGER.info graph.dump(:ttl) if ConfigFile[:debug]
+
+      query = %(
+with <#{self.class.graph_name}>
+delete {?s ?p ?o}
+where {
+values ?s {<#{self.graph_id}>}
+?s ?p ?o }
+      )
+      result = sparql.query(query)
+
+      #      result = sparql.delete_data(graph, graph: graph.name)
       after_delete_proc&.call(result)
       result
     end
 
     def save(validate_dependencies = true)
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
+      sparql = SPARQL::Client.new(self.class.sparql_endpoint)
 
       before_create_proc&.call(self)
-      sparql = SPARQL::Client.new(self.class.sparql_endpoint)
-      graph = as_graph(self, validate_dependencies)
 
-      # File.open('/Users/mehmetc/Dropbox/AllSources/LP/graphiti-api/save.ttl', 'wb') do |file|
-      #   file.puts graph.dump(:ttl)
-      # end
-      Solis::LOGGER.info SPARQL::Client::Update::InsertData.new(graph, graph: graph.name).to_s if ConfigFile[:debug]
+      if exists?(sparql)
+        data = Model.properties_to_hash(self)
 
-      result = sparql.insert_data(graph, graph: graph.name)
+        result = update(data)
+      else
+        graph = as_graph(self, validate_dependencies)
+
+        # File.open('/Users/mehmetc/Dropbox/AllSources/LP/graphiti-api/save.ttl', 'wb') do |file|
+        #   file.puts graph.dump(:ttl)
+        # end
+        Solis::LOGGER.info SPARQL::Client::Update::InsertData.new(graph, graph: graph.name).to_s if ConfigFile[:debug]
+
+        result = sparql.insert_data(graph, graph: graph.name)
+      end
+
       after_create_proc&.call(result)
       result
     rescue StandardError => e
@@ -144,7 +163,7 @@ module Solis
       raise Solis::Error::GeneralError, "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
 
       attributes = data.include?('attributes') ? data['attributes'] : data
-      raise "id is mandatory in attributes" unless attributes.keys.include?('id')
+      raise "id is mandatory when updating" unless attributes.keys.include?('id')
 
       id = attributes.delete('id')
 
@@ -155,14 +174,12 @@ module Solis
       updated_klass = original_klass.deep_dup
 
       attributes.each_pair do |key, value|
-        updated_klass.send(:"#{key}=", value)
+        updated_klass.instance_variable_set("@#{key}", value)
       end
 
       before_update_proc&.call(original_klass, updated_klass)
 
       delete_graph = as_graph(original_klass, false)
-      # where_graph = RDF::Graph.new
-      # where_graph.name = RDF::URI(self.class.graph_name)
 
       where_graph = RDF::Graph.new(graph_name: RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{id}"), data: RDF::Repository.new)
 
@@ -176,16 +193,16 @@ module Solis
 
       insert_graph = as_graph(updated_klass, true)
 
-      #Solis::LOGGER.info delete_graph.dump(:ttl) if ConfigFile[:debug]
-      #Solis::LOGGER.info insert_graph.dump(:ttl) if ConfigFile[:debug]
-      #Solis::LOGGER.info where_graph.dump(:ttl) if ConfigFile[:debug]
+      puts delete_graph.dump(:ttl) #if ConfigFile[:debug]
+      puts insert_graph.dump(:ttl) #if ConfigFile[:debug]
+      puts where_graph.dump(:ttl) #if ConfigFile[:debug]
 
       #if ConfigFile[:debug]
       delete_insert_query = SPARQL::Client::Update::DeleteInsert.new(delete_graph, insert_graph, where_graph, graph: insert_graph.name).to_s
       delete_insert_query.gsub!('_:p', '?p')
-      Solis::LOGGER.info delete_insert_query
+      puts delete_insert_query
       data = sparql.query(delete_insert_query)
-      pp data
+      #pp data
       #end
 
       #      sparql.delete_insert(delete_graph, insert_graph, where_graph, graph: insert_graph.name)
@@ -207,10 +224,23 @@ module Solis
       raise e
     end
 
+    def graph_id
+      "#{self.class.graph_name}#{self.name.tableize}/#{self.id}"
+    end
+
+    def is_referenced?(sparql)
+      sparql.query("ASK WHERE { ?s ?p <#{self.graph_id}>. filter (!contains(str(?p), '_audit'))}")
+    end
+
+    def exists?(sparql)
+      sparql.query("ASK WHERE { <#{self.graph_id}> ?p ?o }")
+    end
+
     def self.make_id_for(model)
       id = model.instance_variable_get("@id")
       if id.nil? || (id.is_a?(String) && id&.empty?)
-        model.instance_variable_set("@id", SecureRandom.uuid)
+        id = SecureRandom.uuid
+        model.instance_variable_set("@id", id)
       end
       model
     end
@@ -410,7 +440,7 @@ module Solis
         data = [data] unless data.is_a?(Array)
 
         data.each do |d|
-          if defined?(d.name) && self.class.graph.shape?(d.name)
+          if defined?(d.name) && self.class.graph.shape?(d.name) && resolve_all
             if self.class.graph.shape_as_model(d.name.to_s).metadata[:attributes].select { |_, v| v[:node_kind].is_a?(RDF::URI) }.size > 0 &&
               hierarchy.select { |s| s =~ /^#{d.name.to_s}/ }.size == 0
               internal_resolve = false
@@ -422,6 +452,8 @@ module Solis
               #d = "#{klass.class.graph_name}#{attribute.tableize}/#{d.id}"
               d = "#{klass.class.graph_name}#{d.name.tableize}/#{d.id}"
             end
+          elsif defined?(d.name) && self.class.graph.shape?(d.name)
+            d = "#{klass.class.graph_name}#{d.name.tableize}/#{d.id}"
           end
 
           if d.is_a?(Array) && d.length == 1
@@ -572,6 +604,22 @@ module Solis
       end
       hierarchy.pop
       id
+    end
+
+    def self.properties_to_hash(model)
+      n = {}
+      model.class.metadata[:attributes].each_key do |m|
+        if model.instance_variable_get("@#{m}").is_a?(Array)
+          n[m] = model.instance_variable_get("@#{m}").map { |iv| iv.class.ancestors.include?(Solis::Model) ? properties_to_hash(iv) : iv }
+        elsif model.instance_variable_get("@#{m}").class.ancestors.include?(Solis::Model)
+          n[m] = properties_to_hash(model.instance_variable_get("@#{m}"))
+        else
+          n[m] = model.instance_variable_get("@#{m}")
+        end
+      end
+
+      n.compact!
+      n
     end
   end
 end

@@ -43,8 +43,8 @@ module Solis
         end
         ids = ids.join(" ")
 
-
-        q = query.gsub(/{ ?{ ?VALUES ?} ?}/, "VALUES ?#{id_name} { #{ids} }")
+        language = Graphiti.context[:object]&.language || Solis::Options.instance.get[:language] || 'en'
+        q = query.gsub(/{ ?{ ?VALUES ?} ?}/, "VALUES ?#{id_name} { #{ids} }").gsub(/{ ?{ ?LANGUAGE ?} ?}/, "bind(\"#{language}\" as ?filter_language).")
 
         result = Solis::Query.run(entity, q)
       end
