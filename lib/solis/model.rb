@@ -71,9 +71,9 @@ module Solis
     def query
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
 
-      #before_read_proc&.call(self)
+      # before_read_proc&.call(self)
       result = Solis::Query.new(self)
-      #after_read_proc&.call(result)
+      # after_read_proc&.call(result)
       result
     end
 
@@ -111,7 +111,7 @@ module Solis
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
 
       raise Solis::Error::QueryError, "#{self.id} is still referenced, refusing to delete" if is_referenced?(sparql)
-      #sparql.query('delete{}')
+      # sparql.query('delete{}')
       before_delete_proc&.call(self)
       #      graph = as_graph(self, false)
       #      Solis::LOGGER.info graph.dump(:ttl) if ConfigFile[:debug]
@@ -136,8 +136,8 @@ values ?s {<#{self.graph_id}>}
 
       before_create_proc&.call(self)
 
-      if exists?(sparql)
-        data = Model.properties_to_hash(self)
+      if self.exists?(sparql)
+        data = properties_to_hash(self)
 
         result = update(data)
       else
@@ -174,46 +174,139 @@ values ?s {<#{self.graph_id}>}
       updated_klass = original_klass.deep_dup
 
       attributes.each_pair do |key, value|
+        if value.is_a?(Hash)
+          embedded = self.class.graph.shape_as_model(original_klass.class.metadata[:attributes][key][:datatype].to_s).new(value)
+          if embedded.exists?(sparql)
+            embedded_data = properties_to_hash(embedded)
+            embedded.update(embedded_data)
+          else
+            embedded.save
+          end
+        end
+
         updated_klass.instance_variable_set("@#{key}", value)
       end
 
+      # attributes.each_pair do |key, value|
+      #   updated_klass.instance_variable_set("@#{key}", value)
+      # end
+      # properties_original_klass=Model.properties_to_hash(original_klass)
+      # properties_updated_klass = Model.properties_to_hash(updated_klass)
+      # changes = Hashdiff.diff(properties_original_klass, properties_updated_klass)
+      # pp changes
+      #
+      # #a=self.class.graph.shape_as_model('Identificatienummer').new
+      # changes.each do |change|
+      #   change_type = change[0]
+      #   original_change_entity = change[1]
+      #   change_entity = original_change_entity.split('.').last
+      #   change[1] = change_object
+      #   data = change[2]
+      #
+      #   case change_type
+      #   when '+' # new
+      #     new_entity_hash = {} #self.class.graph.shape_as_model(change_object.classify).new
+      #     Hashdiff.patch!(new_entity_hash, [change])
+      #
+      #     new_entity = self.class.graph.shape_as_model(change_entity.classify).new(new_entity_hash[change_entity])
+      #     new_entity.save
+      #   when '-' # delete
+      #   when '~' # change
+      #   else
+      #     raise RuntimeError, "Unknown change type(#{change_type}) for #{change[1]}"
+      #   end
+      #
+      # end
+
+      # attributes.each_pair do |key, value|
+      #   updated_klass.instance_variable_set("@#{key}", value)
+      #   unless original_klass.class.metadata[:attributes][key][:node_kind].nil?
+      #     inner_model = self.class.graph.shape_as_model(original_klass.class.metadata[:attributes][key][:datatype].to_s)
+      #     if value.is_a?(Hash)
+      #       value.each_pair do |inner_key, inner_value|
+      #         next unless inner_model.metadata[:attributes][inner_key][:node_kind].is_a?(RDF::URI)
+      #         inner_inner_model = self.class.graph.shape_as_model(inner_model.metadata[:attributes][inner_key][:datatype].to_s)
+      #         # if inner_inner_model.class.ancestors.include?(Codetabel) && inner_value.key?('id')
+      #         #   inner_data = inner_inner_model.query.filter({ language: nil, filters: { id: [inner_value['id']] } }).find_all.map { |m| m }&.first
+      #         # else
+      #         inner_value = inner_value.first if inner_value.is_a?(Array)
+      #           inner_data = inner_inner_model.new(inner_value)
+      #           inner_data.save
+      #         # end
+      #       end
+      #     elsif value.is_a?(Array)
+      #       data = value.map do |m|
+      #         if m.is_a?(Hash)
+      #           m.each do |inner_key, inner_value|
+      #             #next if inner_model.metadata[:attributes][inner_key][:class].nil?
+      #             next unless inner_model.metadata[:attributes][inner_key][:node_kind].is_a?(RDF::URI)
+      #             inner_inner_model = self.class.graph.shape_as_model(inner_model.class.metadata[:attributes][inner_key][:datatype].to_s)
+      #             # if inner_inner_model.class.ancestors.include?(Codetabel) && inner_value.key?('id')
+      #             #   inner_data = inner_inner_model.query.filter({ language: nil, filters: { id: [inner_value['id']] } }).find_all.map { |m| m }&.first
+      #             # else
+      #               inner_value = inner_value.first if inner_value.is_a?(Array)
+      #               inner_data = inner_inner_model.new(inner_value)
+      #               inner_data.save
+      #             # end
+      #
+      #             inner_data
+      #           end
+      #         else
+      #           m
+      #         end
+      #       end
+      #     elsif value.is_a?(Object)
+      #       value.save
+      #     end
+      #   end
+      # end
+
       before_update_proc&.call(original_klass, updated_klass)
 
-      delete_graph = as_graph(original_klass, false)
+      properties_orignal_klass = properties_to_hash(original_klass)
+      properties_updated_klsss = properties_to_hash(updated_klass)
 
-      where_graph = RDF::Graph.new(graph_name: RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{id}"), data: RDF::Repository.new)
-
-      if id.is_a?(Array)
-        id.each do |i|
-          where_graph << [RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{i}"), :p, :o]
-        end
-      else
-        where_graph << [RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{id}"), :p, :o]
-      end
-
-      insert_graph = as_graph(updated_klass, true)
-
-      puts delete_graph.dump(:ttl) #if ConfigFile[:debug]
-      puts insert_graph.dump(:ttl) #if ConfigFile[:debug]
-      puts where_graph.dump(:ttl) #if ConfigFile[:debug]
-
-      #if ConfigFile[:debug]
-      delete_insert_query = SPARQL::Client::Update::DeleteInsert.new(delete_graph, insert_graph, where_graph, graph: insert_graph.name).to_s
-      delete_insert_query.gsub!('_:p', '?p')
-      puts delete_insert_query
-      data = sparql.query(delete_insert_query)
-      #pp data
-      #end
-
-      #      sparql.delete_insert(delete_graph, insert_graph, where_graph, graph: insert_graph.name)
-
-      data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
-      if data.nil?
-        sparql.insert_data(insert_graph, graph: insert_graph.name)
+      if Hashdiff.best_diff(properties_orignal_klass, properties_updated_klsss).empty?
+        Solis::LOGGER.info("#{original_klass.class.name} unchanged, skipping")
         data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
-      end
+      else
 
+        delete_graph = as_graph(original_klass, false)
+
+        where_graph = RDF::Graph.new(graph_name: RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{id}"), data: RDF::Repository.new)
+
+        if id.is_a?(Array)
+          id.each do |i|
+            where_graph << [RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{i}"), :p, :o]
+          end
+        else
+          where_graph << [RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{id}"), :p, :o]
+        end
+
+        insert_graph = as_graph(updated_klass, true)
+
+        # puts delete_graph.dump(:ttl) #if ConfigFile[:debug]
+        # puts insert_graph.dump(:ttl) #if ConfigFile[:debug]
+        # puts where_graph.dump(:ttl) #if ConfigFile[:debug]
+
+        # if ConfigFile[:debug]
+        delete_insert_query = SPARQL::Client::Update::DeleteInsert.new(delete_graph, insert_graph, where_graph, graph: insert_graph.name).to_s
+        delete_insert_query.gsub!('_:p', '?p')
+        # puts delete_insert_query
+        data = sparql.query(delete_insert_query)
+        # pp data
+        # end
+
+        #      sparql.delete_insert(delete_graph, insert_graph, where_graph, graph: insert_graph.name)
+
+        data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
+        if data.nil?
+          sparql.insert_data(insert_graph, graph: insert_graph.name)
+          data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
+        end
+      end
       after_update_proc&.call(updated_klass, data)
+
       data
     rescue StandardError => e
       original_graph = as_graph(original_klass, false)
@@ -386,7 +479,7 @@ values ?s {<#{self.graph_id}>}
 
       graph << [id, RDF::RDFV.type, klass_metadata[:target_class]]
 
-      #load existing object and overwrite
+      # load existing object and overwrite
       original_klass = klass.query.filter({ filters: { id: [uuid] } }).find_all { |f| f.id == uuid }.first || nil
 
       if original_klass.nil?
@@ -411,11 +504,9 @@ values ?s {<#{self.graph_id}>}
     def make_graph(graph, hierarchy, id, klass, klass_metadata, resolve_all)
       klass_metadata[:attributes].each do |attribute, metadata|
         data = klass.instance_variable_get("@#{attribute}")
-
-        raise Solis::Error::InvalidAttributeError,
-              "#{hierarchy.join('.')}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}" if data.nil? &&
-          metadata[:mincount] > 0 &&
-          graph.query(RDF::Query.new({ attribute.to_sym => { RDF.type => metadata[:node] } })).size == 0
+        if data.nil? && metadata[:mincount] > 0 && graph.query(RDF::Query.new({ attribute.to_sym => { RDF.type => metadata[:node] } })).size == 0
+          raise Solis::Error::InvalidAttributeError, "#{hierarchy.join('.')}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}"
+        end
 
         # skip if nil or an object that is empty
         next if data.nil? || ([Hash, Array, String].include?(data.class) && data&.empty?)
@@ -427,7 +518,7 @@ values ?s {<#{self.graph_id}>}
           data = data.to_json
         end
 
-        #make it an object
+        # make it an object
         unless metadata[:node_kind].nil?
           model = self.class.graph.shape_as_model(metadata[:datatype].to_s)
           if data.is_a?(Hash)
@@ -449,7 +540,7 @@ values ?s {<#{self.graph_id}>}
               internal_resolve = false
               d = build_ttl_objekt2(graph, d, hierarchy, internal_resolve)
             else
-              #d = "#{klass.class.graph_name}#{attribute.tableize}/#{d.id}"
+              # d = "#{klass.class.graph_name}#{attribute.tableize}/#{d.id}"
               d = "#{klass.class.graph_name}#{d.name.tableize}/#{d.id}"
             end
           elsif defined?(d.name) && self.class.graph.shape?(d.name)
@@ -554,7 +645,7 @@ values ?s {<#{self.graph_id}>}
           end
 
           if model && d.is_a?(Hash)
-            #TODO: figure out in what use case we need the parent_model
+            # TODO: figure out in what use case we need the parent_model
             # model_instance = if parent_model
             #                     parent_model.new(d)
             #                  else
@@ -606,7 +697,7 @@ values ?s {<#{self.graph_id}>}
       id
     end
 
-    def self.properties_to_hash(model)
+    def properties_to_hash(model)
       n = {}
       model.class.metadata[:attributes].each_key do |m|
         if model.instance_variable_get("@#{m}").is_a?(Array)
