@@ -351,7 +351,7 @@ module Solis
 
       @sparql_client = SPARQL::Client.new(@sparql_endpoint)
       result = @sparql_client.query("with <#{graph_name}> delete {?s ?p ?o} where{?s ?p ?o}")
-      LOGGER.info(result.first.to_a.first.last.value)
+      LOGGER.info(result)
       true
     end
 

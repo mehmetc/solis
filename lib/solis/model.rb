@@ -1,5 +1,6 @@
 require 'securerandom'
 require 'iso8601'
+require 'hashdiff'
 require_relative 'query'
 
 module Solis
@@ -173,19 +174,48 @@ values ?s {<#{self.graph_id}>}
       raise Solis::Error::NotFoundError if original_klass.nil?
       updated_klass = original_klass.deep_dup
 
-      attributes.each_pair do |key, value|
-        if value.is_a?(Hash)
-          embedded = self.class.graph.shape_as_model(original_klass.class.metadata[:attributes][key][:datatype].to_s).new(value)
-          if embedded.exists?(sparql)
-            embedded_data = properties_to_hash(embedded)
-            embedded.update(embedded_data)
-          else
-            embedded.save
+      attributes.each_pair do |key, value| # check each key. if it is an entity process it
+        unless original_klass.class.metadata[:attributes][key][:node].nil? #it is an entity
+          value = [value] unless value.is_a?(Array)
+          value.each do |sub_value|
+            embedded = self.class.graph.shape_as_model(original_klass.class.metadata[:attributes][key][:datatype].to_s).new(sub_value)
+            if embedded.exists?(sparql)
+              embedded_data = properties_to_hash(embedded)
+              embedded.update(embedded_data)
+            else
+              embedded.save
+            end
           end
         end
 
         updated_klass.instance_variable_set("@#{key}", value)
       end
+
+
+      # attributes.each_pair do |key, value|
+      #   if value.is_a?(Hash)
+      #     embedded = self.class.graph.shape_as_model(original_klass.class.metadata[:attributes][key][:datatype].to_s).new(value)
+      #     if embedded.exists?(sparql)
+      #       embedded_data = properties_to_hash(embedded)
+      #       embedded.update(embedded_data)
+      #     else
+      #       embedded.save
+      #     end
+      #   elsif value.is_a?(Array)
+      #     value.each do |sub_value|
+      #       if sub_value.is_a?(Hash)
+      #         if embedded.exists?(sparql)
+      #           embedded_data = properties_to_hash(embedded)
+      #           embedded.update(embedded_data)
+      #         else
+      #           embedded.save
+      #         end
+      #       end
+      #     end
+      #   end
+      #
+      #   updated_klass.instance_variable_set("@#{key}", value)
+      # end
 
       # attributes.each_pair do |key, value|
       #   updated_klass.instance_variable_set("@#{key}", value)
@@ -264,9 +294,9 @@ values ?s {<#{self.graph_id}>}
       before_update_proc&.call(original_klass, updated_klass)
 
       properties_orignal_klass = properties_to_hash(original_klass)
-      properties_updated_klsss = properties_to_hash(updated_klass)
+      properties_updated_klass = properties_to_hash(updated_klass)
 
-      if Hashdiff.best_diff(properties_orignal_klass, properties_updated_klsss).empty?
+      if Hashdiff.best_diff(properties_orignal_klass, properties_updated_klass).empty?
         Solis::LOGGER.info("#{original_klass.class.name} unchanged, skipping")
         data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
       else
