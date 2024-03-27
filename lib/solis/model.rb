@@ -131,7 +131,7 @@ values ?s {<#{self.graph_id}>}
       result
     end
 
-    def save(validate_dependencies = true)
+    def save(validate_dependencies = true, top_level = true)
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
 
@@ -142,6 +142,29 @@ values ?s {<#{self.graph_id}>}
 
         result = update(data)
       else
+        data = properties_to_hash(self)
+        attributes = data.include?('attributes') ? data['attributes'] : data
+        attributes.each_pair do |key, value| # check each key. if it is an entity process it
+          unless self.class.metadata[:attributes][key][:node].nil? #is it an entity
+            value = [value] unless value.is_a?(Array)
+            value.each do |sub_value|
+              embedded = self.class.graph.shape_as_model(self.class.metadata[:attributes][key][:datatype].to_s).new(sub_value)
+              embedded_readonly_entities = Solis::Options.instance.get[:embedded_readonly].map{|s| s.to_s} || []
+
+              if (embedded.class.ancestors.map{|s| s.to_s} & embedded_readonly_entities).empty? || top_level
+                if embedded.exists?(sparql)
+                  embedded_data = properties_to_hash(embedded)
+                  embedded.update(embedded_data, validate_dependencies, false)
+                else
+                  embedded.save(validate_dependencies, false)
+                end
+              else
+                Solis::LOGGER.info("#{embedded.class.name} is embedded not allowed to change. Skipping")
+              end
+            end
+          end
+        end
+
         graph = as_graph(self, validate_dependencies)
 
         # File.open('/Users/mehmetc/Dropbox/AllSources/LP/graphiti-api/save.ttl', 'wb') do |file|
@@ -160,7 +183,7 @@ values ?s {<#{self.graph_id}>}
       raise e
     end
 
-    def update(data, validate_dependencies = true)
+    def update(data, validate_dependencies = true, top_level = true)
       raise Solis::Error::GeneralError, "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
 
       attributes = data.include?('attributes') ? data['attributes'] : data
@@ -179,117 +202,24 @@ values ?s {<#{self.graph_id}>}
           value = [value] unless value.is_a?(Array)
           value.each do |sub_value|
             embedded = self.class.graph.shape_as_model(original_klass.class.metadata[:attributes][key][:datatype].to_s).new(sub_value)
-            if embedded.exists?(sparql)
-              embedded_data = properties_to_hash(embedded)
-              embedded.update(embedded_data)
+
+            embedded_readonly_entities = Solis::Options.instance.get[:embedded_readonly].map{|s| s.to_s} || []
+
+            if (embedded.class.ancestors.map{|s| s.to_s} & embedded_readonly_entities).empty? || top_level
+              if embedded.exists?(sparql)
+                embedded_data = properties_to_hash(embedded)
+                embedded.update(embedded_data, validate_dependencies, false)
+              else
+                embedded.save(validate_dependencies, false)
+              end
             else
-              embedded.save
+              Solis::LOGGER.info("#{embedded.class.name} is embedded not allowed to change. Skipping")
             end
           end
         end
 
         updated_klass.instance_variable_set("@#{key}", value)
       end
-
-
-      # attributes.each_pair do |key, value|
-      #   if value.is_a?(Hash)
-      #     embedded = self.class.graph.shape_as_model(original_klass.class.metadata[:attributes][key][:datatype].to_s).new(value)
-      #     if embedded.exists?(sparql)
-      #       embedded_data = properties_to_hash(embedded)
-      #       embedded.update(embedded_data)
-      #     else
-      #       embedded.save
-      #     end
-      #   elsif value.is_a?(Array)
-      #     value.each do |sub_value|
-      #       if sub_value.is_a?(Hash)
-      #         if embedded.exists?(sparql)
-      #           embedded_data = properties_to_hash(embedded)
-      #           embedded.update(embedded_data)
-      #         else
-      #           embedded.save
-      #         end
-      #       end
-      #     end
-      #   end
-      #
-      #   updated_klass.instance_variable_set("@#{key}", value)
-      # end
-
-      # attributes.each_pair do |key, value|
-      #   updated_klass.instance_variable_set("@#{key}", value)
-      # end
-      # properties_original_klass=Model.properties_to_hash(original_klass)
-      # properties_updated_klass = Model.properties_to_hash(updated_klass)
-      # changes = Hashdiff.diff(properties_original_klass, properties_updated_klass)
-      # pp changes
-      #
-      # #a=self.class.graph.shape_as_model('Identificatienummer').new
-      # changes.each do |change|
-      #   change_type = change[0]
-      #   original_change_entity = change[1]
-      #   change_entity = original_change_entity.split('.').last
-      #   change[1] = change_object
-      #   data = change[2]
-      #
-      #   case change_type
-      #   when '+' # new
-      #     new_entity_hash = {} #self.class.graph.shape_as_model(change_object.classify).new
-      #     Hashdiff.patch!(new_entity_hash, [change])
-      #
-      #     new_entity = self.class.graph.shape_as_model(change_entity.classify).new(new_entity_hash[change_entity])
-      #     new_entity.save
-      #   when '-' # delete
-      #   when '~' # change
-      #   else
-      #     raise RuntimeError, "Unknown change type(#{change_type}) for #{change[1]}"
-      #   end
-      #
-      # end
-
-      # attributes.each_pair do |key, value|
-      #   updated_klass.instance_variable_set("@#{key}", value)
-      #   unless original_klass.class.metadata[:attributes][key][:node_kind].nil?
-      #     inner_model = self.class.graph.shape_as_model(original_klass.class.metadata[:attributes][key][:datatype].to_s)
-      #     if value.is_a?(Hash)
-      #       value.each_pair do |inner_key, inner_value|
-      #         next unless inner_model.metadata[:attributes][inner_key][:node_kind].is_a?(RDF::URI)
-      #         inner_inner_model = self.class.graph.shape_as_model(inner_model.metadata[:attributes][inner_key][:datatype].to_s)
-      #         # if inner_inner_model.class.ancestors.include?(Codetabel) && inner_value.key?('id')
-      #         #   inner_data = inner_inner_model.query.filter({ language: nil, filters: { id: [inner_value['id']] } }).find_all.map { |m| m }&.first
-      #         # else
-      #         inner_value = inner_value.first if inner_value.is_a?(Array)
-      #           inner_data = inner_inner_model.new(inner_value)
-      #           inner_data.save
-      #         # end
-      #       end
-      #     elsif value.is_a?(Array)
-      #       data = value.map do |m|
-      #         if m.is_a?(Hash)
-      #           m.each do |inner_key, inner_value|
-      #             #next if inner_model.metadata[:attributes][inner_key][:class].nil?
-      #             next unless inner_model.metadata[:attributes][inner_key][:node_kind].is_a?(RDF::URI)
-      #             inner_inner_model = self.class.graph.shape_as_model(inner_model.class.metadata[:attributes][inner_key][:datatype].to_s)
-      #             # if inner_inner_model.class.ancestors.include?(Codetabel) && inner_value.key?('id')
-      #             #   inner_data = inner_inner_model.query.filter({ language: nil, filters: { id: [inner_value['id']] } }).find_all.map { |m| m }&.first
-      #             # else
-      #               inner_value = inner_value.first if inner_value.is_a?(Array)
-      #               inner_data = inner_inner_model.new(inner_value)
-      #               inner_data.save
-      #             # end
-      #
-      #             inner_data
-      #           end
-      #         else
-      #           m
-      #         end
-      #       end
-      #     elsif value.is_a?(Object)
-      #       value.save
-      #     end
-      #   end
-      # end
 
       before_update_proc&.call(original_klass, updated_klass)
 
@@ -360,9 +290,17 @@ values ?s {<#{self.graph_id}>}
     end
 
     def self.make_id_for(model)
+      raise "I need a SPARQL endpoint" if self.sparql_endpoint.nil?
+      sparql = SPARQL::Client.new(self.sparql_endpoint)
       id = model.instance_variable_get("@id")
       if id.nil? || (id.is_a?(String) && id&.empty?)
-        id = SecureRandom.uuid
+        id_retries = 0
+
+        while id.nil? || sparql.query("ASK WHERE { ?s <#{self.graph_name}/id>  \"#{id}\" }")
+          id = SecureRandom.uuid
+          id_retries+=1
+        end
+        LOGGER.info("ID(#{id}) generated for #{self.name} in #{id_retries} retries") if ConfigFile[:debug]
         model.instance_variable_set("@id", id)
       end
       model
