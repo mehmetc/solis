@@ -1,6 +1,7 @@
 require "bundler"
 Bundler.require
 
+require 'ostruct'
 require 'logger'
 require "solis/version"
 require 'solis/config_file'

@@ -394,6 +394,10 @@ values ?s {<#{self.graph_id}>}
       m
     end
 
+    def self.construct(level = 0)
+      raise 'to bo implemented'
+    end
+
     def self.model_before_read(&blk)
       self.before_read_proc = blk
     end

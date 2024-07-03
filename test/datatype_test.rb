@@ -64,7 +64,7 @@ class DatatypeTest < Minitest::Test
       assert_equal("fr", a.class.language)
       assert_kind_of(Array, a.lang_string_array_dt)
       assert_equal(["un", "due", "trois"].sort, a.lang_string_array_dt.sort)
-
+      pp a.lang_string_array_dt
     end
 
     r = EveryDataTypeResource.all({filter: {id: '1'}})

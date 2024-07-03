@@ -309,7 +309,8 @@ module Solis
                       remote_resource.id =~ /^http/ ? remote_resource.id.split('/').last : remote_resource.id
                     end
                   end
-                  "#{resource.class.graph_name.gsub(/\/$/,'')}/#{belongs_to_resource.name.tableize}?filter[id]=#{resource_ids.join(',')}" unless remote_resources.nil? || resource_ids.empty?
+                  #"#{resource.class.graph_name.gsub(/\/$/,'')}/#{belongs_to_resource.name.tableize}?filter[id]=#{resource_ids.join(',')}" unless remote_resources.nil? || resource_ids.empty?
+                  "#{resource.class.graph_name.gsub(/\/$/,'')}/#{remote_resources.first.name.tableize}?filter[id]=#{resource_ids.join(',')}" unless remote_resources.nil? || resource_ids.empty?
                 end
               end
               #

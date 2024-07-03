@@ -28,13 +28,13 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_runtime_dependency 'activesupport', '~> 7.0'
-  spec.add_runtime_dependency 'http', '~> 5.1'
-  spec.add_runtime_dependency 'graphiti', '~> 1.3'
+  spec.add_runtime_dependency 'http', '~> 5.2'
+  spec.add_runtime_dependency 'graphiti', '~> 1.7'
   spec.add_runtime_dependency 'moneta', '~> 1.6'
   spec.add_runtime_dependency 'linkeddata', '~> 3.3'
   spec.add_runtime_dependency 'google_drive', '~> 3.0'
-  spec.add_runtime_dependency 'json', '~> 2.6'
-  spec.add_runtime_dependency 'hashdiff', '~> 1.0'
+  spec.add_runtime_dependency 'json', '~> 2.7'
+  spec.add_runtime_dependency 'hashdiff', '~> 1.1'
   spec.add_runtime_dependency  'iso8601', '~> 0.13.0'
   spec.add_runtime_dependency  'connection_pool', '~> 2.4'
   spec.add_runtime_dependency  'uuidtools', '~> 2.2.0'
