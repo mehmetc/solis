@@ -119,7 +119,7 @@ module Solis
       core_query = core_query(relationship)
       count_query = core_query.gsub(/SELECT .* WHERE/, 'SELECT (COUNT(distinct ?concept) as ?count) WHERE')
 
-      count_query = count_query.split('a ?type')[0]+'a ?type }'
+      # count_query = count_query.split('a ?type')[0]+'a ?type }'
       result = sparql_client.query(count_query)
       solution = result.first
       solution.nil? ? 0 : solution[:count].object || 0

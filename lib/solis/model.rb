@@ -296,7 +296,7 @@ values ?s {<#{self.graph_id}>}
       if id.nil? || (id.is_a?(String) && id&.empty?)
         id_retries = 0
 
-        while id.nil? || sparql.query("ASK WHERE { ?s <#{self.graph_name}/id>  \"#{id}\" }")
+        while id.nil? || sparql.query("ASK WHERE { ?s <#{self.graph_name}id>  \"#{id}\" }")
           id = SecureRandom.uuid
           id_retries+=1
         end
@@ -304,6 +304,9 @@ values ?s {<#{self.graph_id}>}
         model.instance_variable_set("@id", id)
       end
       model
+    rescue StandardError => e
+      Solis::LOGGER.error(e.message)
+      raise Solis::Error::GeneralError, "Error generating id for #{@model_name}"
     end
 
     def self.metadata

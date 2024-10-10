@@ -219,7 +219,7 @@ read_lang_string_array_type = lang_string_array_definition.constructor do |i|
   # i = i.is_a?(String) ? {:"@value" => i, :"@language" => language} : i
   # i[:"@value"]=[i[:"@value"]] unless i[:"@value"].is_a?(Array)
 
-  i
+  i.is_a?(Array) ? i : [i]
 rescue StandardError => e
   i
 end
