@@ -175,8 +175,8 @@ values ?s {<#{self.graph_id}>}
         result = sparql.insert_data(graph, graph: graph.name)
       end
 
-      after_create_proc&.call(result)
-      result
+      after_create_proc&.call(self)
+      self
     rescue StandardError => e
       Solis::LOGGER.error e.message
       Solis::LOGGER.error e.message
@@ -210,7 +210,7 @@ values ?s {<#{self.graph_id}>}
                 embedded_data = properties_to_hash(embedded)
                 embedded.update(embedded_data, validate_dependencies, false)
               else
-                embedded.save(validate_dependencies, false)
+                value = embedded.save(validate_dependencies, false)
               end
             else
               Solis::LOGGER.info("#{embedded.class.name} is embedded not allowed to change. Skipping")
@@ -245,9 +245,9 @@ values ?s {<#{self.graph_id}>}
 
         insert_graph = as_graph(updated_klass, true)
 
-        # puts delete_graph.dump(:ttl) #if ConfigFile[:debug]
-        # puts insert_graph.dump(:ttl) #if ConfigFile[:debug]
-        # puts where_graph.dump(:ttl) #if ConfigFile[:debug]
+        # puts delete_graph.dump(:ttl) if ConfigFile[:debug]
+        # puts insert_graph.dump(:ttl) if ConfigFile[:debug]
+        # puts where_graph.dump(:ttl) if ConfigFile[:debug]
 
         # if ConfigFile[:debug]
         delete_insert_query = SPARQL::Client::Update::DeleteInsert.new(delete_graph, insert_graph, where_graph, graph: insert_graph.name).to_s
