@@ -10,8 +10,16 @@ module Solis
       class Sheet
         def self.read(key, spreadsheet_id, options = {})
           class << self
+            def progress(i, data)
+              if data.key?(:job_id) && data.key?(:store)
+                job_id = data[:job_id]
+                progress = data[:store]
+                progress[job_id] = i
+              end
+            end
+
             def validate(sheets)
-              #raise "Please make sure the sheet contains '_PREFIXES', '_METADATA', '_ENTITIES' tabs" unless (%w[_PREFIXES _METADATA _ENTITIES] - sheets.keys).length == 0
+              # raise "Please make sure the sheet contains '_PREFIXES', '_METADATA', '_ENTITIES' tabs" unless (%w[_PREFIXES _METADATA _ENTITIES] - sheets.keys).length == 0
 
               prefixes = sheets['_PREFIXES']
               metadata = sheets['_METADATA']
@@ -61,7 +69,7 @@ module Solis
               sheets
             end
 
-            def process_sheet(key, sheet_id, sheets, options = {follow: true})
+            def process_sheet(key, sheet_id, sheets, options = { follow: true })
               entities = {}
               prefixes = {}
               ontology_metadata = {}
@@ -79,12 +87,16 @@ module Solis
               sheets['_ENTITIES'].each do |e|
 
                 top_class = e['name'].to_s
-                #if prefixes[graph_prefix][:data].nil? || prefixes[graph_prefix][:data].empty?
-                  entity_data = parse_entity_data(e['name'].to_s, graph_prefix, graph_name, sheets[top_class], { key: key, prefixes: prefixes, follow: options[:follow] })
+                top_sheet = sheets[top_class] || nil
+                # if sheets[top_class].nil? && !(e['subclassof'].nil? || e['subclassof'].empty?)
+                #   top_sheet = sheets[e['subclassof'].split(':').last.to_s] || nil
+                # end
+                # if prefixes[graph_prefix][:data].nil? || prefixes[graph_prefix][:data].empty?
+                entity_data = parse_entity_data(e['name'].to_s, graph_prefix, graph_name, top_sheet, { key: key, prefixes: prefixes, follow: options[:follow] })
                 #  prefixes[graph_prefix][:data] = entity_data
-                #else
+                # else
                 #  entity_data = prefixes[graph_prefix][:data]
-                #end
+                # end
 
                 if entity_data.empty?
                   entity_data[:id] = {
@@ -190,8 +202,8 @@ module Solis
             end
 
             def build_plantuml(datas)
+              #              !pragma layout elk
               out = %(@startuml
-!pragma layout elk
 skinparam classFontSize 14
 !define LIGHTORANGE
 skinparam groupInheritance 1
@@ -204,31 +216,31 @@ title #{datas.first[:metadata][:title]} - #{datas.first[:metadata][:version]} - 
 
               out += "\npackage #{datas.first[:ontologies][:base][:prefix]} {\n"
               datas.each do |data|
-              data[:entities].each do |entity_name, metadata|
-                out += "\nclass #{entity_name}"
+                data[:entities].each do |entity_name, metadata|
+                  out += "\nclass #{entity_name}"
 
-                properties = metadata[:properties]
-                relations = []
-                unless properties.nil? || properties.empty?
-                  out += "{\n"
-                  properties.each do |property, property_metadata|
-                    out += "\t{field} #{property_metadata[:datatype]} : #{property} \n"
+                  properties = metadata[:properties]
+                  relations = []
+                  unless properties.nil? || properties.empty?
+                    out += "{\n"
+                    properties.each do |property, property_metadata|
+                      out += "\t{field} #{property_metadata[:datatype]} : #{property} \n"
 
-                    if property_metadata[:datatype].split(':').first.eql?(data[:ontologies][:base][:prefix].to_s)
-                      relations << "#{property_metadata[:datatype].split(':').last} - #{property_metadata[:cardinality].key?(:max) && !property_metadata[:cardinality][:max].empty? ? "\"#{property_metadata[:cardinality][:max]}\"" : ''} #{entity_name} : #{property} >"
+                      if property_metadata[:datatype].split(':').first.eql?(data[:ontologies][:base][:prefix].to_s)
+                        relations << "#{property_metadata[:datatype].split(':').last} - #{property_metadata[:cardinality].key?(:max) && !property_metadata[:cardinality][:max].empty? ? "\"#{property_metadata[:cardinality][:max]}\"" : ''} #{entity_name} : #{property} >"
+                      end
                     end
+                    out += "}\n"
+                    out += relations.join("\n")
                   end
-                  out += "}\n"
-                  out += relations.join("\n")
-                end
 
-                out += "\n"
-                sub_classes = metadata[:sub_class_of]
-                sub_classes = [sub_classes] unless sub_classes.is_a?(Array)
-                sub_classes.each do |sub_class|
-                  out += "#{entity_name} --|> #{sub_class.split(':').last}\n" unless sub_class.empty?
+                  out += "\n"
+                  sub_classes = metadata[:sub_class_of]
+                  sub_classes = [sub_classes] unless sub_classes.is_a?(Array)
+                  sub_classes.each do |sub_class|
+                    out += "#{entity_name} --|> #{sub_class.split(':').last}\n" unless sub_class.empty?
+                  end
                 end
-              end
               end
               out += %(
 hide circle
@@ -263,61 +275,72 @@ hide empty members
 
               datas.each do |data|
                 data[:entities].each do |entity_name, metadata|
-                graph_prefix = data[:ontologies][:base][:prefix]
-                graph_name = data[:ontologies][:base][:uri]
+                  graph_prefix = data[:ontologies][:base][:prefix]
+                  graph_name = data[:ontologies][:base][:uri]
 
-                description = metadata[:comment]
-                label = metadata[:label]
-                target_class = "#{graph_prefix}:#{entity_name}"
-                node = metadata[:sub_class_of]
+                  description = metadata[:comment]
+                  label = metadata[:label]
+                  target_class = "#{graph_prefix}:#{entity_name}"
+                  node = metadata[:sub_class_of]
 
-                if node && !node.empty?
-                  node = node.first if node.is_a?(Array)
-                  node = node.strip
-                  node += 'Shape' if node != /Shape$/ # && node =~ /^#{graph_prefix}:/
-                else
-                  node = target_class
-                end
+                  if node && !node.empty?
+                    node = node.first if node.is_a?(Array)
+                    node = node.strip
+                    node += 'Shape' if node != /Shape$/ # && node =~ /^#{graph_prefix}:/
+                  else
+                    node = target_class
+                  end
 
-                out += %(
-                #{graph_prefix}:#{entity_name}Shape
+                  out += %(
+#{graph_prefix}:#{entity_name}Shape
     a               #{shacl_prefix}:NodeShape ;
     #{shacl_prefix}:description "#{description&.gsub('"', "'")&.gsub(/\n|\r/, '')}" ;
     #{shacl_prefix}:targetClass  #{target_class} ;#{
-                  unless node.nil? || node.empty?
-                    "\n    #{shacl_prefix}:node         #{node} ;"
-                  end}
+                    unless node.nil? || node.empty?
+                      "\n    #{shacl_prefix}:node         #{node} ;"
+                    end}
                 #{shacl_prefix}:name         "#{label}" ;
 )
-                metadata[:properties].each do |property, property_metadata|
-                  attribute = property.to_s.strip
-                  next if attribute.empty?
+                  metadata[:properties].each do |property, property_metadata|
+                    attribute = property.to_s.strip
+                    next if attribute.empty?
 
-                  description = property_metadata[:description]&.gsub('"', "'")&.gsub(/\n|\r/, '').strip
-                  path = "#{graph_prefix}:#{attribute}"
-                  datatype = property_metadata[:datatype].strip
-                  min_count = property_metadata[:cardinality][:min].strip
-                  max_count = property_metadata[:cardinality][:max].strip
+                    description = property_metadata[:description]&.gsub('"', "'")&.gsub(/\n|\r/, '').strip
+                    path = "#{graph_prefix}:#{attribute}"
+                    datatype = property_metadata[:datatype].strip
+                    min_count = property_metadata[:cardinality][:min].strip
+                    max_count = property_metadata[:cardinality][:max].strip
 
-                  if datatype =~ /^#{graph_prefix}:/ || datatype =~ /^<#{graph_name}/
-                    out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
+                    if datatype =~ /^#{graph_prefix}:/ || datatype =~ /^<#{graph_name}/
+                      out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
                  #{shacl_prefix}:name "#{attribute}" ;
                  #{shacl_prefix}:description "#{description}" ;
                  #{shacl_prefix}:nodeKind #{shacl_prefix}:IRI ;
                  #{shacl_prefix}:class    #{datatype} ;#{min_count =~ /\d+/ ? "\n                 #{shacl_prefix}:minCount #{min_count} ;" : ''}#{max_count =~ /\d+/ ? "\n                 #{shacl_prefix}:maxCount #{max_count} ;" : ''}
     ] ;
 )
-                  else
-                    out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
+                    else
+                      if datatype.eql?('rdf:langString')
+                        out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
+                 #{shacl_prefix}:name "#{attribute}";
+                 #{shacl_prefix}:description "#{description}" ;
+                 #{shacl_prefix}:uniqueLang true ;
+                 #{shacl_prefix}:datatype #{datatype} ;#{min_count =~ /\d+/ ? "\n                 #{shacl_prefix}:minCount #{min_count} ;" : ''}
+    ] ;
+)
+                      else
+                        out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
                  #{shacl_prefix}:name "#{attribute}";
                  #{shacl_prefix}:description "#{description}" ;
                  #{shacl_prefix}:datatype #{datatype} ;#{min_count =~ /\d+/ ? "\n                 #{shacl_prefix}:minCount #{min_count} ;" : ''}#{max_count =~ /\d+/ ? "\n                 #{shacl_prefix}:maxCount #{max_count} ;" : ''}
     ] ;
 )
+                      end
+
+                    end
                   end
+                  out += ".\n"
                 end
-                out += ".\n"
-              end
               end
               out
             rescue StandardError => e
@@ -411,15 +434,15 @@ hide empty members
               graph.graph_name = RDF::URI(graph_name)
 
               datas.each do |data|
-              data[:entities].select { |_k, v| !v[:same_as].empty? }.each do |k, v|
-                prefix, verb = v[:same_as].split(':')
-                rdf_vocabulary = RDF::Vocabulary.from_sym(prefix.upcase)
-                rdf_verb = rdf_vocabulary[verb.to_sym]
-                graph << RDF::Statement.new(rdf_verb, RDF::RDFV.type, RDF::OWL.Class)
-                graph << RDF::Statement.new(rdf_verb, RDF::Vocab::OWL.sameAs, o[k.to_sym])
-              rescue StandardError => e
-                puts e.message
-              end
+                data[:entities].select { |_k, v| !v[:same_as].empty? }.each do |k, v|
+                  prefix, verb = v[:same_as].split(':')
+                  rdf_vocabulary = RDF::Vocabulary.from_sym(prefix.upcase)
+                  rdf_verb = rdf_vocabulary[verb.to_sym]
+                  graph << RDF::Statement.new(rdf_verb, RDF::RDFV.type, RDF::OWL.Class)
+                  graph << RDF::Statement.new(rdf_verb, RDF::Vocab::OWL.sameAs, o[k.to_sym])
+                rescue StandardError => e
+                  puts e.message
+                end
               end
 
               graph << o.to_enum
@@ -432,10 +455,10 @@ hide empty members
             def build_inflections(datas)
               inflections = {}
               datas.each do |data|
-              data[:entities].each do |entity, metadata|
-                inflections[entity] = metadata[:plural]
-                inflections[entity.to_s.underscore.to_sym] = metadata[:plural].underscore
-              end
+                data[:entities].each do |entity, metadata|
+                  inflections[entity] = metadata[:plural]
+                  inflections[entity.to_s.underscore.to_sym] = metadata[:plural].underscore
+                end
               end
 
               inflections.to_json
@@ -591,13 +614,13 @@ hide empty members
           end
 
           sheet_data = read_sheets(key, spreadsheet_id, options)
-
+          #TODO: cleanup
           if sheet_data.is_a?(Hash)
             raise "No _REFERENCES sheet found" unless sheet_data.key?("_REFERENCES")
-          #read other ontologies
+            # read other ontologies
             Solis::LOGGER.info('Reading referenced ontologies')
             references = sheet_data['_REFERENCES'].map do |reference|
-              {sheet_url: reference['sheeturl'], description: reference['description']}
+              { sheet_url: reference['sheeturl'], description: reference['description'] }
             end
 
             cache_dir = ConfigFile.include?(:cache) ? ConfigFile[:cache] : '/tmp'
@@ -629,7 +652,8 @@ hide empty members
           schema = build_schema(datas)
           Solis::LOGGER.info('Generating INFLECTIONS')
           inflections = build_inflections(datas)
-          { inflections: inflections, shacl: shacl, schema: schema, plantuml: plantuml}
+
+          { inflections: inflections, shacl: shacl, schema: schema, plantuml: plantuml }
         end
       end
     end

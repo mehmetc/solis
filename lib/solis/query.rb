@@ -128,7 +128,10 @@ module Solis
     private
 
     def model_construct?
-      File.exist?("#{ConfigFile.path}/constructs/#{@model.name.tableize.singularize}.sparql")
+      construct_name = @model.name.tableize.singularize rescue @model.class.name.tableize.singularize
+      File.exist?("#{ConfigFile.path}/constructs/#{construct_name}.sparql")
+    rescue StandardError => e
+      false
     end
 
     def target_class

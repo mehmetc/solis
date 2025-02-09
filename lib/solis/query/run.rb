@@ -64,6 +64,8 @@ class Solis::Query::Runner
                     value = Date.parse(value)
                   when "http://www.w3.org/2006/time#DateTimeInterval"
                     value = ISO8601::TimeInterval.parse(value)
+                  when "http://www.w3.org/2001/XMLSchema#boolean"
+                    value = value == "true"
                   end
                   v = value
                 end
