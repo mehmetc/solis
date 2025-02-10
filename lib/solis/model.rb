@@ -210,7 +210,13 @@ values ?s {<#{self.graph_id}>}
                 embedded_data = properties_to_hash(embedded)
                 embedded.update(embedded_data, validate_dependencies, false)
               else
-                value = embedded.save(validate_dependencies, false)
+                embedded_value = embedded.save(validate_dependencies, false)
+                value = updated_klass.instance_variable_get("@#{key}").deep_dup
+                if value.is_a?(Array)
+                  value << embedded_value
+                else
+                  value = embedded_value
+                end
               end
             else
               Solis::LOGGER.info("#{embedded.class.name} is embedded not allowed to change. Skipping")
