@@ -76,6 +76,7 @@ class ConfigFile
       end
     end
 
+    @config_file_path = File.expand_path(@config_file_path)
     #puts "#{@config_file_name} found at #{@config_file_path}"
   end
 

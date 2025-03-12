@@ -2,7 +2,7 @@ require 'solis/store/sparql/client'
 require 'solis/config_file'
 
 class Solis::Query::Runner
-    def self.run(entity, query)
+    def self.run(entity, query, options = {})
       result = {}
       context = JSON.parse %(
 {
@@ -16,7 +16,7 @@ class Solis::Query::Runner
    )
 
       c = Solis::Store::Sparql::Client.new(Solis::Options.instance.get[:sparql_endpoint], Solis::Options.instance.get[:graph_name])
-      r = c.query(query)
+      r = c.query(query, options)
       if r.is_a?(SPARQL::Client)
         g = RDF::Graph.new
         t = r.query('select * where{?s ?p ?o}')
@@ -47,11 +47,15 @@ class Solis::Query::Runner
     def self.sanitize_result(framed)
       data = framed&.key?('@graph') ? framed['@graph'] : [framed]
 
+      sanitatize_data_in_result(data)
+    end
+
+    def self.sanitatize_data_in_result(data)
       data.map do |d|
         d.delete_if { |e| e =~ /^@/ }
         if d.is_a?(Hash)
           new_d = {}
-          d.each do |k,v|
+          d.each do |k, v|
             if v.is_a?(Hash)
               if v.key?('@type')
                 type = v['@type']
@@ -71,7 +75,11 @@ class Solis::Query::Runner
                 end
                 v = sanitize_result(v) if v.is_a?(Hash)
               end
-              new_d[k] = v.class.method_defined?(:value) ? v.value : v
+              if v.is_a?(Hash)
+                new_d[k] = v.class.method_defined?(:value) ? v.value : sanitize_result(v)
+              else
+                new_d[k] = v.class.method_defined?(:value) ? v.value : v
+              end
             elsif v.is_a?(Array) #todo: make recursive
               new_d[k] = []
               v.each do |vt|
@@ -95,5 +103,8 @@ class Solis::Query::Runner
 
         d
       end
+    rescue StandardError => e
+      Solis::LOGGER.error(e.message)
+      data
     end
 end

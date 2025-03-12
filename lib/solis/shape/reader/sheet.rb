@@ -43,6 +43,12 @@ module Solis
                 raise "_REFERENCES tab must have ['sheeturl', 'description', 'entityrange'] as a header at row 1" unless (%w[sheeturl description entityrange] - references.header).length == 0
               end
 
+              sheets.each do |sheet_name, sheet|
+                if sheet_name !~ /^_/
+                  entities = sheets[sheet_name]
+                  raise "#{sheet_name} tab must have ['Name', 'Description', 'MIN', 'MAX', 'sameAs', 'datatype'] as a header at row 1" unless (%w[name description min max sameas datatype] - entities.header).length == 0
+                end
+              end
             end
 
             def read_sheets(key, spreadsheet_id, options)

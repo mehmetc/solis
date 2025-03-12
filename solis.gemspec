@@ -27,7 +27,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_runtime_dependency 'activesupport', '~> 7.0'
+  spec.add_runtime_dependency 'activesupport', '~> 8.0'
   spec.add_runtime_dependency 'http', '~> 5.2'
   spec.add_runtime_dependency 'graphiti', '~> 1.7'
   spec.add_runtime_dependency 'moneta', '~> 1.6'
@@ -40,6 +40,8 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'uuidtools', '~> 2.2.0'
   spec.add_runtime_dependency 'dry-struct', '~> 1.6'
   spec.add_runtime_dependency 'psych', '~> 5.1'
+  spec.add_runtime_dependency 'csv'
+  spec.add_runtime_dependency 'mutex_m'
   #  spec.add_runtime_dependency 'rdf-edtf', '~> 1.1.2'
 
   spec.add_development_dependency 'rake', '~> 13.0'

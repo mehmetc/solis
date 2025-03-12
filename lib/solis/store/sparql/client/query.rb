@@ -7,7 +7,7 @@ module Solis
             @client = client
           end
 
-          def run(query)
+          def run(query, options = {})
             result = @client.query(query)
 
             if is_construct?(query)

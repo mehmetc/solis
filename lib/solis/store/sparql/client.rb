@@ -27,11 +27,11 @@ module Solis
           return false
         end
 
-        def query(query)
+        def query(query, options = {})
           raise Solis::Error::NotFoundError, "Server or graph(#{@graph_name} not found" unless up?
           result = nil
           @pool.with do |c|
-            result = Query.new(c).run(query)
+            result = Query.new(c).run(query, options)
           end
           result
         end
