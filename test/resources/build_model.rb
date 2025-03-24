@@ -11,6 +11,7 @@ File.open('./test/resources/data/t_shacl.ttl', 'wb') {|f| f.puts s[:shacl]}
 File.open('./test/resources/data/t.json', 'wb') {|f| f.puts s[:inflections]}
 File.open('./test/resources/data/t_schema.ttl', 'wb') {|f| f.puts s[:schema]}
 File.open('./test/resources/data/t.puml', 'wb') {|f| f.puts s[:plantuml]}
+File.open('./test/resources/data/t.json_schema', 'wb') {|f| f.puts s[:json_schema]}
 #File.open('./data/t.sql', 'wb') {|f| f.puts s[:sql]}
 
 # `plantuml -tsvg ./data/t.puml`

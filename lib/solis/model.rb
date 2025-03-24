@@ -485,8 +485,31 @@ values ?s {<#{self.graph_id}>}
     def make_graph(graph, hierarchy, id, klass, klass_metadata, resolve_all)
       klass_metadata[:attributes].each do |attribute, metadata|
         data = klass.instance_variable_get("@#{attribute}")
-        if data.nil? && metadata[:mincount] > 0 && graph.query(RDF::Query.new({ attribute.to_sym => { RDF.type => metadata[:node] } })).size == 0
-          raise Solis::Error::InvalidAttributeError, "#{hierarchy.join('.')}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}"
+
+        if data.nil? && metadata.key?(:mincount) && ( metadata[:mincount].nil? || metadata[:mincount] > 0) && graph.query(RDF::Query.new({ attribute.to_sym => { RDF.type => metadata[:node] } })).size == 0
+          if data.nil?
+            uuid = id.value.split('/').last
+            original_klass = klass.query.filter({ filters: { id: [ uuid ] } }).find_all { |f| f.id == uuid }.first || nil
+            unless original_klass.nil?
+              klass = original_klass
+              data = klass.instance_variable_get("@#{attribute}")
+            end
+          end
+          #if data is still nil
+          raise Solis::Error::InvalidAttributeError, "#{hierarchy.join('.')}~#{klass.name}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}" if data.nil?
+        end
+
+        if data.nil? && metadata.key?(:maxcount) && ( metadata[:maxcount].nil? || metadata[:maxcount] > 0) && graph.query(RDF::Query.new({ attribute.to_sym => { RDF.type => metadata[:node] } })).size == 0
+          if data.nil?
+            uuid = id.value.split('/').last
+            original_klass = klass.query.filter({ filters: { id: [ uuid ] } }).find_all { |f| f.id == uuid }.first || nil
+            unless original_klass.nil?
+              klass = original_klass
+              data = klass.instance_variable_get("@#{attribute}")
+            end
+          end
+          #if data is still nil
+          raise Solis::Error::InvalidAttributeError, "#{hierarchy.join('.')}~#{klass.name}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}" if data.nil?
         end
 
         # skip if nil or an object that is empty

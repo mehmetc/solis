@@ -267,6 +267,11 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
               record_uri = statement.s.value
               attribute = statement.p.value.split('/').last.underscore
 
+              unless solution_model.metadata[:attributes].key?(attribute)
+                Solis::LOGGER.error "Attribute found in data that is not part of the model model #{solution_model.name}(#{record_uri.split('/').last}).#{attribute}"
+                next
+              end
+
               if statement.o.valid?
                 if statement.o.is_a?(RDF::URI)
                   object = statement.o.canonicalize.value
@@ -335,6 +340,10 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
                 end
               end
             rescue StandardError => e
+              unless solution_model.metadata[:attributes].key?(attribute)
+                Solis::LOGGER.error("#{record_uri} - graph_to_object - #{attribute} - #{e.message}")
+                raise  "'#{attribute}' not in model"
+              end
               puts e.backtrace.first
               Solis::LOGGER.error("#{record_uri} - graph_to_object - #{attribute} - #{e.message}")
               g = RDF::Graph.new
