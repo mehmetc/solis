@@ -499,16 +499,7 @@ values ?s {<#{self.graph_id}>}
           raise Solis::Error::InvalidAttributeError, "#{hierarchy.join('.')}~#{klass.name}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}" if data.nil?
         end
 
-        if data.nil? && metadata.key?(:maxcount) && ( metadata[:maxcount].nil? || metadata[:maxcount] > 0) && graph.query(RDF::Query.new({ attribute.to_sym => { RDF.type => metadata[:node] } })).size == 0
-          if data.nil?
-            uuid = id.value.split('/').last
-            original_klass = klass.query.filter({ filters: { id: [ uuid ] } }).find_all { |f| f.id == uuid }.first || nil
-            unless original_klass.nil?
-              klass = original_klass
-              data = klass.instance_variable_get("@#{attribute}")
-            end
-          end
-          #if data is still nil
+        if data && metadata.key?(:maxcount) && ( metadata[:maxcount] && metadata[:maxcount] > 0) && graph.query(SPARQL.parse("select (count(?s) as ?max_subject) where { ?s #{self.class.graph_prefix}:#{attribute} ?p}")).first.max_subject > metadata[:maxcount].to_i
           raise Solis::Error::InvalidAttributeError, "#{hierarchy.join('.')}~#{klass.name}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}" if data.nil?
         end
 
