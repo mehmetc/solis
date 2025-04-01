@@ -1,4 +1,0 @@
-
-<http://solis.template/courses/1> a <http://solis.template/Course>;
-  <http://solis.template/course_name> "Algebra 101"@nl;
-  <http://solis.template/id> "1" .

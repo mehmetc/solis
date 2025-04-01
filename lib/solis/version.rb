@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Solis
-  VERSION = "0.85.0"
+  VERSION = "1.0.0"
 end
