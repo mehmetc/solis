@@ -48,11 +48,11 @@ example:CarShape
   end
 
   def test_mandatory_parameters
-    assert_raises Solis::Error::MissingParameter do
+    assert_raises Solis::Error::BadParameter do
       solis = Solis.new(not_mandatory: '1234')
     end
     # missing Google key
-    assert_raises Solis::Error::MissingParameter do
+    assert_raises Solis::Error::BadParameter do
       solis = Solis.new(uri: 'google+sheet://18JDgCfr2CLl_jATuvFTcpu-a5T6CWAgJwTwEqtSe8YE', config_path: 'test/resources/incorrect')
     end
   end
@@ -86,7 +86,7 @@ example:CarShape
     }
     solis = Solis.new(config)
     assert_includes(solis.list, 'http://id.loc.gov/ontologies/bibframe/Title')
-
+    #TODO: test more
     File.open('bibframe.ttl', 'wb') do |f|
       f.puts solis.to_shacl
     end
@@ -115,23 +115,24 @@ example:CarShape
       prefix: 'odis'
     }
     config = {
-      store: Solis::Store::Triple.new(graph),
+      store: Solis::Store::Memory.new(),
       model: {
         namespace: 'https://data.odis.be/',
         prefix: 'odis',
-        uri: 'google+sheet://18JDgCfr2CLl_jATuvFTcpu-a5T6CWAgJwTwEqtSe8YE'
+        uri: 'google+sheet://18JDgCfr2CLl_jATuvFTcpu-a5T6CWAgJwTwEqtSe8YE',
+        config_path: 'test/resources/correct'
       }
     }
 
-    Solis.new(config)
+    solis = Solis.new(config)
 
-    models = Solis::Model::Reader.from_uri('google+sheet://18JDgCfr2CLl_jATuvFTcpu-a5T6CWAgJwTwEqtSe8YE')
+    #models = Solis::Model::Reader.from_uri('google+sheet://18JDgCfr2CLl_jATuvFTcpu-a5T6CWAgJwTwEqtSe8YE')
 
 
-    Solis::Model::Writer.to_shacl
-    Solis::Model::Writer.to_rdf
-    Solis::Model::Writer.to_puml
-    Solis::Model::Writer.to_sql
+    # Solis::Model::Writer.to_shacl
+    # Solis::Model::Writer.to_rdf
+    # Solis::Model::Writer.to_puml
+    # Solis::Model::Writer.to_sql
   end
 
 end

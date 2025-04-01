@@ -17,7 +17,8 @@ module Solis
 
         def self.read(ontology_uri)
           if ontology_uri.is_a?(String)
-            graph = RDF::Graph.load(ontology_uri)
+            #graph = RDF::Graph.load(ontology_uri)
+            graph = RDF::Repository.load(ontology_uri)
           else
             graph = ontology_uri
           end
@@ -111,7 +112,7 @@ module Solis
         end
         private
 
-        def safe_class_name(name)
+        def self.safe_class_name(name)
           name = name.split("#").last || name.split("/").last
           RESERVED_WORDS.include?(name) ? "#{name}Class" : name
         end
