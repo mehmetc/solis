@@ -87,7 +87,7 @@ example:CarShape
     solis = Solis.new(config)
     assert_includes(solis.list, 'http://id.loc.gov/ontologies/bibframe/Title')
     #TODO: test more
-    File.open('bibframe.ttl', 'wb') do |f|
+    File.open("#{__dir__}/output/bibframe.ttl", 'wb') do |f|
       f.puts solis.to_shacl
     end
   end
