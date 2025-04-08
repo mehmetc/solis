@@ -858,4 +858,124 @@ class TestSHACLValidator < Minitest::Test
 
   end
 
+  def test_property_amount_in_range
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+
+      example:CarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a car entity" ;
+              sh:targetClass  example:Car;
+              sh:node         example:Car;
+              sh:name         "Car";
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color" ;
+                                sh:description "Color of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    3 ; ];
+              sh:property     [ sh:path        example:brand;
+                                sh:name        "brand" ;
+                                sh:description "Brand of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:in          ("toyota" "mercedes" "fiat") ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+      .
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/"
+        },
+        "@graph": [
+          {
+            "@id": "http://schema.org/my_car_1",
+            "@type": "Car",
+            "color": "blue",
+            "brand": "toyota"
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, true)
+    assert_equal(messages.size, 0)
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/"
+        },
+        "@graph": [
+          {
+            "@id": "http://schema.org/my_car_1",
+            "@type": "Car",
+            "color": ["blue"],
+            "brand": "toyota"
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, true)
+    assert_equal(messages.size, 0)
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/"
+        },
+        "@graph": [
+          {
+            "@id": "http://schema.org/my_car_1",
+            "@type": "Car",
+            "color": ["blue", "red"],
+            "brand": "toyota"
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, true)
+    assert_equal(messages.size, 0)
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, true)
+    assert_equal(messages.size, 0)
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/"
+        },
+        "@graph": [
+          {
+            "@id": "http://schema.org/my_car_1",
+            "@type": "Car",
+            "color": ["blue", "red", "yellow", "green"],
+            "brand": "toyota"
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, false)
+    assert_equal(messages.size, 1)
+
+  end
+
 end
