@@ -23,7 +23,9 @@ module Solis
             graph = ontology_uri
           end
 
-          shacl_graph = RDF::Graph.new
+          #shacl_graph = RDF::Graph.new
+          shacl_graph = RDF::Repository.new
+          shacl_graph.graph_name = graph.graph_name if graph.named?
           graph.query([nil, RDF.type, RDF::OWL.Class]).each do |stmt|
             class_uri = stmt.subject
             class_name = safe_class_name(class_uri.to_s)

@@ -1,4 +1,5 @@
 require_relative 'model/reader'
+require_relative 'model/writer'
 
 module Solis
   class Model
@@ -16,16 +17,42 @@ module Solis
       @graph = Solis::Model::Reader.from_uri(model)
     end
 
-    def to_shacl
-      shacl = StringIO.new
-      Solis::Model::Writer.to_uri(uri: shacl, namespace: @namespace, prefix: @prefix, model: @graph)
-      shacl.rewind
-      shacl.read
+    def list
+      #TODO: what about multiple namespaces?
+      data = @graph.query([nil, RDF::Vocab::SHACL.targetClass, nil]).map do |klass|
+        klass.object.to_s
+        #klass.object.to_s.gsub(@namespace,'')
+      end
+
+      data
     end
 
-    def list
-      @graph.query([nil, RDF::Vocab::SHACL.targetClass, nil]).map do |klass|
-        klass.object.to_s
+    def entity(name)
+
+    end
+
+    ## Export model as a shacl, mermaid, plantuml diagram
+    def writer(content_type = 'text/turtle', options = {})
+      options[:namespace] ||= @namespace
+      options[:prefix] ||= @prefix
+      options[:model] ||= @graph
+
+      case content_type
+      when 'text/vnd.mermaid'
+        Solis::Model::Writer.to_uri(uri: "mermaid://#{@prefix}", namespace: @namespace, prefix: @prefix, model: @graph)
+      when 'text/vnd.plantuml'
+        Solis::Model::Writer.to_uri(uri: "plantuml://#{@prefix}", namespace: @namespace, prefix: @prefix, model: @graph)
+      when 'application/schema+json'
+        options[:uri] = "jsonschema://#{@prefix}"
+        Solis::Model::Writer.to_uri(options)
+      when 'application/form'
+        options[:uri] = "form://#{@prefix}"
+        Solis::Model::Writer.to_uri(options)
+      else
+        shacl = StringIO.new
+        Solis::Model::Writer.to_uri(uri: shacl, namespace: @namespace, prefix: @prefix, model: @graph, content_type: content_type)
+        shacl.rewind
+        shacl.read
       end
     end
   end

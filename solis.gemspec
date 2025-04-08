@@ -43,6 +43,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "abbrev"
   spec.add_dependency "csv"
   spec.add_dependency "mutex_m"
+  spec.add_dependency "ostruct"
   spec.add_dependency 'google_drive', '~> 3.0'
 
   # For more information and examples about making a new gem, check out our

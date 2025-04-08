@@ -22,17 +22,20 @@ module Solis
             raise Solis::Error::MissingParameter, 'Missing key parameter. This is your Google Auth key.' unless params.key?(:key) || DataCollector::ConfigFile.include?(:key)
             google_key = params[:key] || DataCollector::ConfigFile[:key]
             spreadsheet_id = uri.host
-            data = Reader::Sheet.read(google_key, spreadsheet_id, params)
+            data = Sheet.read(google_key, spreadsheet_id, params)
           else
             raise Solis::Error::MissingParameter, 'Missing content_type parameter' unless params.key?(:content_type)
             data = DataCollector::Input.new.from_uri(params[:uri], content_type: params[:content_type], raw: true)
             raise Solis::Error::General, "Unable to load Graph" unless data.is_a?(RDF::Graph)
-            data = Solis::Model::Reader::Rdf.read(data)
+            data = Rdf.read(data)
           end
         else
           raise Solis::Error::MissingParameter, 'Missing io or uri parameter'
         end
 
+        if data.is_a?(RDF::Graph)
+          data = RDF::Repository.new.insert(data)
+        end
         data
       rescue => e
         if e.is_a?(Solis::Error::MissingParameter)
