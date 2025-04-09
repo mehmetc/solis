@@ -60,9 +60,9 @@ module Solis
                                       })
             end
           when 'mermaid'
-            MermaidWriter.write(shacl_graph)
+            MermaidWriter.write(shacl_graph, params)
           when 'plantuml'
-            PlantUMLWriter.write(shacl_graph)
+            PlantUMLWriter.write(shacl_graph, params)
           when 'jsonschema'
             JSONSchemaWriter.write(shacl_graph, params)
           when 'form'

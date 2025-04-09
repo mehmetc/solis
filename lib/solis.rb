@@ -11,5 +11,4 @@ module Solis
     params_hash = params.reduce({}) {|h,pairs| pairs.each {|k,v| h[k] = v}; h}
     Solis::Model.new(params_hash)
   end
-
 end

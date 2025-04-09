@@ -6,7 +6,7 @@ module Solis
           super
         end
 
-        def self.write(data)
+        def self.write(data, options = {})
           Solis.logger.error('To be implemented')
         end
       end

@@ -7,7 +7,7 @@ class MermaidWriter < Solis::Model::Writer::Generic
   INDENT = "  "
 
   # Main method to convert a RDF::Repository with SHACL definitions to a Mermaid class diagram
-  def self.write(repository)
+  def self.write(repository, options = {})
     return "No repository provided" if repository.nil?
 
     # Extract all node shapes from the repository
@@ -47,7 +47,9 @@ class MermaidWriter < Solis::Model::Writer::Generic
     add_relationships(mermaid, shapes)
 
     # Return the complete Mermaid diagram
-    mermaid.join("\n")
+    mermaid = mermaid.join("\n")
+    mermaid = get_link(mermaid) if options.key?(:link) && options[:link]
+    mermaid
   end
 
   private
@@ -252,5 +254,23 @@ class MermaidWriter < Solis::Model::Writer::Generic
     else
       "--o \"1\""  # One
     end
+  end
+
+
+  def self.get_link(diagram)
+    json_graph = {
+      "code": diagram,
+      "mermaid": {"theme": "default"}
+    }
+
+    encoded = Base64.strict_encode64(pako_deflate(JSON.generate(json_graph).b)).force_encoding('ASCII-8BIT').encode('ASCII-8BIT')
+    "http://mermaid.live/view#pako:#{encoded}"
+  end
+
+  def self.pako_deflate(data)
+    z = Zlib::Deflate.new(9, Zlib::MAX_WBITS, 8, Zlib::DEFAULT_STRATEGY)
+    compressed_data = z.deflate(data, Zlib::FINISH)
+    z.close
+    compressed_data
   end
 end
