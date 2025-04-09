@@ -167,5 +167,66 @@ class TestUtilsJSONLD < Minitest::Test
 
   end
 
+  def test_make_jsonld_datatypes_context_from_shape
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+
+      example:CarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a car entity" ;
+              sh:targetClass  example:Car;
+              sh:node         example:Car;
+              sh:name         "Car";
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color" ;
+                                sh:description "Color of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+              sh:property     [ sh:path        example:brand;
+                                sh:name        "brand" ;
+                                sh:description "Brand of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+      .
+    )
+
+    graph_shacl = RDF::Graph.new
+    graph_shacl.from_ttl(str_shacl_ttl)
+
+    parser = SHACLParser.new(graph_shacl)
+    shapes = parser.parse_shapes
+
+    obj = JSON.parse %(
+      {
+          "@type": "Car",
+          "color": "blue",
+          "brand": "toyota"
+      }
+    )
+    
+    shape = shapes[obj['@type']]
+    context_datatypes = Solis::Utils::JSONLD.make_jsonld_datatypes_context_from_shape(shape)
+
+    context = {
+      "@vocab" => "https://example.com/"
+    }
+    context.merge!(context_datatypes)
+
+    hash_jsonld_compacted = Solis::Utils::JSONLD.json_object_to_jsonld(obj, context)
+
+    hash_jsonld_expanded = JSON::LD::API.expand(hash_jsonld_compacted)[0]
+
+    assert_equal(hash_jsonld_expanded['@context'], nil)
+    assert_equal(hash_jsonld_expanded['https://example.com/color'].is_a?(Array), true)
+    assert_equal(hash_jsonld_expanded['https://example.com/color'][0]['@value'], 'blue')
+    assert_equal(hash_jsonld_expanded['https://example.com/brand'][0]['@value'], 'toyota')
+
+  end
+
 
 end

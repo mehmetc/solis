@@ -68,6 +68,7 @@ module Solis
       end
 
       def self.infer_jsonld_types_from_shapes!(data, shapes, type_root)
+        # NOTE: currently only meant for a _compacted_ JSON-LD object
         data['@type'] = type_root if data['@type'].nil?
         data.each do |name_attr, val_attr|
           next if ['@id', '@type'].include?(name_attr)
@@ -80,6 +81,19 @@ module Solis
           end
         end
         data.compact!
+      end
+
+      def self.make_jsonld_datatypes_context_from_shape(shape)
+        # NOTE: currently only meant for a _compacted_ JSON-LD object
+        context = {}
+        props = shape[:properties]
+        props.each do |name_prop, value_prop|
+          datatype = value_prop[:constraints][:datatype]
+          context[name_prop] = {
+            '@type' => datatype
+          } unless datatype.nil?
+        end
+        context
       end
 
     end
