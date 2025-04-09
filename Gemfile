@@ -11,4 +11,4 @@ gem "minitest", "~> 5.16"
 
 gem "standard", "~> 1.3"
 
-gem "data_collector", path: "/Users/mehmetc/Dropbox/AllSources/LIBIS/data_collector"
+gem "data_collector"#, path: "/Users/mehmetc/Dropbox/AllSources/LIBIS/data_collector"
