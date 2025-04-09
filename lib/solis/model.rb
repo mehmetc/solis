@@ -39,7 +39,8 @@ module Solis
 
       case content_type
       when 'text/vnd.mermaid'
-        Solis::Model::Writer.to_uri(uri: "mermaid://#{@prefix}", namespace: @namespace, prefix: @prefix, model: @graph)
+        options[:uri] = "mermaid://#{@prefix}"
+        Solis::Model::Writer.to_uri(options)
       when 'text/vnd.plantuml'
         Solis::Model::Writer.to_uri(uri: "plantuml://#{@prefix}", namespace: @namespace, prefix: @prefix, model: @graph)
       when 'application/schema+json'

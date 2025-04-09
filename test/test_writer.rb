@@ -89,6 +89,13 @@ example:CarShape
     assert_equal(expect, mermaid)
   end
 
+
+  def test_write_to_mermaid_link
+    mermaid  = @solis.writer('text/vnd.mermaid', link: true)
+
+    puts mermaid
+  end
+
   def test_write_to_plantuml
     expect=%(@startuml
 

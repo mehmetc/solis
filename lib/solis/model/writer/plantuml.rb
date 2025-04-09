@@ -7,7 +7,7 @@ class PlantUMLWriter < Solis::Model::Writer::Generic
   INDENT = "  "
 
   # Main method to convert a RDF::Repository with SHACL definitions to a PlantUML class diagram
-  def self.write(repository)
+  def self.write(repository, options = {})
     return "No repository provided" if repository.nil?
 
     # Extract all node shapes from the repository
