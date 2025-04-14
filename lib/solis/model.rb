@@ -192,6 +192,7 @@ values ?s {<#{self.graph_id}>}
       id = attributes.delete('id')
 
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
+      #sparql = Solis::Store::Sparql::Client.new(self.class.sparql_endpoint, self.class.graph_name)
 
       original_klass = self.query.filter({ language: nil, filters: { id: [id] } }).find_all.map { |m| m }&.first
       raise Solis::Error::NotFoundError if original_klass.nil?
@@ -274,10 +275,12 @@ values ?s {<#{self.graph_id}>}
       after_update_proc&.call(updated_klass, data)
 
       data
+      #rescue EOFError => e
     rescue StandardError => e
       original_graph = as_graph(original_klass, false)
       Solis::LOGGER.error(e.message)
       Solis::LOGGER.error original_graph.dump(:ttl)
+      Solis::LOGGER.error delete_insert_query
       sparql.insert_data(original_graph, graph: original_graph.name)
 
       raise e
@@ -307,6 +310,10 @@ values ?s {<#{self.graph_id}>}
           id_retries+=1
         end
         LOGGER.info("ID(#{id}) generated for #{self.name} in #{id_retries} retries") if ConfigFile[:debug]
+        model.instance_variable_set("@id", id)
+      elsif id.to_s =~ /^https?:\/\//
+        id = id.to_s.split('/').last
+        LOGGER.info("ID(#{id}) normalised for #{self.name}") if ConfigFile[:debug]
         model.instance_variable_set("@id", id)
       end
       model

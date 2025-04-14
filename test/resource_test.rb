@@ -85,6 +85,20 @@ class ResourceTest < Minitest::Test
     assert_equal('John', t.data.first.first_name)
   end
 
+  def test_create_a_teacher_with_a_bad_skill_reference
+    teacher5 = Teacher.new({id:5,
+                            first_name: 'Enaj',
+                            last_name: 'Doe',
+                            skill: [{id: 'https://http://solis.template/skills/2'}]
+                           })
+    teacher5.save
+
+    t = TeacherResource.all({"filter"=>{"id"=>{"eq"=>"5"}}, "include"=>"skill"})
+    assert_equal(1, t.data.length)
+    assert_equal('2', t.data.first.skill.first.id)
+  end
+
+
   def test_relation_class
     @solis.flush_all('http://solis.template/')
 

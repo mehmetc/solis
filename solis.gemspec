@@ -42,6 +42,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'psych', '~> 5.1'
   spec.add_runtime_dependency 'csv'
   spec.add_runtime_dependency 'mutex_m'
+  spec.add_runtime_dependency 'ostruct'
   #  spec.add_runtime_dependency 'rdf-edtf', '~> 1.1.2'
 
   spec.add_development_dependency 'rake', '~> 13.0'
