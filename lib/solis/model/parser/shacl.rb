@@ -4,8 +4,8 @@ require 'active_support/all'
 class SHACLParser
   attr_reader :shapes_graph
 
-  def initialize(shacl_file)
-    @shapes_graph = RDF::Graph.load(shacl_file, format: :ttl)
+  def initialize(shapes_graph)
+    @shapes_graph = shapes_graph
   end
 
   def parse_shapes
@@ -49,11 +49,20 @@ class SHACLParser
       property_info[:constraints][:max_count] = max_count.object.to_i
     end
 
+    shapes_graph.query([property_uri, RDF::Vocab::SHACL.class, nil]) do |klass|
+      property_info[:constraints][:class] = klass.object.path[1..]
+    end
+
     property_info
   end
 end
 
-parser = SHACLParser.new('bibframe.ttl')
-shacl_rules = parser.parse_shapes
 
-puts JSON.pretty_generate(shacl_rules)
+
+module SHACLSHapes
+
+  def self.get_property_class_for_shape(shapes, name_shape, name_property)
+    shapes.dig(name_shape, :properties, name_property, :constraints, :class)
+  end
+
+end
