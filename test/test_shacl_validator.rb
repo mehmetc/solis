@@ -978,4 +978,89 @@ class TestSHACLValidator < Minitest::Test
 
   end
 
+  def test_missing_data_type_when_ref_class_exists
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+
+      example:PersonShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a person entity" ;
+              sh:targetClass  example:Person;
+              sh:node         example:Person;
+              sh:name         "Person";
+              sh:property     [ sh:path        example:name;
+                                sh:name        "name" ;
+                                sh:description "Name of the person" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+      .
+
+      example:CarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a car entity" ;
+              sh:targetClass  example:Car;
+              sh:node         example:Car;
+              sh:name         "Car";
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color" ;
+                                sh:description "Color of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+              sh:property     [ sh:path        example:brand;
+                                sh:name        "brand" ;
+                                sh:description "Brand of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+              sh:property     [ sh:path        example:owners;
+                                sh:name        "owners" ;
+                                sh:description "Owners of the car" ;
+                                sh:nodeKind    sh:IRI ;
+                                sh:class       example:Person ;
+                                sh:minCount    1 ; ];
+      .
+
+    )
+
+    # "owners" object misses "@type".
+    # But this is allowed, to express that the "Car" object just wants to
+    # reference an existing "Person" object.
+    # However, since the "owners" property in the SHACL file contains a "sh:class" predicate,
+    # "@type" must exist in order for the validation to succeed.
+    # Having a type in a nested object triggers both the following validations:
+    # 1) the shape constraint on that data type instance
+    # 2) if referenced, also reference class check is triggered in the referent
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/"
+        },
+        "@graph": [
+          {
+            "@id": "http://schema.org/my_car_1",
+            "@type": "Car",
+            "color": "blue",
+            "brand": "toyota",
+            "owners": [
+              {
+                "@id": "http://schema.org/john_doe"
+              }
+            ]
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, false)
+    assert_equal(messages.size, 1)
+
+  end
+
 end
