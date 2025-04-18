@@ -208,7 +208,7 @@ class TestUtilsJSONLD < Minitest::Test
           "brand": "toyota"
       }
     )
-    
+
     shape = shapes[obj['@type']]
     context_datatypes = Solis::Utils::JSONLD.make_jsonld_datatypes_context_from_shape(shape)
 

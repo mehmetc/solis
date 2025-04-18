@@ -5,5 +5,8 @@ require "solis"
 require "solis/model/writer"
 require "solis/validator"
 require "solis/utils/jsonld"
+require "solis/model/mock"
+require "solis/model/entity"
+require "solis/store/proxy"
 
 require "minitest/autorun"
