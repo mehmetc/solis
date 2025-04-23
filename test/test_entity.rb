@@ -106,10 +106,7 @@ class TestEntity < Minitest::Test
       }
     )
 
-    repository = RDF::Repository.new
-    store = Solis::Store::Proxy.new(repository, @name_graph)
-
-    car = Solis::Model::Entity.new(data, @model, 'Car', store)
+    car = Solis::Model::Entity.new(data, @model, 'Car', nil)
 
     assert_equal(car['@id'], "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be")
     assert_equal(car.owners[0]['address']['@id'], "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea")
