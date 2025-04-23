@@ -378,7 +378,7 @@ class TestEntity < Minitest::Test
 
     graph_to_check = RDF::Graph.new(data: repository)
 
-    assert_equal(graph_truth==graph_to_check, true)
+    assert_equal(graph_truth == graph_to_check, true)
 
   end
 
