@@ -5,6 +5,12 @@ require "test_helper"
 Solis::SHACLValidator = Solis::SHACLValidatorV1
 
 class TestSHACLValidator < Minitest::Test
+  def setup
+    super
+    @opts = {
+      path_dir: './data'
+    }
+  end
 
   def test_required_property
 
@@ -56,7 +62,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -82,7 +88,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -139,7 +145,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -166,7 +172,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -236,7 +242,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -273,7 +279,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -337,7 +343,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -401,7 +407,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -461,7 +467,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -529,7 +535,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -581,7 +587,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -602,7 +608,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -657,7 +663,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -679,7 +685,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -740,7 +746,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -762,7 +768,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -824,7 +830,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -853,7 +859,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 2)
@@ -905,7 +911,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -926,7 +932,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -947,12 +953,12 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -973,7 +979,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -1058,7 +1064,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
