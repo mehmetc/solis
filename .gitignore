@@ -17,3 +17,4 @@ lib/solis/entity
 cache
 Gemfile.lock
 lib/solis/next
+.rake_tasks~
