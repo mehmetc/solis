@@ -2,6 +2,8 @@
 
 require "test_helper"
 
+Solis::SHACLValidator = Solis::SHACLValidatorV1
+
 class TestSHACLValidator < Minitest::Test
 
   def test_required_property

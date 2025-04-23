@@ -4,7 +4,7 @@ require 'shacl'
 require 'json/ld'
 
 module Solis
-  class SHACLValidator
+  class SHACLValidatorV1
 
     def initialize(shacl, format)
       if format.eql?(:ttl)

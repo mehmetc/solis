@@ -1,5 +1,5 @@
 
-require_relative "../validator"
+require_relative "../validator/validatorV1"
 
 
 module Solis
@@ -11,7 +11,7 @@ module Solis
       @graph = params[:graph]
       @parser = SHACLParser.new(@graph)
       @shapes = @parser.parse_shapes
-      @validator = Solis::SHACLValidator.new(@graph, :graph)
+      @validator = Solis::SHACLValidatorV1.new(@graph, :graph)
       @prefix = params[:prefix]
       @namespace = params[:namespace]
     end
