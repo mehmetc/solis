@@ -6,7 +6,7 @@ require 'json/ld'
 module Solis
   class SHACLValidatorV1
 
-    def initialize(shacl, format)
+    def initialize(shacl, format, opts={})
       if format.eql?(:ttl)
         graph_shacl = RDF::Graph.new
         graph_shacl.from_ttl(shacl)
