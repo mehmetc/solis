@@ -313,6 +313,125 @@ class TestEntity < Minitest::Test
 
   end
 
+  def test_entity_patch_depth0_1
+
+    data = JSON.parse %(
+      {
+        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "jon doe",
+            "address": {
+              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "street": "fake street"
+            }
+          }
+        ]
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', nil)
+
+    obj_patch = JSON.parse %(
+      {
+        "color": "black",
+        "brand": "@unset",
+        "owners": [
+          {
+            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "john smith"
+          }
+        ]
+      }
+    )
+
+    car.patch(obj_patch)
+
+    assert_equal(car.brand, "@unset")
+
+  end
+
+  def test_entity_patch_depth0_2
+
+    data = JSON.parse %(
+      {
+        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "jon doe",
+            "address": {
+              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "street": "fake street"
+            }
+          }
+        ]
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', nil)
+
+    obj_patch = JSON.parse %(
+      {
+        "color": "black",
+        "brand": "@unset",
+        "owners": "@unset"
+      }
+    )
+
+    car.patch(obj_patch)
+
+    assert_equal(car.owners, "@unset")
+
+  end
+
+  def test_entity_patch_depth1
+
+    data = JSON.parse %(
+      {
+        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "jon doe",
+            "address": {
+              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "street": "fake street"
+            }
+          }
+        ]
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', nil)
+
+    obj_patch = JSON.parse %(
+      {
+        "color": "black",
+        "brand": "@unset",
+        "owners": [
+          {
+            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "john smith",
+            "address": "@unset"
+          }
+        ]
+      }
+    )
+
+    car.patch(obj_patch)
+
+    assert_equal(car.owners[0]["address"], "@unset")
+
+  end
+
   def test_entity_save
 
     data = JSON.parse %(
