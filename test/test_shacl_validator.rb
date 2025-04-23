@@ -2,13 +2,13 @@
 
 require "test_helper"
 
-Solis::SHACLValidator = Solis::SHACLValidatorV1
+Solis::SHACLValidator = Solis::SHACLValidatorV2
 
 class TestSHACLValidator < Minitest::Test
   def setup
     super
     @opts = {
-      path_dir: './data'
+      path_dir: File.join(__dir__, './data')
     }
   end
 
@@ -777,7 +777,10 @@ class TestSHACLValidator < Minitest::Test
 
   def test_valid_property_email_pattern
 
-    # NOTE: see here; here using HTML regex.
+    # NOTE: see here:
+    # https://piotr.gg/regexp/email-address-regular-expression-that-99-99-works.html
+    # The used regex is: HTML5.
+    # SHACLValidatorV2 does not support "sh:flags"
     str_shacl_ttl = %(
       @prefix example: <https://example.com/> .
       @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
@@ -807,7 +810,6 @@ class TestSHACLValidator < Minitest::Test
                                 sh:description "Warehouse e-mail" ;
                                 sh:datatype    xsd:string ;
                                 sh:pattern     "^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$" ;
-                                sh:flags       "g" ;
                                 sh:minCount    1 ;
                                 sh:maxCount    1 ; ];
       .
@@ -835,6 +837,7 @@ class TestSHACLValidator < Minitest::Test
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
 
+    # can check here: https://www.activityinfo.org/support/docs/regex/test.html
     hash_data_jsonld = JSON.parse %(
       {
         "@context": {
@@ -849,7 +852,7 @@ class TestSHACLValidator < Minitest::Test
             "email_warehouse": "john.doe@fakecom"
           },
           {
-            "@id": "http://schema.org/my_car_1",
+            "@id": "http://schema.org/my_car_2",
             "@type": "Car",
             "color": "blue",
             "brand": "toyota",
@@ -862,7 +865,7 @@ class TestSHACLValidator < Minitest::Test
     validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
-    assert_equal(messages.size, 2)
+    assert_equal(messages.size, 1)
 
   end
 

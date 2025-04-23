@@ -1,4 +1,9 @@
 
+# NOTE:
+# This validator does not support:
+# - inheritance
+# This is a necessary feature, hence it needed to be replaced with V2.
+
 require 'linkeddata'
 require 'shacl'
 require 'json/ld'
