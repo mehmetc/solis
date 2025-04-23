@@ -1074,4 +1074,182 @@ class TestSHACLValidator < Minitest::Test
 
   end
 
+  def test_single_inheritance
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+
+      example:CarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a car entity" ;
+              sh:targetClass  example:Car;
+              sh:name         "Car";
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color" ;
+                                sh:description "Color of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+              sh:property     [ sh:path        example:brand;
+                                sh:name        "brand" ;
+                                sh:description "Brand of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+      .
+
+      example:ElectricCarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a electric car entity" ;
+              sh:targetClass  example:ElectricCar;
+              sh:name         "ElectricCar";
+              sh:property     [ sh:path        example:battery;
+                                sh:name        "battery" ;
+                                sh:description "Battery of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    3 ; ];
+      .
+
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+          "@context": {
+            "@vocab": "https://example.com/",
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+            "rdfs:subClassOf": {
+              "@type": "@id"
+            }
+          },
+        "@graph": [
+          {
+            "@id": "https://example.com/ElectricCar",
+            "rdfs:subClassOf": "https://example.com/Car"
+          },
+          {
+            "@id": "http://schema.org/my_car_1",
+            "@type": "Car",
+            "color": "blue",
+            "brand": "toyota"
+          },
+          {
+            "@id": "http://schema.org/my_car_2",
+            "@type": "ElectricCar",
+            "brand": "BYD"
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, false)
+    # non conform for "my_car_2":
+    # - misses one prop of type "ElectricCar": "battery"
+    # - misses one prop of parent type "Car: "color"
+    assert_equal(messages.size, 2)
+
+  end
+
+  def test_multiple_inheritance
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+
+      example:CarShape
+          a sh:NodeShape;
+          sh:description  "Abstract shape that describes a car entity" ;
+          sh:targetClass  example:Car;
+          sh:name         "Car";
+          sh:property     [ sh:path        example:color;
+                            sh:name        "color" ;
+                            sh:description "Color of the car" ;
+                            sh:datatype    xsd:string ;
+                            sh:minCount    1 ;
+                            sh:maxCount    1 ; ];
+          sh:property     [ sh:path        example:brand;
+                            sh:name        "brand" ;
+                            sh:description "Brand of the car" ;
+                            sh:datatype    xsd:string ;
+                            sh:minCount    1 ;
+                            sh:maxCount    1 ; ];
+      .
+
+      example:ElectricVehicleShape
+          a sh:NodeShape;
+          sh:description  "Abstract shape that describes a electric vehicle entity" ;
+          sh:targetClass  example:ElectricVehicle;
+          sh:name         "ElectricVehicle";
+          sh:property     [ sh:path        example:efficiency;
+                            sh:name        "efficiency" ;
+                            sh:description "Efficiency of the vehicle" ;
+                            sh:datatype    xsd:float ;
+                            sh:minCount    1 ;
+                            sh:maxCount    1 ; ];
+      .
+
+      example:ElectricCarShape
+          a sh:NodeShape;
+          sh:description  "Abstract shape that describes a electric car entity" ;
+          sh:targetClass  example:ElectricCar;
+          sh:name         "ElectricCar";
+          sh:property     [ sh:path        example:battery;
+                            sh:name        "battery" ;
+                            sh:description "Battery of the car" ;
+                            sh:datatype    xsd:string ;
+                            sh:minCount    1 ;
+                            sh:maxCount    3 ; ];
+      .
+
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+          "@context": {
+            "@vocab": "https://example.com/",
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+            "rdfs:subClassOf": {
+              "@type": "@id"
+            }
+          },
+        "@graph": [
+          {
+            "@id": "https://example.com/ElectricCar",
+            "rdfs:subClassOf": "https://example.com/Car"
+          },
+          {
+            "@id": "https://example.com/ElectricCar",
+            "rdfs:subClassOf": "https://example.com/ElectricVehicle"
+          },
+          {
+            "@id": "http://schema.org/my_car_1",
+            "@type": "Car",
+            "color": "blue",
+            "brand": "toyota"
+          },
+          {
+            "@id": "http://schema.org/my_car_2",
+            "@type": "ElectricCar",
+            "brand": "toyota",
+            "battery": "something"
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, false)
+    # non conform for "my_car_2":
+    # - misses one prop of parent 1 type "Car": "color"
+    # - misses one prop of parent 2 type "ElectricVehicle": "efficiency"
+    assert_equal(messages.size, 2)
+
+  end
+
 end
