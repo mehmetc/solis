@@ -78,7 +78,8 @@ class TestEntity < Minitest::Test
     @model = Solis::ModelMock.new({
                                    graph: graph_shacl,
                                    prefix: 'ex',
-                                   namespace: "https://example.com/"
+                                   namespace: "https://example.com/",
+                                   tmp_dir: File.join(__dir__, './data')
                                  })
 
 
