@@ -10,7 +10,7 @@ require_relative 'operations_collector'
 module Solis
   class Store
 
-    class Proxy
+    class RDFProxyWithSyncWrite
 
       include Solis::Store::OperationsCollector
 

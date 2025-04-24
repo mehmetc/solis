@@ -8,6 +8,6 @@ require "solis/validator/validatorV2"
 require "solis/utils/jsonld"
 require "solis/model/mock"
 require "solis/model/entity"
-require "solis/store/proxy"
+require "solis/store/rdf_proxy_with_sync_write"
 
 require "minitest/autorun"

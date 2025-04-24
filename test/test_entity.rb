@@ -453,7 +453,7 @@ class TestEntity < Minitest::Test
     )
 
     repository = RDF::Repository.new
-    store = Solis::Store::Proxy.new(repository, @name_graph)
+    store = Solis::Store::RDFProxyWithSyncWrite.new(repository, @name_graph)
 
     car = Solis::Model::Entity.new(data, @model, 'Car', store)
 
