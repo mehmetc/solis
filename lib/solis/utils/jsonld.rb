@@ -108,6 +108,22 @@ module Solis
         data.compact!
       end
 
+      def self.infer_jsonld_types_from_model!(data, model, type_root)
+        # NOTE: currently only meant for a _compacted_ JSON-LD object
+        data['@type'] = type_root if data['@type'].nil?
+        data.each do |name_attr, val_attr|
+          next if ['@id', '@type'].include?(name_attr)
+          val_attr = [val_attr] unless val_attr.is_a?(Array)
+          val_attr.each do |e|
+            if is_object_an_embedded_entity_or_ref(e)
+              type_embedded = model.get_embedded_class_type_for_class_property(type_root, name_attr)
+              infer_jsonld_types_from_model!(e, model, type_embedded)
+            end
+          end
+        end
+        data.compact!
+      end
+
       def self.make_jsonld_datatypes_context_from_shape(shape)
         # NOTE: currently only meant for a _compacted_ JSON-LD object
         context = {}
@@ -115,6 +131,19 @@ module Solis
         props.each do |name_prop, value_prop|
           datatype = value_prop[:constraints][:datatype]
           context[name_prop] = {
+            '@type' => datatype
+          } unless datatype.nil?
+        end
+        context
+      end
+
+      def self.make_jsonld_datatypes_context_from_model(obj, model)
+        # NOTE: currently only meant for a _compacted_ JSON-LD object
+        context = {}
+        obj.each do |name_attr, value_attr|
+          next if ['@id', '@type'].include?(name_attr)
+          datatype = model.get_datatype_for_class_property(obj['@type'], name_attr)
+          context[name_attr] = {
             '@type' => datatype
           } unless datatype.nil?
         end
@@ -147,6 +176,30 @@ module Solis
             end
           end
         end
+      end
+
+      def self.make_jsonld_hierarchy_context
+        context = {
+          # the following to allow easily adding inheritance triples
+          "rdfs" => "http://www.w3.org/2000/01/rdf-schema#",
+          "rdfs:subClassOf" => {
+            "@type" => "@id"
+          }
+        }
+        context
+      end
+
+      def self.make_jsonld_triples_from_hierarchy(model)
+        triples = []
+        model.hierarchy.each do |name_class, names_classes_parents|
+          names_classes_parents.each do |name_class_parent|
+            triples.append({
+                             "@id" => URI.join(model.namespace, name_class).to_s,
+                             "rdfs:subClassOf" => URI.join(model.namespace, name_class_parent).to_s
+                           })
+          end
+        end
+        triples
       end
 
     end
