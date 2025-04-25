@@ -61,8 +61,16 @@ end
 
 module SHACLSHapes
 
+  def self.get_property_datatype_for_shape(shapes, name_shape, name_property)
+    shapes.dig(name_shape, :properties, name_property, :constraints, :datatype)
+  end
+
   def self.get_property_class_for_shape(shapes, name_shape, name_property)
     shapes.dig(name_shape, :properties, name_property, :constraints, :class)
+  end
+
+  def self.shape_exists?(shapes, name_shape)
+    shapes.key?(name_shape)
   end
 
 end

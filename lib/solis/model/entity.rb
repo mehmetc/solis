@@ -41,6 +41,13 @@ module Solis
         Solis::Utils::JSONLD.clean_flattened_expanded_from_unset_data!(flattened_ordered_expanded['@graph'])
         puts "=== flattened + deps sorted + expanded + cleaned JSON-LD:"
         puts JSON.pretty_generate(flattened_ordered_expanded)
+
+        # add hierarchy triples
+        flattened_ordered_expanded['@context'].merge!(Solis::Utils::JSONLD.make_jsonld_hierarchy_context)
+        flattened_ordered_expanded['@graph'].concat(Solis::Utils::JSONLD.make_jsonld_triples_from_hierarchy(@model))
+        puts "=== flattened + deps sorted + expanded + cleaned + hierarchy JSON-LD:"
+        puts JSON.pretty_generate(flattened_ordered_expanded)
+
         conform, messages = @model.validator.execute(flattened_ordered_expanded, :jsonld)
         puts conform
         puts messages
@@ -120,8 +127,8 @@ module Solis
 
       def to_jsonld(hash_data_json)
 
-        # infer "@type"(s) from shapes, when not available
-        Solis::Utils::JSONLD.infer_jsonld_types_from_shapes!(hash_data_json, @model.shapes, @type)
+        # infer "@type"(s) from model, when not available
+        Solis::Utils::JSONLD.infer_jsonld_types_from_model!(hash_data_json, @model, @type)
 
         # make json-ld out of json
         hash_data_jsonld = Solis::Utils::JSONLD.json_object_to_jsonld(hash_data_json, {
@@ -138,16 +145,18 @@ module Solis
 
       def expand_obj(obj)
 
-        shape = @model.shapes[obj['@type']]
-        context_datatypes = Solis::Utils::JSONLD.make_jsonld_datatypes_context_from_shape(shape)
+        puts "======= object:"
+        puts JSON.pretty_generate(obj)
+        context_datatypes = Solis::Utils::JSONLD.make_jsonld_datatypes_context_from_model(obj, @model)
 
         context = {
           "@vocab" => @model.namespace
         }
         context.merge!(context_datatypes)
 
+        puts "======= compacted single object:"
         hash_jsonld_compacted = Solis::Utils::JSONLD.json_object_to_jsonld(obj, context)
-        # puts JSON.pretty_generate(hash_jsonld_compacted)
+        puts JSON.pretty_generate(hash_jsonld_compacted)
 
         # benefits of expansion:
         # - all properties names are expanded to URIs
