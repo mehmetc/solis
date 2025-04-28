@@ -9,5 +9,6 @@ require "solis/utils/jsonld"
 require "solis/model/mock"
 require "solis/model/entity"
 require "solis/store/rdf_proxy_with_sync_write"
+require "solis/mock/sparql_client"
 
 require "minitest/autorun"

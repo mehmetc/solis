@@ -584,4 +584,70 @@ class TestEntity < Minitest::Test
 
   end
 
+  def test_entity_save_fail_and_rollback
+
+    data = JSON.parse %(
+      {
+        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "jon doe",
+            "address": {
+              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "street": "fake street"
+            }
+          }
+        ]
+      }
+    )
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxyWithSyncWrite.new(repository, @name_graph)
+
+    car = Solis::Model::Entity.new(data, @model_1, 'Car', store)
+    puts car.to_pretty_jsonld
+    puts car['@id']
+
+    car.save
+
+    client_sparql_mock = Solis::Mock::SPARQLClientForRollbackTest.new(repository, graph: @name_graph)
+    store.instance_variable_set(:@client_sparql, client_sparql_mock)
+
+    car.color = 'black'
+    begin
+      car.save
+    rescue RuntimeError => e
+      puts "Expected error while saving: #{e.full_message}"
+    ensure
+
+      puts "\n\nREPO CONTENT:\n\n"
+      puts repository.dump(:ntriples)
+
+      str_ttl_truth = %(
+        <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Address" .
+        <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <https://example.com/street> "fake street" .
+        <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Person" .
+        <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <https://example.com/name> "jon doe" .
+        <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <https://example.com/address> "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea"^^<http://www.w3.org/2001/XMLSchema#anyURI> .
+        <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Car" .
+        <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/brand> "toyota" .
+        <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/owners> "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9"^^<http://www.w3.org/2001/XMLSchema#anyURI> .
+        <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/color> "green" .
+        <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/color> "yellow" .
+      )
+
+      graph_truth = RDF::Graph.new
+      graph_truth.from_ttl(str_ttl_truth)
+
+      graph_to_check = RDF::Graph.new(data: repository)
+
+      assert_equal(graph_truth == graph_to_check, true)
+
+    end
+
+  end
+
 end

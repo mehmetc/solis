@@ -127,19 +127,43 @@ module Solis
 
         end
 
+        rollbacks = []
+
         # run delete query
         str_query = SPARQL::Client::Update::DeleteData.new(delete['graph'], graph: @name_graph).to_s
         puts "\n\nDELETE QUERY:\n\n"
         puts str_query
         puts "\n\n"
-        @client_sparql.delete_data(delete['graph'])
+        begin
+          @client_sparql.delete_data(delete['graph'])
+        rescue RuntimeError => e
+          puts "error deleting data: #{e.full_message}"
+          puts "rolling back ..."
+          rollback(rollbacks)
+          raise RuntimeError, e
+        end
+        rollbacks << {
+          type: 'query_insert',
+          graph: delete['graph']
+        }
 
         # run insert query
         str_query = SPARQL::Client::Update::InsertData.new(insert['graph'], graph: @name_graph).to_s
         puts "\n\nINSERT QUERY:\n\n"
         puts str_query
         puts "\n\n"
-        @client_sparql.insert_data(insert['graph'])
+        begin
+          @client_sparql.insert_data(insert['graph'])
+        rescue RuntimeError => e
+          puts "error inserting data: #{e.full_message}"
+          puts "rolling back ..."
+          rollback(rollbacks)
+          raise RuntimeError, e
+        end
+        rollbacks << {
+          type: 'query_delete',
+          graph: insert['graph']
+        }
 
         # end critical section
         puts "\n\n-- END CRITICAL SECTION: \n\n"
@@ -172,6 +196,28 @@ module Solis
         end
         puts "GET_OBJECTS_FOR_SUBJECT_AND_PREDICATE: #{s}, #{p}:\n#{objects}"
         objects
+      end
+
+      private
+
+      def rollback(rollbacks)
+        rollbacks.each_with_index do |op, i|
+          puts "\n\nROLLBACK QUERY: #{i+1}"
+          case op[:type]
+          when 'query_insert'
+            str_query = SPARQL::Client::Update::InsertData.new(op[:graph], graph: @name_graph).to_s
+            puts "\n\nINSERT QUERY (AS ROLLBACK QUERY):\n\n"
+            puts str_query
+            puts "\n\n"
+            @client_sparql.insert_data(op[:graph])
+          when 'query_delete'
+            str_query = SPARQL::Client::Update::DeleteData.new(op[:graph], graph: @name_graph).to_s
+            puts "\n\nDELETE QUERY (AS ROLLBACK QUERY):\n\n"
+            puts str_query
+            puts "\n\n"
+            @client_sparql.delete_data(op[:graph])
+          end
+        end
       end
 
     end
