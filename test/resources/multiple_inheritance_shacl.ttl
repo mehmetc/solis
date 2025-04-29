@@ -1,0 +1,49 @@
+@prefix lbs: <https://lib.is/test/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+lbs:ThingShape a sh:NodeShape ;
+    sh:description "A generic entity" ;
+    sh:targetClass lbs:Thing ;
+    sh:name "Thing" ;
+    sh:property
+        [
+            sh:path lbs:creation_date ;
+            rdfs:label "Creation date"@en ;
+            rdfs:label "Aangemaakt op"@nl ;
+            sh:name "creation_date" ;
+            sh:description "Date the entity was created" ;
+            sh:datatype xsd:dateTime ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] .
+
+lbs:FoafPersonShape a sh:NodeShape ;
+    sh:targetClass foaf:Person ;
+    sh:description "Inherited person entity" ;
+    sh:property
+        [
+            sh:path foaf:firstName ;
+            sh:datatype xsd:string ;
+            sh:name "first_name" ;
+        ] ;
+    sh:property
+        [
+            sh:path foaf:lastName ;
+            sh:datatype xsd:string ;
+            sh:name "last_name" ;
+        ] .
+
+lbs:PersonShape a sh:NodeShape ;
+    sh:description "A person entity with inherited properties" ;
+    sh:targetClass lbs:Person ;
+    sh:node lbs:ThingShape ; #inherit properties
+    sh:node lbs:FoafPersonShape ; #inherit properties
+    sh:property
+        [
+            sh:path lbs:favorite_food ;
+            sh:datatype xsd:string ;
+            sh:name "favorite_food" ;
+    ] .
