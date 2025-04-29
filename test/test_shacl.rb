@@ -21,6 +21,6 @@ class TestShacl < Minitest::Test
   end
 
   def test_validate_shacl
-    Solis::
+
   end
 end
