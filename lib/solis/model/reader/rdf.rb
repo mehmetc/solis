@@ -15,12 +15,12 @@ module Solis
         # Reserved Ruby keywords to avoid conflicts
         RESERVED_WORDS = %w[Object Class Module End Begin If Else Def]
 
-        def self.read(ontology_uri)
-          if ontology_uri.is_a?(String)
-            #graph = RDF::Graph.load(ontology_uri)
-            graph = RDF::Repository.load(ontology_uri)
+        def self.read(ontology)
+          if ontology.is_a?(String)
+            #graph = RDF::Graph.load(ontology)
+            graph = RDF::Repository.load(ontology)
           else
-            graph = ontology_uri
+            graph = ontology
           end
 
           #shacl_graph = RDF::Graph.new
@@ -111,6 +111,10 @@ module Solis
           end
 
           shacl_graph
+        end
+        
+        def self.is_rdf?(graph)
+          graph.query([nil, RDF.type, RDF::OWL.Class]).size > 0
         end
         private
 
