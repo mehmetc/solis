@@ -1,3 +1,4 @@
+require 'shacl'
 module Solis
   class Model
     class Reader

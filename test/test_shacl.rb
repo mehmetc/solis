@@ -21,6 +21,9 @@ class TestShacl < Minitest::Test
   end
 
   def test_validate_shacl
+    shacl = SHACL.open('test/resources/shacl-shacl.ttl')
+    results = shacl.execute(@solis.graph)
 
+    pp results
   end
 end
