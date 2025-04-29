@@ -2,7 +2,15 @@
 
 require "test_helper"
 
+Solis::SHACLValidator = Solis::SHACLValidatorV2
+
 class TestSHACLValidator < Minitest::Test
+  def setup
+    super
+    @opts = {
+      path_dir: File.join(__dir__, './data')
+    }
+  end
 
   def test_required_property
 
@@ -54,7 +62,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -80,7 +88,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -137,7 +145,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -164,7 +172,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -234,7 +242,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -271,7 +279,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -335,7 +343,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -399,7 +407,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -459,7 +467,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -527,7 +535,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -579,7 +587,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -600,7 +608,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -655,7 +663,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -677,7 +685,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -738,7 +746,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -760,7 +768,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -769,7 +777,10 @@ class TestSHACLValidator < Minitest::Test
 
   def test_valid_property_email_pattern
 
-    # NOTE: see here; here using HTML regex.
+    # NOTE: see here:
+    # https://piotr.gg/regexp/email-address-regular-expression-that-99-99-works.html
+    # The used regex is: HTML5.
+    # SHACLValidatorV2 does not support "sh:flags"
     str_shacl_ttl = %(
       @prefix example: <https://example.com/> .
       @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
@@ -799,7 +810,6 @@ class TestSHACLValidator < Minitest::Test
                                 sh:description "Warehouse e-mail" ;
                                 sh:datatype    xsd:string ;
                                 sh:pattern     "^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$" ;
-                                sh:flags       "g" ;
                                 sh:minCount    1 ;
                                 sh:maxCount    1 ; ];
       .
@@ -822,11 +832,12 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
 
+    # can check here: https://www.activityinfo.org/support/docs/regex/test.html
     hash_data_jsonld = JSON.parse %(
       {
         "@context": {
@@ -841,7 +852,7 @@ class TestSHACLValidator < Minitest::Test
             "email_warehouse": "john.doe@fakecom"
           },
           {
-            "@id": "http://schema.org/my_car_1",
+            "@id": "http://schema.org/my_car_2",
             "@type": "Car",
             "color": "blue",
             "brand": "toyota",
@@ -851,10 +862,10 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
-    assert_equal(messages.size, 2)
+    assert_equal(messages.size, 1)
 
   end
 
@@ -903,7 +914,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -924,7 +935,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -945,12 +956,12 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, true)
     assert_equal(messages.size, 0)
@@ -971,7 +982,7 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
@@ -1056,10 +1067,188 @@ class TestSHACLValidator < Minitest::Test
       }
     )
 
-    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl)
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
     conform, messages = validator.execute(hash_data_jsonld, :jsonld)
     assert_equal(conform, false)
     assert_equal(messages.size, 1)
+
+  end
+
+  def test_single_inheritance
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+
+      example:CarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a car entity" ;
+              sh:targetClass  example:Car;
+              sh:name         "Car";
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color" ;
+                                sh:description "Color of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+              sh:property     [ sh:path        example:brand;
+                                sh:name        "brand" ;
+                                sh:description "Brand of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+      .
+
+      example:ElectricCarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a electric car entity" ;
+              sh:targetClass  example:ElectricCar;
+              sh:name         "ElectricCar";
+              sh:property     [ sh:path        example:battery;
+                                sh:name        "battery" ;
+                                sh:description "Battery of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    3 ; ];
+      .
+
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+          "@context": {
+            "@vocab": "https://example.com/",
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+            "rdfs:subClassOf": {
+              "@type": "@id"
+            }
+          },
+        "@graph": [
+          {
+            "@id": "https://example.com/ElectricCar",
+            "rdfs:subClassOf": "https://example.com/Car"
+          },
+          {
+            "@id": "http://schema.org/my_car_1",
+            "@type": "Car",
+            "color": "blue",
+            "brand": "toyota"
+          },
+          {
+            "@id": "http://schema.org/my_car_2",
+            "@type": "ElectricCar",
+            "brand": "BYD"
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, false)
+    # non conform for "my_car_2":
+    # - misses one prop of type "ElectricCar": "battery"
+    # - misses one prop of parent type "Car: "color"
+    assert_equal(messages.size, 2)
+
+  end
+
+  def test_multiple_inheritance
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+
+      example:CarShape
+          a sh:NodeShape;
+          sh:description  "Abstract shape that describes a car entity" ;
+          sh:targetClass  example:Car;
+          sh:name         "Car";
+          sh:property     [ sh:path        example:color;
+                            sh:name        "color" ;
+                            sh:description "Color of the car" ;
+                            sh:datatype    xsd:string ;
+                            sh:minCount    1 ;
+                            sh:maxCount    1 ; ];
+          sh:property     [ sh:path        example:brand;
+                            sh:name        "brand" ;
+                            sh:description "Brand of the car" ;
+                            sh:datatype    xsd:string ;
+                            sh:minCount    1 ;
+                            sh:maxCount    1 ; ];
+      .
+
+      example:ElectricVehicleShape
+          a sh:NodeShape;
+          sh:description  "Abstract shape that describes a electric vehicle entity" ;
+          sh:targetClass  example:ElectricVehicle;
+          sh:name         "ElectricVehicle";
+          sh:property     [ sh:path        example:efficiency;
+                            sh:name        "efficiency" ;
+                            sh:description "Efficiency of the vehicle" ;
+                            sh:datatype    xsd:float ;
+                            sh:minCount    1 ;
+                            sh:maxCount    1 ; ];
+      .
+
+      example:ElectricCarShape
+          a sh:NodeShape;
+          sh:description  "Abstract shape that describes a electric car entity" ;
+          sh:targetClass  example:ElectricCar;
+          sh:name         "ElectricCar";
+          sh:property     [ sh:path        example:battery;
+                            sh:name        "battery" ;
+                            sh:description "Battery of the car" ;
+                            sh:datatype    xsd:string ;
+                            sh:minCount    1 ;
+                            sh:maxCount    3 ; ];
+      .
+
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+          "@context": {
+            "@vocab": "https://example.com/",
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+            "rdfs:subClassOf": {
+              "@type": "@id"
+            }
+          },
+        "@graph": [
+          {
+            "@id": "https://example.com/ElectricCar",
+            "rdfs:subClassOf": "https://example.com/Car"
+          },
+          {
+            "@id": "https://example.com/ElectricCar",
+            "rdfs:subClassOf": "https://example.com/ElectricVehicle"
+          },
+          {
+            "@id": "http://schema.org/my_car_1",
+            "@type": "Car",
+            "color": "blue",
+            "brand": "toyota"
+          },
+          {
+            "@id": "http://schema.org/my_car_2",
+            "@type": "ElectricCar",
+            "brand": "toyota",
+            "battery": "something"
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, false)
+    # non conform for "my_car_2":
+    # - misses one prop of parent 1 type "Car": "color"
+    # - misses one prop of parent 2 type "ElectricVehicle": "efficiency"
+    assert_equal(messages.size, 2)
 
   end
 

@@ -1,12 +1,17 @@
 
+# NOTE:
+# This validator does not support:
+# - inheritance
+# This is a necessary feature, hence it needed to be replaced with V2.
+
 require 'linkeddata'
 require 'shacl'
 require 'json/ld'
 
 module Solis
-  class SHACLValidator
+  class SHACLValidatorV1
 
-    def initialize(shacl, format)
+    def initialize(shacl, format, opts={})
       if format.eql?(:ttl)
         graph_shacl = RDF::Graph.new
         graph_shacl.from_ttl(shacl)
