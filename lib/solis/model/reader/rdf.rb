@@ -39,7 +39,7 @@ module Solis
             shacl_graph << [shape, RDF::Vocab::SHACL.name, class_name] #class_uri.path.split('/').last]
             shacl_graph << [shape, RDF::Vocab::SHACL.targetClass, class_uri]
             shacl_graph << [shape, RDF::Vocab::SHACL.node, shape_subclass_of] if shape_subclass_of
-            shacl_graph << [shape, RDF::Vocab::SHACL.description, shape_definition]
+            shacl_graph << [shape, RDF::Vocab::SHACL.description, shape_definition] if shape_definition
 
             # Extract properties associated with this class
             graph.query([nil, RDF::RDFS.domain, class_uri]).each do |property_stmt|
@@ -55,7 +55,7 @@ module Solis
               shacl_graph << [shape, RDF::Vocab::SHACL.property, property_shape]
               shacl_graph << [property_shape, RDF::Vocab::SHACL.name, property_name]# property.path.split('/').last]
               shacl_graph << [property_shape, RDF::Vocab::SHACL.path, property]
-              shacl_graph << [property_shape, RDF::Vocab::SHACL.description, property_definition]
+              shacl_graph << [property_shape, RDF::Vocab::SHACL.description, property_definition] if property_definition
 
               # Add range constraints if available
               # if range
@@ -111,6 +111,8 @@ module Solis
           end
 
           shacl_graph
+        rescue Solis::Error::General => e
+          raise e
         end
         
         def self.is_rdf?(graph)

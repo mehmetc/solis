@@ -3,6 +3,22 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+foaf:PersonShape
+    a sh:NodeShape ;
+    sh:name "http://xmlns.com/foaf/0.1/Person" ;
+    sh:property
+        [
+            sh:name "http://xmlns.com/foaf/0.1/firstName" ;
+            sh:path foaf:firstName
+        ],
+        [
+            sh:name "http://xmlns.com/foaf/0.1/lastName" ;
+            sh:path foaf:lastName
+        ] ;
+    sh:targetClass foaf:Person .
+
 
 lbs:ThingShape a sh:NodeShape ;
     sh:description "A generic entity" ;
@@ -27,13 +43,15 @@ lbs:FoafPersonShape a sh:NodeShape ;
         [
             sh:path foaf:firstName ;
             sh:datatype xsd:string ;
-            sh:name "first_name" ;
+            sh:name "firstName" ;
+            rdfs:label "voornaam"@nl;
+            sh:minCount 1 ;
         ] ;
     sh:property
         [
             sh:path foaf:lastName ;
             sh:datatype xsd:string ;
-            sh:name "last_name" ;
+            sh:name "lastName" ;
         ] .
 
 lbs:PersonShape a sh:NodeShape ;
@@ -46,4 +64,4 @@ lbs:PersonShape a sh:NodeShape ;
             sh:path lbs:favorite_food ;
             sh:datatype xsd:string ;
             sh:name "favorite_food" ;
-    ] .
+        ] .
