@@ -1,0 +1,15 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix lbs: <https://lib.is/test/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+lbs:Person a rdfs:Class;
+    rdfs:subClassOf foaf:Person.
+
+lbs:1 a lbs:Person ;
+    lbs:voornaam "abc";
+    lbs:creation_date "2025-04-29T14:54:30+02:00"^^xsd:dateTime .
+
+
+
