@@ -1,0 +1,235 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix wgs84: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+
+
+wgs84:SpatialThingShape
+    a sh:NodeShape ;
+    sh:name "SpatialThing" ;
+    sh:node wgs84:SpatialThing ;
+    sh:property [
+        sh:name "http://xmlns.com/foaf/0.1/based_near" ;
+        sh:path foaf:based_near
+    ] ;
+    sh:targetClass wgs84:SpatialThing .
+
+foaf:AgentShape
+    a sh:NodeShape ;
+    sh:name "http://xmlns.com/foaf/0.1/Agent" ;
+    sh:node foaf:Agent ;
+    sh:property [
+        sh:name "http://xmlns.com/foaf/0.1/mbox" ;
+        sh:path foaf:mbox
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/mbox_sha1sum" ;
+        sh:path foaf:mbox_sha1sum
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/gender" ;
+        sh:path foaf:gender
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/jabberID" ;
+        sh:path foaf:jabberID
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/aimChatID" ;
+        sh:path foaf:aimChatID
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/skypeID" ;
+        sh:path foaf:skypeID
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/icqChatID" ;
+        sh:path foaf:icqChatID
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/yahooChatID" ;
+        sh:path foaf:yahooChatID
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/msnChatID" ;
+        sh:path foaf:msnChatID
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/weblog" ;
+        sh:path foaf:weblog
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/openid" ;
+        sh:path foaf:openid
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/tipjar" ;
+        sh:path foaf:tipjar
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/made" ;
+        sh:path foaf:made
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/interest" ;
+        sh:path foaf:interest
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/topic_interest" ;
+        sh:path foaf:topic_interest
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/account" ;
+        sh:path foaf:account
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/holdsAccount" ;
+        sh:path foaf:holdsAccount
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/birthday" ;
+        sh:path foaf:birthday
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/age" ;
+        sh:path foaf:age
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/status" ;
+        sh:path foaf:status
+    ] ;
+    sh:targetClass foaf:Agent .
+
+foaf:DocumentShape
+    a sh:NodeShape ;
+    sh:name "http://xmlns.com/foaf/0.1/Document" ;
+    sh:node foaf:Document ;
+    sh:property [
+        sh:class foaf:Document ;
+        sh:name "http://xmlns.com/foaf/0.1/sha1" ;
+        sh:nodeKind sh:IRI ;
+        sh:path foaf:sha1
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/topic" ;
+        sh:path foaf:topic
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/primaryTopic" ;
+        sh:path foaf:primaryTopic
+    ] ;
+    sh:targetClass foaf:Document .
+
+foaf:GroupShape
+    a sh:NodeShape ;
+    sh:name "http://xmlns.com/foaf/0.1/Group" ;
+    sh:node foaf:AgentShape ;
+    sh:property [
+        sh:name "http://xmlns.com/foaf/0.1/member" ;
+        sh:path foaf:member
+    ] ;
+    sh:targetClass foaf:Group .
+
+foaf:ImageShape
+    a sh:NodeShape ;
+    sh:name "http://xmlns.com/foaf/0.1/Image" ;
+    sh:node foaf:DocumentShape ;
+    sh:property [
+        sh:name "http://xmlns.com/foaf/0.1/depicts" ;
+        sh:path foaf:depicts
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/thumbnail" ;
+        sh:path foaf:thumbnail
+    ] ;
+    sh:targetClass foaf:Image .
+
+foaf:LabelPropertyShape
+    a sh:NodeShape ;
+    sh:name "http://xmlns.com/foaf/0.1/LabelProperty" ;
+    sh:node foaf:LabelProperty ;
+    sh:targetClass foaf:LabelProperty .
+
+foaf:OnlineAccountShape
+    a sh:NodeShape ;
+    sh:name "http://xmlns.com/foaf/0.1/OnlineAccount" ;
+    sh:node <http://www.w3.org/2002/07/owl#ThingShape> ;
+    sh:property [
+        sh:name "http://xmlns.com/foaf/0.1/accountServiceHomepage" ;
+        sh:path foaf:accountServiceHomepage
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/accountName" ;
+        sh:path foaf:accountName
+    ] ;
+    sh:targetClass foaf:OnlineAccount .
+
+foaf:OnlineChatAccountShape
+    a sh:NodeShape ;
+    sh:name "http://xmlns.com/foaf/0.1/OnlineChatAccount" ;
+    sh:node foaf:OnlineAccountShape ;
+    sh:targetClass foaf:OnlineChatAccount .
+
+foaf:OnlineEcommerceAccountShape
+    a sh:NodeShape ;
+    sh:name "http://xmlns.com/foaf/0.1/OnlineEcommerceAccount" ;
+    sh:node foaf:OnlineAccountShape ;
+    sh:targetClass foaf:OnlineEcommerceAccount .
+
+foaf:OnlineGamingAccountShape
+    a sh:NodeShape ;
+    sh:name "http://xmlns.com/foaf/0.1/OnlineGamingAccount" ;
+    sh:node foaf:OnlineAccountShape ;
+    sh:targetClass foaf:OnlineGamingAccount .
+
+foaf:OrganizationShape
+    a sh:NodeShape ;
+    sh:name "http://xmlns.com/foaf/0.1/Organization" ;
+    sh:node foaf:AgentShape ;
+    sh:targetClass foaf:Organization .
+
+foaf:PersonShape
+    a sh:NodeShape ;
+    sh:name "http://xmlns.com/foaf/0.1/Person" ;
+    sh:node foaf:AgentShape ;
+    sh:property [
+        sh:name "http://xmlns.com/foaf/0.1/familyName" ;
+        sh:path foaf:familyName
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/plan" ;
+        sh:path foaf:plan
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/img" ;
+        sh:path foaf:img
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/myersBriggs" ;
+        sh:path foaf:myersBriggs
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/workplaceHomepage" ;
+        sh:path foaf:workplaceHomepage
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/workInfoHomepage" ;
+        sh:path foaf:workInfoHomepage
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/schoolHomepage" ;
+        sh:path foaf:schoolHomepage
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/knows" ;
+        sh:path foaf:knows
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/publications" ;
+        sh:path foaf:publications
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/currentProject" ;
+        sh:path foaf:currentProject
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/pastProject" ;
+        sh:path foaf:pastProject
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/geekcode" ;
+        sh:path foaf:geekcode
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/firstName" ;
+        sh:path foaf:firstName
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/lastName" ;
+        sh:path foaf:lastName
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/surname" ;
+        sh:path foaf:surname
+    ], [
+        sh:name "http://xmlns.com/foaf/0.1/family_name" ;
+        sh:path foaf:family_name
+    ] ;
+    sh:targetClass foaf:Person .
+
+foaf:PersonalProfileDocumentShape
+    a sh:NodeShape ;
+    sh:name "http://xmlns.com/foaf/0.1/PersonalProfileDocument" ;
+    sh:node foaf:DocumentShape ;
+    sh:targetClass foaf:PersonalProfileDocument .
+
+foaf:ProjectShape
+    a sh:NodeShape ;
+    sh:name "http://xmlns.com/foaf/0.1/Project" ;
+    sh:node foaf:Project ;
+    sh:targetClass foaf:Project .
+
