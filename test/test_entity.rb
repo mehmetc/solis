@@ -466,7 +466,7 @@ class TestEntity < Minitest::Test
     )
 
     repository = RDF::Repository.new
-    store = Solis::Store::RDFProxyWithSyncWrite.new(repository, @name_graph)
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
 
     car = Solis::Model::Entity.new(data, @model_1, 'Car', store)
 
@@ -535,7 +535,7 @@ class TestEntity < Minitest::Test
     )
 
     repository = RDF::Repository.new
-    store = Solis::Store::RDFProxyWithSyncWrite.new(repository, @name_graph)
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
 
     car = Solis::Model::Entity.new(data, @model_2, 'ElectricCar', store)
 
@@ -605,7 +605,7 @@ class TestEntity < Minitest::Test
     )
 
     repository = RDF::Repository.new
-    store = Solis::Store::RDFProxyWithSyncWrite.new(repository, @name_graph)
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
 
     car = Solis::Model::Entity.new(data, @model_1, 'Car', store)
     puts car.to_pretty_jsonld

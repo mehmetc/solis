@@ -11,7 +11,9 @@ module Solis
       # Expects:
       # - @client_sparql
 
-      def run_operations_as_rdf(ops_generic)
+      def run_operations
+
+        ops_generic = @ops
 
         # convert endpoint-agnostic operations into RDF operations
         ops = ops_generic.map do |op|
@@ -167,6 +169,8 @@ module Solis
 
         # end critical section
         puts "\n\n-- END CRITICAL SECTION: \n\n"
+
+        @ops = []
 
       end
 

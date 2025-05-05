@@ -69,7 +69,7 @@ module Solis
           save_instance(obj)
         end
 
-        @store.write()
+        @store.run_operations
 
       end
 
