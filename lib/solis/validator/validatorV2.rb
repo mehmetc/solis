@@ -63,8 +63,10 @@ module Solis
         end
       end
       conform = status.success?
+      # remove warnings on top
+      i_start = stdout.index("PREFIX")
+      str_ttl = stdout[i_start..]
       # parse validation results
-      str_ttl = stdout
       graph = RDF::Graph.new << RDF::Turtle::Reader.new(str_ttl)
       context = {
         "sh" => "http://www.w3.org/ns/shacl#"
@@ -103,7 +105,8 @@ module Solis
       # dump graph data to file
       path_file_graph_data = File.join(path_dir_data, @name_file_graph_data)
       File.open(path_file_graph_data, "w") do |file|
-        file.puts(graph_data.dump(:ntriples))
+        # NOTE: disable validation of dumped triples, this has to happen later from the validator
+        file.puts(graph_data.dump(:ntriples, validate: false))
       end
       # dump shacl data to file
       path_file_graph_shacl = File.join(path_dir_data, @name_file_graph_shacl)

@@ -1,12 +1,13 @@
 
 require_relative "../validator/validatorV1"
 require_relative "../validator/validatorV2"
+require_relative "validator_literals"
 
 
 module Solis
   class ModelMock
 
-    attr_reader :shapes, :validator, :namespace, :hierarchy
+    attr_reader :shapes, :validator, :hash_validator_literals, :namespace, :hierarchy
 
     def initialize(params = {})
       @graph = params[:graph]
@@ -15,6 +16,9 @@ module Solis
       @validator = Solis::SHACLValidatorV2.new(@graph, :graph, {
         path_dir: params[:tmp_dir]
       })
+      hash_validator_literals_custom = params[:hash_validator_literals_custom] || {}
+      @hash_validator_literals = Solis::Model::Literals.get_default_hash_validator
+      @hash_validator_literals.merge!(hash_validator_literals_custom)
       @prefix = params[:prefix]
       @namespace = params[:namespace]
       @hierarchy = params[:hierarchy] || {}

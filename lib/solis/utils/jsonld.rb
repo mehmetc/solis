@@ -26,8 +26,8 @@ module Solis
         })
         # The library method above seems to provide the same "@type"
         # "http://www.w3.org/2001/XMLSchema#string" to everything,
-        # unless "@type" was alreadty specified externally.
-        # For now, whden the type is like that, it is deleted.
+        # unless "@type" was already specified externally.
+        # For now, when the type is like that, it is deleted.
         # For the validation, the type is let be inferred by the SHACL validator.
         arr.each do |obj|
           obj.each do |name_attr, val_attr|
@@ -200,6 +200,72 @@ module Solis
           end
         end
         triples
+      end
+
+      def self.compact_type(obj)
+        obj2 = Marshal.load(Marshal.dump(obj))
+        obj.each do |name_attr, content_attr|
+          next if ['@id'].include?(name_attr)
+          if name_attr.eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#type')
+            obj2.delete(name_attr)
+            obj2['@type'] = content_attr[0]['@value']
+          end
+        end
+        obj2
+      end
+
+      def self.anyuris_to_uris(obj)
+        obj2 = Marshal.load(Marshal.dump(obj))
+        obj.each do |name_attr, content_attr|
+          next if ['@id', '@type'].include?(name_attr)
+          content_attr.each_with_index do |e, i|
+            if e['@type'].eql?('http://www.w3.org/2001/XMLSchema#anyURI')
+              obj2[name_attr][i] = {
+                '@id' => e['@value']
+              }
+            end
+          end
+        end
+        obj2
+      end
+
+      def self.compact_values(obj, f_conv)
+        obj2 = Marshal.load(Marshal.dump(obj))
+        obj.each do |name_attr, content_attr|
+          next if ['@id', '@type'].include?(name_attr)
+          content_attr.each_with_index do |e, i|
+            unless e.key?('@id')
+              obj2[name_attr][i] = f_conv.call(e['@value'], e['@type'])
+            end
+          end
+        end
+        obj2
+      end
+
+      def self.validate_literals(graph, hv)
+        conform = true
+        messages = []
+        graph.each do |obj|
+          obj.each do |name_attr, content_attr|
+            next if ['@id', '@type'].include?(name_attr)
+            content_attr.each do |e|
+              if e.key?('@type')
+                type = e['@type']
+                value = e['@value']
+                if hv.key?(type)
+                  key = type
+                else
+                  key = hv.keys.find { |k| k.match?(type) }
+                end
+                unless key.nil?
+                  conform &&= hv[key].call(hv, value)
+                  messages << "#{obj['@id']}, #{name_attr}, value does not conform <#{type}>"
+                end
+              end
+            end
+          end
+        end
+        [conform, messages]
       end
 
     end
