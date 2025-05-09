@@ -65,7 +65,7 @@ module Solis
 
       end
 
-      def save()
+      def save(delayed=false)
 
         conform_literals, messages_literals, conform_shacl, messages_shacl = valid?
 
@@ -82,7 +82,9 @@ module Solis
           save_instance(obj)
         end
 
-        @store.run_operations
+        unless delayed
+          @store.run_operations
+        end
 
       end
 
@@ -117,11 +119,13 @@ module Solis
         res
       end
 
-      def destroy
+      def destroy(delayed=false)
         obj = get_internal_data
         id = obj['@id']
         @store.delete_attributes_for_id(id)
-        res = @store.run_operations[0]
+        unless delayed
+          res = @store.run_operations[0]
+        end
         replace({})
       end
 
