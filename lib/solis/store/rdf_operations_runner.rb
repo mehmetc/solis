@@ -190,11 +190,24 @@ module Solis
               ?s ?p ?o .
             }
           )
+          puts "\n\nDELETE QUERY:\n\n"
           puts str_query
-          # @client_sparql.query(str_query, update: true, logger: Logger.new(STDOUT))
-          @client_sparql.query(str_query, update: true)
-          # TODO: check if the reason for failure is being referenced,
-          # and if so raise error
+          puts "\n\n"
+          # run query
+          # TODO: repository seems a snapshot of the triple store
+          # after the query.
+          # This seems inefficient, especially if the store contains
+          # a lot of triple. To check better ...
+          repository = @client_sparql.query(str_query, update: true)
+          # check if delete failed because subjects were referenced
+          client_sparql = SPARQL::Client.new(repository)
+          subjects_were_referenced = client_sparql.ask
+                                                  .where([:s_ref, :p_ref, :s])
+                                                  .values(:s, *ss)
+                                                  .true?
+          if subjects_were_referenced
+            raise StandardError, "any of these #{str_ids} was referenced"
+          end
         end
       end
 
