@@ -42,25 +42,38 @@ module Solis
         puts "=== flattened + deps sorted + expanded + cleaned JSON-LD:"
         puts JSON.pretty_generate(flattened_ordered_expanded)
 
+        # validate literals
+        conform_literals, messages_literals = Solis::Utils::JSONLD.validate_literals(
+          flattened_ordered_expanded['@graph'],
+          @model.hash_validator_literals
+        )
+        puts conform_literals
+        puts messages_literals
+
         # add hierarchy triples
         flattened_ordered_expanded['@context'].merge!(Solis::Utils::JSONLD.make_jsonld_hierarchy_context)
         flattened_ordered_expanded['@graph'].concat(Solis::Utils::JSONLD.make_jsonld_triples_from_hierarchy(@model))
         puts "=== flattened + deps sorted + expanded + cleaned + hierarchy JSON-LD:"
         puts JSON.pretty_generate(flattened_ordered_expanded)
 
-        conform, messages = @model.validator.execute(flattened_ordered_expanded, :jsonld)
-        puts conform
-        puts messages
+        # validate agains SHACL
+        conform_shacl, messages_shacl = @model.validator.execute(flattened_ordered_expanded, :jsonld)
+        puts conform_shacl
+        puts messages_shacl
 
-        [conform, messages]
+        [conform_literals, messages_literals, conform_shacl, messages_shacl]
 
       end
 
       def save()
 
-        conform, messages = valid?
-        unless conform
-          raise ValidationError.new(messages)
+        conform_literals, messages_literals, conform_shacl, messages_shacl = valid?
+
+        unless conform_literals
+          raise ValidationError.new(messages_literals)
+        end
+        unless conform_shacl
+          raise ValidationError.new(messages_shacl)
         end
 
         flattened_ordered_expanded = to_jsonld_flattened_ordered_expanded
@@ -87,8 +100,29 @@ module Solis
         add_ids_if_not_exists!
       end
 
-      def load()
-        raise NotImplementedError
+      def load(deep=false)
+        obj = get_internal_data
+        id = obj['@id']
+        @store.get_data_for_id(id, @model.namespace, deep=deep)
+        obj_res = @store.run_operations[0]
+        replace(obj_res)
+        obj_res
+      end
+
+      def referenced?
+        obj = get_internal_data
+        id = obj['@id']
+        @store.ask_if_id_is_referenced(id)
+        res = @store.run_operations[0]
+        res
+      end
+
+      def destroy
+        obj = get_internal_data
+        id = obj['@id']
+        @store.delete_attributes_for_id(id)
+        res = @store.run_operations[0]
+        replace({})
       end
 
       def to_pretty_jsonld
@@ -227,7 +261,7 @@ module Solis
               end
             elsif content.key?('@id')
               # a reference
-              @store.save_attribute_for_id(id, name_attr, content['@id'], 'http://www.w3.org/2001/XMLSchema#anyURI')
+              @store.save_attribute_for_id(id, name_attr, content['@id'], 'URI')
             end
           end
 
@@ -265,6 +299,8 @@ module Solis
                 if idx.nil?
                   if opts[:add_missing_refs]
                     obj[name_attr_patch].push(item_val_patch)
+                    # obj_loaded = Entity.new(item_val_patch, @model, obj['@type'], @store).load(deep=true)
+                    # obj[name_attr_patch].push(obj_loaded)
                   else
                     raise MissingRefError.new(item_val_patch['@id'])
                   end
