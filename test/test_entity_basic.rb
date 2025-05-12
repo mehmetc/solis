@@ -1,6 +1,6 @@
 require "test_helper"
 
-class TestEntity < Minitest::Test
+class TestEntityBasic < Minitest::Test
 
   def setup
     super
