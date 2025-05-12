@@ -1252,4 +1252,142 @@ class TestSHACLValidator < Minitest::Test
 
   end
 
+  def test_shacl_datatype_vs_jsonld_type
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+      @prefix time:   <http://www.w3.org/2006/time#> .
+      @prefix time2:  <https://example.com/time#> .
+
+      example:CarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a car entity" ;
+              sh:targetClass  example:Car;
+              sh:node         example:Car;
+              sh:name         "Car";
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color" ;
+                                sh:description "Color of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+              sh:property     [ sh:path        example:interval_check;
+                                sh:name        "interval_check" ;
+                                sh:description "Interval to check the car" ;
+                                sh:datatype    time2:MyInterval ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+      .
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/"
+        },
+        "@graph": [
+          {
+            "@id": "http://schema.org/my_car_2",
+            "@type": "Car",
+            "color": "black",
+            "interval_check": {
+              "@type": "https://example.com/time#MyInterval",
+              "@value": "can-be-anything"
+            }
+          }
+        ]
+      }
+    )
+
+    # If JSON-LD @type is declared to be matching the sh:datatype,
+    # and no other constrains are indicated, this is valid.
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, true)
+    assert_equal(messages.size, 0)
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/"
+        },
+        "@graph": [
+          {
+            "@id": "http://schema.org/my_car_2",
+            "@type": "Car",
+            "color": "black",
+            "interval_check": {
+              "@type": "http://www.w3.org/2006/time#DateTimeInterval",
+              "@value": "can-be-anything"
+            }
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, false)
+    assert_equal(messages.size, 1)
+
+  end
+
+  def test_invalid_literal
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+      @prefix time:   <http://www.w3.org/2006/time#> .
+
+      example:CarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a car entity" ;
+              sh:targetClass  example:Car;
+              sh:node         example:Car;
+              sh:name         "Car";
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color" ;
+                                sh:description "Color of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+              sh:property     [ sh:path        example:interval_check;
+                                sh:name        "interval_check" ;
+                                sh:description "Interval to check the car" ;
+                                sh:datatype    xsd:integer ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+      .
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/"
+        },
+        "@graph": [
+          {
+            "@id": "http://schema.org/my_car_2",
+            "@type": "Car",
+            "color": "black",
+            "interval_check": {
+              "@type": "http://www.w3.org/2001/XMLSchema#integer",
+              "@value": "1b"
+            }
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, false)
+    assert_equal(messages.size, 1)
+
+  end
+
 end

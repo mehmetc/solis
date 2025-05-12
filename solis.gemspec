@@ -49,6 +49,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'shacl', '~> 0.4.1'
   spec.add_dependency 'tsort', '~> 0.2.0'
   spec.add_dependency 'securerandom', '~> 0.4.1'
+  spec.add_dependency 'iso8601', '~> 0.13.0'
+  spec.add_dependency 'edtf', '~> 3.2.0'
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
