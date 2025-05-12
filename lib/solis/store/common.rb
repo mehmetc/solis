@@ -13,5 +13,10 @@ module Solis
       DELETE_ATTRIBUTE = 3
     end
 
+    module GetMode
+      SHALLOW = 4
+      DEEP = 5
+    end
+
   end
 end

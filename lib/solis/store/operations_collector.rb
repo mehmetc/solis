@@ -12,12 +12,11 @@ module Solis
 
       def save_id_with_type(id, type, mode=Solis::Store::SaveMode::PRE_DELETE_PEERS_IF_DIFF_SET)
 
-        s, p, o = [id, 'has_type', type]
-
         op = {
-          "type" => "save_id_with_type",
-          "mode" => mode,
-          "content" => [s, p, o]
+          "name" => "save_id_with_type",
+          "type" => "write",
+          "opts" => mode,
+          "content" => [id, 'has_type', type]
         }
 
         puts op
@@ -28,12 +27,11 @@ module Solis
 
       def save_attribute_for_id(id, name_attr, val_attr, type_attr, mode=Solis::Store::SaveMode::PRE_DELETE_PEERS_IF_DIFF_SET)
 
-        s, p, o, dto = [id, name_attr, val_attr, type_attr]
-
         op = {
-          "type" => "save_attribute_for_id",
-          "mode" => mode,
-          "content" => [s, p, o, dto]
+          "name" => "save_attribute_for_id",
+          "type" => "write",
+          "opts" => mode,
+          "content" => [id, name_attr, val_attr, type_attr]
         }
 
         puts op
@@ -44,12 +42,58 @@ module Solis
 
       def delete_attribute_for_id(id, name_attr)
 
-        s, p = [id, name_attr]
+        op = {
+          "name" => "delete_attribute_for_id",
+          "type" => "write",
+          "opts" => Solis::Store::DeleteMode::DELETE_ATTRIBUTE,
+          "content" => [id, name_attr]
+        }
+
+        puts op
+
+        @ops << op
+
+      end
+
+      def get_data_for_id(id, namespace, deep=false)
+
+        mode = deep ? Solis::Store::GetMode::DEEP : Solis::Store::GetMode::SHALLOW
 
         op = {
-          "type" => "delete_attribute_for_id",
-          "mode" => Solis::Store::DeleteMode::DELETE_ATTRIBUTE,
-          "content" => [s, p]
+          "name" => "get_data_for_id",
+          "type" => "read",
+          "opts" => mode,
+          "content" => [id, namespace]
+        }
+
+        puts op
+
+        @ops << op
+
+      end
+
+      def ask_if_id_is_referenced(id)
+
+        op = {
+          "name" => "ask_if_id_is_referenced",
+          "type" => "read",
+          "opts" => nil,
+          "content" => [id]
+        }
+
+        puts op
+
+        @ops << op
+
+      end
+
+      def delete_attributes_for_id(id)
+
+        op = {
+          "name" => "delete_attributes_for_id",
+          "type" => "write",
+          "opts" => nil,
+          "content" => [id]
         }
 
         puts op
