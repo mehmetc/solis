@@ -1,0 +1,31 @@
+@prefix example: <https://example.com/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+
+example:CarShape
+    a sh:NodeShape;
+    sh:description  "Abstract shape that describes a car entity" ;
+    sh:targetClass  example:Car;
+    sh:name         "Car";
+    sh:property     [ sh:path        example:color;
+                          rdfs:label     "Kleur"@nl ;
+                          rdfs:label     "Color"@en ;
+                          sh:name        "color" ;
+                          sh:description "Color of the car" ;
+                          sh:datatype    xsd:string ;
+                          sh:minCount    1 ;
+                          sh:maxCount    1 ; ];
+    sh:property     [ sh:path        example:brand;
+                          sh:name        "brand" ;
+                          rdfs:label     "Brand"@en ;
+                          rdfs:label     "Marque"@fr ;
+                          rdfs:label     "Marke"@de ;
+                          rdfs:label     "Merk"@nl ;
+                          sh:description "Brand of the car" ;
+                          rdfs:comment   "The manufacturer brand"@en ;
+                          rdfs:comment   "La marque du fabricant"@fr ;
+                          sh:datatype    xsd:string ;
+                          sh:minCount    1 ;
+                          sh:maxCount    1 ; ];
+.

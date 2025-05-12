@@ -2,6 +2,7 @@ require_relative 'writer/mermaid'
 require_relative 'writer/plantuml'
 require_relative 'writer/json_schema'
 require_relative 'writer/form'
+require_relative 'writer/open_api'
 
 module Solis
   class Model
@@ -67,6 +68,8 @@ module Solis
             JSONSchemaWriter.write(shacl_graph, params)
           when 'form'
             FormWriter.write(shacl_graph, params)
+          when 'openapi'
+            OpenApiWriter.write(shacl_graph, params)
           else
             raise "Do not know how to process #{source}"
           end

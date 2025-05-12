@@ -49,6 +49,9 @@ module Solis
       when 'application/form'
         options[:uri] = "form://#{@prefix}"
         Solis::Model::Writer.to_uri(options)
+      when 'application/openapi.json'
+        options[:uri] = "openapi://#{@prefix}"
+        Solis::Model::Writer.to_uri(options)
       else
         shacl = StringIO.new
         Solis::Model::Writer.to_uri(uri: shacl, namespace: @namespace, prefix: @prefix, model: @graph, content_type: content_type)

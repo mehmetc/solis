@@ -3,30 +3,7 @@ require "test_helper"
 class TestSolis < Minitest::Test
   def setup
     super
-    @shacl = %(
-@prefix example: <https://example.com/> .
-@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
-@prefix sh:     <http://www.w3.org/ns/shacl#> .
-
-example:CarShape
-        a sh:NodeShape;
-        sh:description  "Abstract shape that describes a car entity" ;
-        sh:targetClass  example:Car;
-        sh:name         "Car";
-        sh:property     [ sh:path        example:color;
-                          sh:name        "color" ;
-                          sh:description "Color of the car" ;
-                          sh:datatype    xsd:string ;
-                          sh:minCount    1 ;
-                          sh:maxCount    1 ; ];
-        sh:property     [ sh:path        example:brand;
-                          sh:name        "brand" ;
-                          sh:description "Brand of the car" ;
-                          sh:datatype    xsd:string ;
-                          sh:minCount    1 ;
-                          sh:maxCount    1 ; ];
-.
-)
+    @shacl = File.read('test/resources/car/car_shacl.ttl')
 
     config = {
       store: Solis::Store::Memory.new(),
