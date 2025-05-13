@@ -34,7 +34,7 @@ module Solis
         add_ids_if_not_exists!
       end
 
-      def valid?
+      def validate
 
         # flatten + expand + clean internal data before validating it
         flattened_ordered_expanded = to_jsonld_flattened_ordered_expanded
@@ -43,10 +43,23 @@ module Solis
         puts JSON.pretty_generate(flattened_ordered_expanded)
 
         # validate literals
-        conform_literals, messages_literals = Solis::Utils::JSONLD.validate_literals(
-          flattened_ordered_expanded['@graph'],
-          @model.hash_validator_literals
-        )
+        # conform_literals, messages_literals = Solis::Utils::JSONLD.validate_literals(
+        #   flattened_ordered_expanded['@graph'],
+        #   @model.hash_validator_literals
+        # )
+        # puts conform_literals
+        # puts messages_literals
+        # NOTE: the following can be even moved inside any SHACL validator
+        graph_data = RDF::Graph.new << JSON::LD::API.toRdf(flattened_ordered_expanded)
+        conform_literals = graph_data.valid?
+        messages_literals = []
+        graph_data.each do |statement|
+          begin
+            statement.object.validate!
+          rescue ArgumentError => e
+            messages_literals << [statement.subject.to_s, statement.predicate.to_s, e.message]
+          end
+        end
         puts conform_literals
         puts messages_literals
 
@@ -65,9 +78,17 @@ module Solis
 
       end
 
+      def valid?
+
+        conform_literals, messages_literals, conform_shacl, messages_shacl = validate
+        res = (conform_literals and conform_shacl)
+        res
+
+      end
+
       def save(delayed=false)
 
-        conform_literals, messages_literals, conform_shacl, messages_shacl = valid?
+        conform_literals, messages_literals, conform_shacl, messages_shacl = validate
 
         unless conform_literals
           raise ValidationError.new(messages_literals)
