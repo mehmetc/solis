@@ -3,39 +3,7 @@ require "test_helper"
 class TestSolis < Minitest::Test
   def setup
     super
-    @shacl = %(
-@prefix example: <https://example.com/> .
-@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
-@prefix sh:     <http://www.w3.org/ns/shacl#> .
-@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
-
-example:CarShape
-        a sh:NodeShape;
-        sh:description  "Abstract shape that describes a car entity" ;
-        sh:targetClass  example:Car;
-        sh:name         "Car";
-        sh:property     [ sh:path        example:color;
-                          rdfs:label     "Kleur"@nl ;
-                          rdfs:label     "Color"@en ;
-                          sh:name        "color" ;
-                          sh:description "Color of the car" ;
-                          sh:datatype    xsd:string ;
-                          sh:minCount    1 ;
-                          sh:maxCount    1 ; ];
-        sh:property     [ sh:path        example:brand;
-                          sh:name        "brand" ;
-                          rdfs:label     "Brand"@en ;
-                          rdfs:label     "Marque"@fr ;
-                          rdfs:label     "Marke"@de ;
-                          rdfs:label     "Merk"@nl ;
-                          sh:description "Brand of the car" ;
-                          rdfs:comment   "The manufacturer brand"@en ;
-                          rdfs:comment   "La marque du fabricant"@fr ;
-                          sh:datatype    xsd:string ;
-                          sh:minCount    1 ;
-                          sh:maxCount    1 ; ];
-.
-)
+    @shacl = File.read('test/resources/car/car_shacl.ttl')
 
     config = {
       store: Solis::Store::Memory.new(),
@@ -77,12 +45,7 @@ example:CarShape
   end
 
   def test_write_to_mermaid
-    expect=%(classDiagram
-  class Car {
-    color : String [Required]
-    brand : String [Required]
-  }
-  note for Car "Abstract shape that describes a car entity")
+    expect = File.read('test/resources/car/car.mermaid')
 
     mermaid  = @solis.writer('text/vnd.mermaid')
 
@@ -97,138 +60,14 @@ example:CarShape
   end
 
   def test_write_to_plantuml
-    expect=%(@startuml
-
-skinparam classAttributeIconSize 0
-skinparam classFontStyle bold
-skinparam classFontName Arial
-
-class Car << (S,#ADD1B2) SHACL >> {
-  ' Color of the car
-  color : String [Required]
-  ' Brand of the car
-  brand : String [Required]
-}
-note bottom of Car
-  Abstract shape that describes a car entity
-end note
-
-
-legend right
-  Created from SHACL definitions
-  [Required] = minCount >= 1
-  [Optional] = minCount = 0 or not specified
-  [*] = maxCount not specified or > 1
-end legend
-
-@enduml)
-
+    expect=File.read('test/resources/car/car.puml')
     plantuml = @solis.writer('text/vnd.plantuml')
 
     assert_equal(expect, plantuml)
   end
 
   def test_write_json_schema
-    expect=%({
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Generated from SHACL definitions",
-  "description": "JSON Schema generated from SHACL shapes",
-  "type": "object",
-  "definitions": {
-    "Car": {
-      "type": "object",
-      "title": "Car",
-      "additionalProperties": false,
-      "description": "Abstract shape that describes a car entity",
-      "properties": {
-        "color": {
-          "title": "Kleur",
-          "description": "Color of the car",
-          "type": "string",
-          "default": ""
-        },
-        "brand": {
-          "title": "Brand",
-          "description": "The manufacturer brand",
-          "type": "string",
-          "default": ""
-        }
-      },
-      "required": [
-        "color",
-        "brand"
-      ]
-    }
-  },
-  "properties": {
-    "car": {
-      "$ref": "#/definitions/Car",
-      "title": "Car",
-      "description": "Abstract shape that describes a car entity"
-    }
-  },
-  "additionalProperties": false,
-  "uiSchema": {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Generated from SHACL definitions",
-    "description": "JSON Schema generated from SHACL shapes",
-    "type": "object",
-    "definitions": {
-      "Car": {
-        "type": "object",
-        "title": "Car",
-        "additionalProperties": false,
-        "description": "Abstract shape that describes a car entity",
-        "properties": {
-          "color": {
-            "title": "Kleur",
-            "description": "Color of the car",
-            "type": "string",
-            "default": ""
-          },
-          "brand": {
-            "title": "Brand",
-            "description": "The manufacturer brand",
-            "type": "string",
-            "default": ""
-          }
-        },
-        "required": [
-          "color",
-          "brand"
-        ]
-      }
-    },
-    "properties": {
-      "car": {
-        "$ref": "#/definitions/Car",
-        "title": "Car",
-        "description": "Abstract shape that describes a car entity"
-      }
-    },
-    "additionalProperties": false,
-    "uiSchema": {
-      "car": {
-        "ui:order": [
-          "color",
-          "brand"
-        ],
-        "color": {
-          "ui:widget": "text",
-          "ui:help": "Color of the car"
-        },
-        "brand": {
-          "ui:widget": "text",
-          "ui:help": "The manufacturer brand"
-        }
-      },
-      "ui:globalOptions": {
-        "theme": "default",
-        "layout": "vertical"
-      }
-    }
-  }
-})
+    expect=File.read('test/resources/car/car_schema.json')
     json_schema = @solis.writer("application/schema+json")
 
     assert_equal(expect, json_schema)
@@ -255,4 +94,28 @@ end legend
 
     puts form
   end
+
+  def test_write_open_api
+    open_api = @solis.writer('application/openapi.json')
+
+    puts open_api
+  end
+
+  def test_write_shacl_for_sioc
+    s = Solis.new({store: Solis::Store::Memory.new(),model: {
+      prefix: 'sioc',
+      namespace: 'http://rdfs.org/sioc/ns#',
+      uri: 'http://rdfs.org/sioc/ns#',
+      content_type: 'application/rdf+xml'
+    }})
+
+    expected_mermaid='http://mermaid.live/view#pako:eNqVWEtv3DYQ/isLHYsYaK5GLkGCtgGCNqibmwGCK4122UqkQFJ2DNf/vXyIFIciterJ2pmPM8N58YNfm1Z00Nw37UCV+szoRdLxkZ9O7vfpN60nQsiPceCKtGIkvaA9+Zm8J3/wgXH42LZi5vr0ao+8HTn38QL/C/9ZtPNYOvJJjOPMmX4paLimJjjpNUYcBET0p/sT5S9efqWKXIXSuWyi0nrMpGo+q1ays7GbaIxHTZiGkXRUg9HYP17F59FplJFywX+HC9XsCb5wDReQHuNdobiSm/wi5DyGW9gYRlMsSbVAIVg/+iqBdnVPidEvJqRgk57FjC5Ku06CUtARLZBca9pexywtNrFe9KAl4xcv7WAwzqWxQREaqByYKYLRKSY4Uo1n6BT5h4vnAboLpDrTMNs722TEsuaKjql2VrkPq5EwDS+4fLockVWYyhY0NglGpFAJ4Icm55fQA1hesDFJeGJiVqUzUVc4Z4ucZdVdKWtsU8JJ8LyG6kptUc4oAYqdzSBfiu33zc7G0ima6QEKtSfA7QbpkMqEqTfl78COz6TzdIqO9Qy21+pNC/EW+TQj+De0uhjsn8LEtwTbz7y1fgrzrloxQdHAw0RbSIdtViAvUswTCsGiavP6YMY9tUC7kXGm9LZ9TWZrRv5yo7zZat9NNGjdmqH0P7NbIqe57olqKje12uBgpGzYCIjpoPfZsPdiGMSzwgNipjm3GDfXVm7Ln4vF83Zdrws4U/RMmnRyOsJmM2Nhlk5f3HS9ushTI7EHttXCL+CHf+/uDj+X9yfGryCZVtaQfxJvGPAgfDC+jTfORhw+vr6g7vz6M4eFNbvA1q27A/NPF4a4l8dp3VdN+c0/yanSDbdTui+s9IPrtP6zrmYa9sNehg9jjpbVWUjnFJtZWy4Cw3opR3R3J06PzU+PTchXSmRq0OWOgdvUYGkZV85TQ+NLYTZ0xEOkORbsW2PPeFwWsTE2qXDMZUed8JgdVGQ1BcxXk0hJ7RZMCU0B+Kuk09XAchJT9xspTQGSFybWvG4Oc559nKMLdQimPQUcLlbgQnWDKTO6gao7XVA5azqArNtcy7uQqrq1QLH2EIFw3UxZZGEW6Vbdilw2X+Q+cfWtkGX/JQynDop8Z12DOKqwfhDbKYHDXg3sx2HsotmbYkRECidQp3tCFNZkMLSCb7+MKxuqW1mWY06R6gfwrTx9OopeqdXRE45lHQUvzGsfHiocOVkdHl7slKkdjSVhcUePBIZXx6f9gbgffkx3HxJ37Ro+dHVK8pp3zQjS1KFr7l8bfYXR/nekg57Og27e3v4DI8G48A=='
+    shacl = s.writer
+    mermaid  = s.writer('text/vnd.mermaid', link: true)
+    assert_equal(expected_mermaid, mermaid)
+
+    assert_includes(s.list, 'http://rdfs.org/sioc/ns#Post')
+    assert_includes(s.list, 'http://xmlns.com/foaf/0.1/Agent')
+  end
+
 end

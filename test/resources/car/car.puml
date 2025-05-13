@@ -1,0 +1,25 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam classFontName Arial
+
+class Car << (S,#ADD1B2) SHACL >> {
+  ' Color of the car
+  color : String [Required]
+  ' Brand of the car
+  brand : String [Required]
+}
+note bottom of Car
+  Abstract shape that describes a car entity
+end note
+
+
+legend right
+  Created from SHACL definitions
+  [Required] = minCount >= 1
+  [Optional] = minCount = 0 or not specified
+  [*] = maxCount not specified or > 1
+end legend
+
+@enduml
