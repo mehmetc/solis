@@ -2,6 +2,8 @@
 require_relative "../validator/validatorV1"
 require_relative "../validator/validatorV2"
 require_relative "validator_literals"
+require_relative "literals/edtf"
+require_relative "literals/iso8601"
 
 
 module Solis
