@@ -257,9 +257,12 @@ module Solis
                 else
                   key = hv.keys.find { |k| k.match?(type) }
                 end
-                unless key.nil?
+                if key.nil?
+                  # conform &&= false
+                  messages << "#{obj['@id']}, #{name_attr}, no validator found for type <#{type}>"
+                else
                   conform &&= hv[key].call(hv, value)
-                  messages << "#{obj['@id']}, #{name_attr}, value does not conform <#{type}>"
+                  messages << "#{obj['@id']}, #{name_attr}, value does not conform type <#{type}>"
                 end
               end
             end
