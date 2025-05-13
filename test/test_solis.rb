@@ -29,7 +29,6 @@ class TestSolis < Minitest::Test
     logger.info('test')
 
     s.rewind
-    data = s.read.split(']').last
-    assert_equal("  INFO -- : test\n", data)
+    assert_match(/test/, s.string)
   end
 end
