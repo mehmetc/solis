@@ -12,9 +12,37 @@ module Solis
 
     class Entity < OpenStruct
 
+      class MissingTypeError < StandardError
+        def initialize
+          msg = "entity has no type"
+          super(msg)
+        end
+      end
+
+      class MissingStoreError < StandardError
+        def initialize
+          msg = "entity was provided no store"
+          super(msg)
+        end
+      end
+
+      class MissingOjbectIdError < StandardError
+        def initialize
+          msg = "entity has no @id"
+          super(msg)
+        end
+      end
+
       class MissingRefError < StandardError
         def initialize(ref)
-          msg = "missing ref: #{ref}"
+          msg = "missing ref: '#{ref}'"
+          super(msg)
+        end
+      end
+
+      class PatchTypeMismatchError < StandardError
+        def initialize(ref)
+          msg = "patch for '#{ref}' is an object, but data to patch is not"
           super(msg)
         end
       end
@@ -26,8 +54,25 @@ module Solis
         end
       end
 
+      class LoadError < StandardError
+        def initialize(ref)
+          msg = "no entity with id '#{ref}'"
+          super(msg)
+        end
+      end
+
+      class DestroyError < StandardError
+        def initialize(msg)
+          msg = "#{msg}"
+          super(msg)
+        end
+      end
+
       def initialize(obj, model, type, store)
         @model = model
+        if type.nil?
+          raise MissingTypeError
+        end
         @type = type
         @store = store
         super(hash=obj)
@@ -88,6 +133,8 @@ module Solis
 
       def save(delayed=false)
 
+        check_store_exists
+
         conform_literals, messages_literals, conform_shacl, messages_shacl = validate
 
         unless conform_literals
@@ -115,37 +162,60 @@ module Solis
       end
 
       def patch(obj_patch, opts={})
-        # "plays" the patch on instance
+        # make default opts
+        _opts = deep_copy(opts)
+        _opts[:add_missing_refs] = opts[:add_missing_refs] || false
+        _opts[:autoload_missing_refs] = opts[:autoload_missing_refs] || false
+        _opts[:append_attributes] = opts[:append_attributes] || false
+        # get internal data
         obj = get_internal_data
-        patch_internal(obj, obj_patch, opts)
+        # infer type if reference autoload is requested
+        if _opts[:autoload_missing_refs]
+          Solis::Utils::JSONLD.infer_jsonld_types_from_model!(obj, @model, @type)
+        end
+        # "plays" the patch on instance
+        patch_internal(obj, obj_patch, _opts)
         set_internal_data(obj)
         # in case new references are added, get them an "id" where missing
         add_ids_if_not_exists!
       end
 
       def load(deep=false)
+        check_store_exists
         obj = get_internal_data
+        check_obj_has_id(obj)
         id = obj['@id']
-        @store.get_data_for_id(id, @model.namespace, deep=deep)
-        obj_res = @store.run_operations[0]
+        id_op = @store.get_data_for_id(id, @model.namespace, deep=deep)
+        # obj_res = @store.run_operations[0]
+        obj_res = @store.run_operations[id_op]
+        if obj_res.empty?
+          raise LoadError.new(id)
+        end
         replace(obj_res)
         obj_res
       end
 
       def referenced?
+        check_store_exists
         obj = get_internal_data
+        check_obj_has_id(obj)
         id = obj['@id']
-        @store.ask_if_id_is_referenced(id)
-        res = @store.run_operations[0]
+        id_op = @store.ask_if_id_is_referenced(id)
+        res = @store.run_operations[id_op]
         res
       end
 
       def destroy(delayed=false)
+        check_store_exists
         obj = get_internal_data
+        check_obj_has_id(obj)
         id = obj['@id']
-        @store.delete_attributes_for_id(id)
+        id_op = @store.delete_attributes_for_id(id)
         unless delayed
-          res = @store.run_operations[0]
+          res = @store.run_operations[id_op]
+          unless res['success']
+            raise DestroyError.new(res['message'])
+          end
         end
         replace({})
       end
@@ -167,6 +237,18 @@ module Solis
 
 
       private
+
+      def check_store_exists
+        if @store.nil?
+          raise MissingStoreError
+        end
+      end
+
+      def check_obj_has_id(obj)
+        unless obj.key?('@id')
+          raise MissingOjbectIdError
+        end
+      end
 
       def deep_copy(obj)
         Marshal.load(Marshal.dump(obj))
@@ -314,7 +396,7 @@ module Solis
           type_attr = nil # will be defined just soon
           val_attr_patch.each do |item_val_patch|
 
-            if item_val_patch.is_a?(Hash)
+            if Solis::Utils::JSONLD.is_object_an_embedded_entity_or_ref(item_val_patch)
               # patch item is an embedded entity
               type_attr = 'entity'
               if obj[name_attr_patch].is_a?(Array)
@@ -323,27 +405,38 @@ module Solis
                 end
                 if idx.nil?
                   if opts[:add_missing_refs]
-                    obj[name_attr_patch].push(item_val_patch)
-                    # obj_loaded = Entity.new(item_val_patch, @model, obj['@type'], @store).load(deep=true)
-                    # obj[name_attr_patch].push(obj_loaded)
+                    if opts[:autoload_missing_refs]
+                      obj_loaded = Entity.new(item_val_patch, @model, obj['@type'], @store).load(deep=true)
+                      obj[name_attr_patch].push(obj_loaded)
+                    else
+                      obj[name_attr_patch].push(item_val_patch)
+                    end
+                    idx = obj[name_attr_patch].size - 1
+                    patch_internal(obj[name_attr_patch][idx], item_val_patch, opts)
                   else
                     raise MissingRefError.new(item_val_patch['@id'])
                   end
                 else
                   patch_internal(obj[name_attr_patch][idx], item_val_patch, opts)
                 end
-              elsif obj[name_attr_patch].is_a?(Hash)
+              elsif Solis::Utils::JSONLD.is_object_an_embedded_entity_or_ref(obj[name_attr_patch])
                 if obj[name_attr_patch]['@id'] == item_val_patch['@id']
                   patch_internal(obj[name_attr_patch], item_val_patch, opts)
                 else
                   if opts[:add_missing_refs]
-                    obj[name_attr_patch] = item_val_patch
+                    if opts[:autoload_missing_refs]
+                      obj_loaded = Entity.new(item_val_patch, @model, obj['@type'], @store).load(deep=true)
+                      obj[name_attr_patch] = obj_loaded
+                    else
+                      obj[name_attr_patch] = item_val_patch
+                    end
+                    patch_internal(obj[name_attr_patch], item_val_patch, opts)
                   else
                     raise MissingRefError.new(item_val_patch['@id'])
                   end
                 end
               else
-                raise MissingRefError.new(item_val_patch['@id'])
+                raise PatchTypeMismatchError.new(item_val_patch['@id'])
               end
             else
               # patch item is either:

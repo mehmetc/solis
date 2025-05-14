@@ -60,7 +60,7 @@ class TestEntityDestroy < Minitest::Test
     assert_equal(car.referenced?, false)
     assert_equal(person.referenced?, true)
 
-    assert_raises(StandardError) do
+    assert_raises(Solis::Model::Entity::DestroyError) do
       person.destroy
     end
 

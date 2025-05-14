@@ -21,8 +21,12 @@ module Solis
             ops_write << op
           end
         end
-        run_write_operations(ops_write)
-        res = run_read_operations(ops_read)
+        res = {}
+        # There must be guaranteed that in the following functions call
+        # all exceptions are handled internally, and return in the results.
+        # This way, @ops can be reset successfully to empty array.
+        res.merge!(run_write_operations(ops_write))
+        res.merge!(run_read_operations(ops_read))
         @ops = []
         res
       end
@@ -113,7 +117,10 @@ module Solis
           res = jsonld_compacted_framed
         end
         res.delete('@context')
-        puts JSON.pretty_generate(res)
+        # puts JSON.pretty_generate(res)
+        # if res.empty?
+        #   raise StandardError, "no entity with id '#{s.to_s}'"
+        # end
         res
       end
 
@@ -135,13 +142,14 @@ module Solis
             namespace = op['content'][1]
             deep = op['opts'] == Solis::Store::GetMode::DEEP
             s = RDF::URI(id)
-            get_data_for_subject(s, namespace, deep)
+            r = get_data_for_subject(s, namespace, deep)
           when 'ask_if_id_is_referenced'
             id = op['content'][0]
             o = RDF::URI(id)
-            ask_if_object_is_referenced(o)
+            r = ask_if_object_is_referenced(o)
           end
-        end
+          [op['id'], r]
+        end.to_h
         res
       end
 
@@ -155,8 +163,10 @@ module Solis
             ops_save << op
           end
         end
-        run_save_operations(ops_save)
-        run_destroy_operations(ops_destroy)
+        res = {}
+        res.merge!(run_save_operations(ops_save))
+        res.merge!(run_destroy_operations(ops_destroy))
+        res
       end
 
       def run_destroy_operations(ops_generic)
@@ -169,7 +179,12 @@ module Solis
             ss << s
           end
         end
-        delete_attributes_for_subjects(ss)
+        r = delete_attributes_for_subjects(ss)
+        res = {}
+        ops_generic.each do |op|
+          res[op['id']] = r
+        end
+        res
       end
 
       def delete_attributes_for_subjects(ss)
@@ -205,9 +220,18 @@ module Solis
                                                   .where([:s_ref, :p_ref, :s])
                                                   .values(:s, *ss)
                                                   .true?
+          # if subjects_were_referenced
+          #   raise StandardError, "any of these '#{str_ids}' was referenced"
+          # end
+          success = !subjects_were_referenced
+          message = ''
           if subjects_were_referenced
-            raise StandardError, "any of these #{str_ids} was referenced"
+            message = "any of these '#{str_ids}' was referenced"
           end
+          {
+            "success" => success,
+            "message" => message
+          }
         end
       end
 
@@ -391,6 +415,11 @@ module Solis
 
         # end critical section
         puts "\n\n-- END CRITICAL SECTION: \n\n"
+
+        res = ops_generic.map do |op|
+          [op['id'], 'ok']
+        end.to_h
+        res
 
       end
 
