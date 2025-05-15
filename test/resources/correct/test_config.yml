@@ -1,4 +1,4 @@
-:key: YOUR_GOOGLE_KEY
+:key: "${GOOGLE_KEY}"
 :cache: ./test/cache
 :namespace: https://example.com/
 :prefix: e
