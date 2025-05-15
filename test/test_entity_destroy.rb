@@ -8,7 +8,7 @@ class TestEntityDestroy < Minitest::Test
     dir_tmp = File.join(__dir__, './data')
     @name_graph = 'https://example.com/'
     @model = Solis::Model.new(model: {
-      uri: "file://test/resources/car/car_shacl_2.ttl",
+      uri: "file://test/resources/car/car_test_entity_destroy.ttl",
       prefix: 'ex',
       namespace: @name_graph,
       tmp_dir: dir_tmp
