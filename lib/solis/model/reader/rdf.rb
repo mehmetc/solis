@@ -33,6 +33,7 @@ module Solis
 
             shape_definition = graph.first_object([class_uri, RDF::Vocab::SKOS.definition, nil])
             shape_subclass_of = graph.first_object([class_uri, RDF::RDFS.subClassOf, nil])
+            shape_subclass_of = nil if shape_subclass_of == RDF::OWL.Restriction
             shape_subclass_of = shape_subclass_of.nil? ? class_uri : RDF::URI.new("#{shape_subclass_of}Shape")
 
             shacl_graph << [shape, RDF.type, RDF::Vocab::SHACL.NodeShape]
@@ -108,6 +109,51 @@ module Solis
               # shacl_graph << [property_shape, RDF::Vocab::SHACL.minCount, 0]
               # shacl_graph << [property_shape, RDF::Vocab::SHACL.maxCount, 1]
             end
+
+            # add:
+            # - sh:minCount
+            # - sh:maxCount
+            # - sh:hasValue
+            graph.query([class_uri, RDF::RDFS.subClassOf, nil]).each do |restriction_stmt|
+              # get restriction property target
+              restriction = restriction_stmt.object
+              property = graph.first_object([restriction, RDF::OWL.onProperty])
+              property_name = safe_class_name(property.to_s)
+              # search for property shape whose sh:name is "property_name", and associated to "shape"
+              property_shape = nil
+              shacl_graph.query([shape, RDF::Vocab::SHACL.property, nil]) do |property_shape_stmt|
+                next unless property_shape.nil?
+                property_shape = property_shape_stmt.object
+                property_shape = shacl_graph.first_subject([property_shape, RDF::Vocab::SHACL.name, property_name])
+              end
+              # if found
+              unless property_shape.nil?
+                graph.query([restriction, nil, nil]).each do |restriction_info_stmt|
+                  predicate = restriction_info_stmt.predicate
+                  object = restriction_info_stmt.object
+                  case predicate
+                  when RDF::OWL.cardinality
+                    cardinality = object
+                    pp [class_uri, property, predicate, cardinality]
+                    shacl_graph << [property_shape, RDF::Vocab::SHACL.minCount, cardinality]
+                    shacl_graph << [property_shape, RDF::Vocab::SHACL.maxCount, cardinality]
+                  when RDF::OWL.minCardinality
+                    min_cardinality = object
+                    # add to property shape
+                    shacl_graph << [property_shape, RDF::Vocab::SHACL.minCount, min_cardinality]
+                  when RDF::OWL.maxCardinality
+                    max_cardinality = object
+                    # add to property shape
+                    shacl_graph << [property_shape, RDF::Vocab::SHACL.maxCount, max_cardinality]
+                  when RDF::OWL.hasValue
+                    has_value = object
+                    # add to property shape
+                    shacl_graph << [property_shape, RDF::Vocab::SHACL.hasValue, has_value]
+                  end
+                end
+              end
+            end
+
           end
 
           shacl_graph

@@ -39,6 +39,21 @@ class TestSolis < Minitest::Test
     end
   end
 
+  def test_read_from_uri_more_complex_ontology
+    config = {
+      store: Solis::Store::Memory.new(),
+      model: {
+        prefix: 'wn',
+        namespace: 'http://example.org/',
+        uri: 'file://test/resources/wine_ontology.xml',
+        content_type: 'application/rdf+xml'}
+    }
+    solis = Solis.new(config)
+    File.open('wine_shapes.ttl', 'wb') do |f|
+      f.puts solis.model.writer
+    end
+  end
+
   #TODO: make it do something
   def test_load_from_google_sheet
     config = {
