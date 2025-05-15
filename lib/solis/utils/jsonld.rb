@@ -166,6 +166,10 @@ module Solis
         obj.is_a?(Hash) and (obj.key?('@id') or (!obj.key?('@value') and !obj.key?('@list') and !obj.key?('@set')))
       end
 
+      def self.is_object_a_ref(obj)
+        obj.is_a?(Hash) and obj.key?('@id') and (obj.keys - ['@id', '@type']).empty?
+      end
+
       def self.add_ids_if_not_exists!(obj, namespace)
         obj['@id'] = obj['@id'] || URI.join(namespace, SecureRandom.uuid).to_s
         obj.each do |name_attr, val_attr|

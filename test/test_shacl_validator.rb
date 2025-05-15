@@ -1074,6 +1074,82 @@ class TestSHACLValidator < Minitest::Test
 
   end
 
+  def test_missing_data_type_when_ref_class_does_not_exist
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+
+      example:PersonShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a person entity" ;
+              sh:targetClass  example:Person;
+              sh:node         example:Person;
+              sh:name         "Person";
+              sh:property     [ sh:path        example:name;
+                                sh:name        "name" ;
+                                sh:description "Name of the person" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+      .
+
+      example:CarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a car entity" ;
+              sh:targetClass  example:Car;
+              sh:node         example:Car;
+              sh:name         "Car";
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color" ;
+                                sh:description "Color of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+              sh:property     [ sh:path        example:brand;
+                                sh:name        "brand" ;
+                                sh:description "Brand of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+              sh:property     [ sh:path        example:owners;
+                                sh:name        "owners" ;
+                                sh:description "Owners of the car" ;
+                                sh:nodeKind    sh:IRI ;
+                                sh:minCount    1 ; ];
+      .
+
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/"
+        },
+        "@graph": [
+          {
+            "@id": "http://schema.org/my_car_1",
+            "@type": "Car",
+            "color": "blue",
+            "brand": "toyota",
+            "owners": [
+              {
+                "@id": "http://schema.org/john_doe"
+              }
+            ]
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, true)
+    assert_equal(messages.size, 0)
+
+  end
+
   def test_single_inheritance
 
     str_shacl_ttl = %(
