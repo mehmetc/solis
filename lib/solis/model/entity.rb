@@ -186,8 +186,7 @@ module Solis
         check_obj_has_id(obj)
         id = obj['@id']
         id_op = @store.get_data_for_id(id, @model.namespace, deep=deep)
-        # obj_res = @store.run_operations[0]
-        obj_res = @store.run_operations[id_op]
+        obj_res = @store.run_operations(ids=[id_op])[id_op]
         if obj_res.empty?
           raise LoadError.new(id)
         end
@@ -201,7 +200,7 @@ module Solis
         check_obj_has_id(obj)
         id = obj['@id']
         id_op = @store.ask_if_id_is_referenced(id)
-        res = @store.run_operations[id_op]
+        res = @store.run_operations(ids=[id_op])[id_op]
         res
       end
 
@@ -212,12 +211,13 @@ module Solis
         id = obj['@id']
         id_op = @store.delete_attributes_for_id(id)
         unless delayed
-          res = @store.run_operations[id_op]
+          res = @store.run_operations(ids=[id_op])[id_op]
           unless res['success']
             raise DestroyError.new(res['message'])
           end
         end
         replace({})
+        id_op
       end
 
       def to_pretty_jsonld

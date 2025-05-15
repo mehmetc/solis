@@ -11,23 +11,30 @@ module Solis
       # Expects:
       # - @client_sparql
 
-      def run_operations
+      def run_operations(ids_op='all')
         ops_read = []
         ops_write = []
-        @ops.each do |op|
+        indexes = []
+        @ops.each_with_index do |op, index|
+          if ids_op.is_a?(Array)
+            next unless ids_op.include?(op['id'])
+          end
           if op['type'].eql?('read')
             ops_read << op
           else
             ops_write << op
           end
+          indexes << index
         end
         res = {}
         # There must be guaranteed that in the following functions call
         # all exceptions are handled internally, and return in the results.
-        # This way, @ops can be reset successfully to empty array.
+        # This way, @ops can be updated successfully.
         res.merge!(run_write_operations(ops_write))
         res.merge!(run_read_operations(ops_read))
-        @ops = []
+        # remove performed operations from list;
+        # following does not seem thread-safe, but ok for the now ...
+        indexes.sort.reverse_each { |index| @ops.delete_at(index) }
         res
       end
 
