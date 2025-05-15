@@ -41,32 +41,22 @@ class TestSolis < Minitest::Test
 
   #TODO: make it do something
   def test_load_from_google_sheet
-    graph = {
-      uri: 'https://127.0.0.1:8890/sparql',
-      namespace: 'https://data.odis.be/',
-      prefix: 'odis'
-    }
     config = {
       store: Solis::Store::Memory.new(),
       model: {
-        namespace: 'https://data.odis.be/',
-        prefix: 'odis',
-        uri: 'google+sheet://18JDgCfr2CLl_jATuvFTcpu-a5T6CWAgJwTwEqtSe8YE',
+        namespace: 'https://solis.libis.be/',
+        prefix: 'solis',
+        uri: 'google+sheet://11APPpKYfNfUdAN5_hj_x-B_Ck2zdZlnZZcgSyUvR8As',
         config_path: 'test/resources/correct',
         config_name: 'test_config.yml'
       }
     }
 
     solis = Solis.new(config)
+    all_entities = solis.model.entity.list
+    assert_includes(all_entities, 'Tenant')
 
-    pp solis.model.entity.list
-
-    #models = Solis::Model::Reader.from_uri('google+sheet://18JDgCfr2CLl_jATuvFTcpu-a5T6CWAgJwTwEqtSe8YE')
-
-
-    # Solis::Model::Writer.to_shacl
-    # Solis::Model::Writer.to_rdf
-    # Solis::Model::Writer.to_puml
-    # Solis::Model::Writer.to_sql
+    mermaid_url = solis.model.writer('text/vnd.mermaid', link: true)
+    puts mermaid_url
   end
 end
