@@ -74,6 +74,7 @@ class TestSolis < Minitest::Test
   end
 
   def test_write_form
+    #TODO: finish test
     options = {
       theme: 'bootstrap',
       layout: 'horizontal',
@@ -96,6 +97,7 @@ class TestSolis < Minitest::Test
   end
 
   def test_write_open_api
+    #TODO:finish test
     open_api = @solis.model.writer('application/openapi.json')
 
     puts open_api
