@@ -5,46 +5,16 @@ class TestEntityBulkOps < Minitest::Test
   def setup
     super
 
-    str_shacl_ttl = %(
-      @prefix example: <https://example.com/> .
-      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
-      @prefix sh:     <http://www.w3.org/ns/shacl#> .
-
-      example:CarShape
-              a sh:NodeShape;
-              sh:description  "Abstract shape that describes a car entity" ;
-              sh:targetClass  example:Car;
-              sh:node         example:Car;
-              sh:name         "Car";
-              sh:property     [ sh:path        example:color;
-                                sh:name        "color" ;
-                                sh:description "Color of the car" ;
-                                sh:datatype    xsd:string ;
-                                sh:minCount    1 ;
-                                sh:maxCount    3 ; ];
-              sh:property     [ sh:path        example:brand;
-                                sh:name        "brand" ;
-                                sh:description "Brand of the car" ;
-                                sh:datatype    xsd:string ;
-                                sh:minCount    0 ;
-                                sh:maxCount    1 ; ];
-      .
-
-    )
-
-    graph_shacl = RDF::Graph.new
-    graph_shacl.from_ttl(str_shacl_ttl)
-
+    dir_tmp = File.join(__dir__, './data')
     @name_graph = 'https://example.com/'
 
-    dir_tmp = File.join(__dir__, './data')
+    @model = Solis::Model.new(model: {
+      uri: "file://test/resources/car/car_shacl_2.ttl",
+      prefix: 'ex',
+      namespace: @name_graph,
+      tmp_dir: dir_tmp
+    })
 
-    @model = Solis::ModelMock.new({
-                                   graph: graph_shacl,
-                                   prefix: 'ex',
-                                   namespace: @name_graph,
-                                   tmp_dir: dir_tmp
-                                 })
 
   end
 
