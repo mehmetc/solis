@@ -12,6 +12,7 @@ module Solis
         data = nil
         params[:content_type] = 'text/turtle' unless params.key?(:content_type)
         DataCollector::ConfigFile.path = params[:config_path] if params[:config_path]
+        DataCollector::ConfigFile.name = params[:config_name] if params[:config_name]
 
         if params.keys.include?(:uri) && params[:uri].is_a?(StringIO)
           raise Solis::Error::BadParameter, 'Not a IO object' unless params[:uri].is_a?(StringIO)

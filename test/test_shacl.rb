@@ -22,15 +22,15 @@ class TestShacl < Minitest::Test
   end
 
   def test_is_shacl_loaded
-    assert_kind_of(RDF::Repository, @solis.graph)
-    assert_equal('lbs', @solis.prefix)
-    assert_equal('https://lib.is/test/', @solis.namespace)
+    assert_kind_of(RDF::Repository, @solis.model.graph)
+    assert_equal('lbs', @solis.model.prefix)
+    assert_equal('https://lib.is/test/', @solis.model.namespace)
   end
 
   def test_validate_shacl
     shacl_shacl = Solis::Model::Reader.from_uri(uri: 'file://test/resources/shacl-shacl.ttl', content_type: 'text/turtle')
     validator = Solis::SHACLValidatorV2.new(shacl_shacl.dump(:ttl), :ttl, @opts)
-    conform, messages = validator.execute(RDF::Graph.new.from_ttl(@solis.writer), :graph)
+    conform, messages = validator.execute(RDF::Graph.new.from_ttl(@solis.model.writer), :graph)
     pp conform
     pp messages
     assert_equal(true, conform)

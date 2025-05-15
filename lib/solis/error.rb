@@ -3,13 +3,16 @@ module Solis
     class General < StandardError
     end
 
-    class MissingParameter < StandardError
+    class MissingParameter < General
     end
 
-    class BadParameter < StandardError
+    class BadParameter < General
     end
 
     class NotFound < General
+    end
+
+    class PropertyNotFound < General
     end
   end
 end

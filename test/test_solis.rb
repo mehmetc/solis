@@ -11,13 +11,16 @@ class TestSolis < Minitest::Test
   end
 
   def test_mandatory_parameters
-    assert_raises Solis::Error::BadParameter do
+    error = assert_raises Solis::Error::BadParameter do
       solis = Solis.new(not_mandatory: '1234')
     end
+    assert_equal("Please provide a {store: Solis::Store::Memory.new()}", error.message)
+
     # missing Google key
-    assert_raises Solis::Error::BadParameter do
-      solis = Solis.new(uri: 'google+sheet://18JDgCfr2CLl_jATuvFTcpu-a5T6CWAgJwTwEqtSe8YE', config_path: 'test/resources/incorrect')
+    error = assert_raises Solis::Error::BadParameter do
+      solis = Solis.new(store: Solis::Store::Memory.new(), uri: 'google+sheet://18JDgCfr2CLl_jATuvFTcpu-a5T6CWAgJwTwEqtSe8YE', config_path: 'test/resources/incorrect')
     end
+    assert_equal("Please provide a {model: {prefix: 'ex', namespace: 'http://example.com/', uri: 'file://cars.ttl', content_type: 'text/turtle'}}", error.message)
   end
 
   def test_setup_logger
