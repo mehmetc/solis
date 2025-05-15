@@ -10,6 +10,7 @@ module Solis
     module RDFOperationsRunner
       # Expects:
       # - @client_sparql
+      # - @logger
 
       def run_operations(ids_op='all')
         ops_read = []
@@ -62,7 +63,7 @@ module Solis
         fill_graph_from_subject_root = lambda do |g, s, deep|
           query = @client_sparql.select.where([s, :p, :o])
           query.each_solution do |solution|
-            pp [s, solution.p, solution.o]
+            @logger.debug([s, solution.p, solution.o])
             g << [s, solution.p, solution.o]
             if deep
               # if solution.o.is_a?(RDF::URI) or solution.o.is_a?(RDF::Literal::AnyURI)
@@ -75,7 +76,7 @@ module Solis
         fill_graph_from_subject_root.call(graph, s, deep)
         # turn graph into JSON-LD hash
         jsonld = JSON::LD::API.fromRDF(graph)
-        puts JSON.pretty_generate(jsonld)
+        @logger.debug(JSON.pretty_generate(jsonld))
         # compact @type
         jsonld_compacted = jsonld.map do |obj|
           Solis::Utils::JSONLD.compact_type(obj)
@@ -90,13 +91,13 @@ module Solis
         # jsonld_compacted.map! do |obj|
         #   Solis::Utils::JSONLD.anyuris_to_uris(obj)
         # end
-        puts JSON.pretty_generate(jsonld_compacted)
+        @logger.debug(JSON.pretty_generate(jsonld_compacted))
         f_conv = method(:parse_json_value_from_datatype)
         # compact also the values
         jsonld_compacted.map! do |obj|
           Solis::Utils::JSONLD.compact_values(obj, f_conv)
         end
-        puts JSON.pretty_generate(jsonld_compacted)
+        @logger.debug(JSON.pretty_generate(jsonld_compacted))
         # find the type of the (root) object with URI "s"
         obj_root = jsonld_compacted.find { |e| e['@id'] == s.to_s }
         type = obj_root.nil? ? nil : obj_root['@type']
@@ -115,7 +116,7 @@ module Solis
           }
         )
         jsonld_compacted_framed = JSON::LD::API.frame(jsonld_compacted, frame)
-        puts JSON.pretty_generate(jsonld_compacted_framed)
+        @logger.debug(JSON.pretty_generate(jsonld_compacted_framed))
         # produce result
         res = {}
         # if framing created a "@graph" (empty) attribute,
@@ -212,9 +213,9 @@ module Solis
               ?s ?p ?o .
             }
           )
-          puts "\n\nDELETE QUERY:\n\n"
-          puts str_query
-          puts "\n\n"
+          @logger.debug("\n\nDELETE QUERY:\n\n")
+          @logger.debug(str_query)
+          @logger.debug("\n\n")
           # run query
           # TODO: repository seems a snapshot of the triple store
           # after the query.
@@ -286,7 +287,7 @@ module Solis
         end
 
         # begin critical section
-        puts "\n\n-- BEGIN CRITICAL SECTION: \n\n"
+        @logger.debug("\n\n-- BEGIN CRITICAL SECTION: \n\n")
 
         # write graphs
         ops.each do |op|
@@ -370,14 +371,14 @@ module Solis
 
             # run delete query
             str_query = SPARQL::Client::Update::DeleteData.new(delete['graph'], graph: @name_graph).to_s
-            puts "\n\nDELETE QUERY:\n\n"
-            puts str_query
-            puts "\n\n"
+            @logger.debug("\n\nDELETE QUERY:\n\n")
+            @logger.debug(str_query)
+            @logger.debug("\n\n")
             begin
               @client_sparql.delete_data(delete['graph'])
             rescue RuntimeError => e
-              puts "error deleting data: #{e.full_message}"
-              puts "rolling back ..."
+              @logger.debug("error deleting data: #{e.full_message}")
+              @logger.debug("rolling back ...")
               rollback(rollbacks)
               raise RuntimeError, e
             end
@@ -388,14 +389,14 @@ module Solis
 
             # run insert query
             str_query = SPARQL::Client::Update::InsertData.new(insert['graph'], graph: @name_graph).to_s
-            puts "\n\nINSERT QUERY:\n\n"
-            puts str_query
-            puts "\n\n"
+            @logger.debug("\n\nINSERT QUERY:\n\n")
+            @logger.debug(str_query)
+            @logger.debug("\n\n")
             begin
               @client_sparql.insert_data(insert['graph'])
             rescue RuntimeError => e
-              puts "error inserting data: #{e.full_message}"
-              puts "rolling back ..."
+              @logger.debug("error inserting data: #{e.full_message}")
+              @logger.debug("rolling back ...")
               rollback(rollbacks)
               raise RuntimeError, e
             end
@@ -410,9 +411,9 @@ module Solis
             # Of course better than method 1 because supposedly atomic (no rollout strategies needed).
 
             str_query = SPARQL::Client::Update::DeleteInsert.new(delete['graph'], insert['graph'], nil, graph: @name_graph).to_s
-            puts "\n\nDELETE/INSERT QUERY:\n\n"
-            puts str_query
-            puts "\n\n"
+            @logger.debug("\n\nDELETE/INSERT QUERY:\n\n")
+            @logger.debug(str_query)
+            @logger.debug("\n\n")
 
             @client_sparql.delete_insert(delete['graph'], insert['graph'], nil)
 
@@ -421,7 +422,7 @@ module Solis
         end
 
         # end critical section
-        puts "\n\n-- END CRITICAL SECTION: \n\n"
+        @logger.debug("\n\n-- END CRITICAL SECTION: \n\n")
 
         res = ops_generic.map do |op|
           [op['id'], 'ok']
@@ -454,25 +455,25 @@ module Solis
         result.each_solution do |solution|
           objects << solution.o
         end
-        puts "GET_OBJECTS_FOR_SUBJECT_AND_PREDICATE: #{s}, #{p}:\n#{objects}"
+        @logger.debug("GET_OBJECTS_FOR_SUBJECT_AND_PREDICATE: #{s}, #{p}:\n#{objects}")
         objects
       end
 
       def rollback(rollbacks)
         rollbacks.each_with_index do |op, i|
-          puts "\n\nROLLBACK QUERY: #{i+1}"
+          @logger.debug("\n\nROLLBACK QUERY: #{i+1}")
           case op[:type]
           when 'query_insert'
             str_query = SPARQL::Client::Update::InsertData.new(op[:graph], graph: @name_graph).to_s
-            puts "\n\nINSERT QUERY (AS ROLLBACK QUERY):\n\n"
-            puts str_query
-            puts "\n\n"
+            @logger.debug("\n\nINSERT QUERY (AS ROLLBACK QUERY):\n\n")
+            @logger.debug(str_query)
+            @logger.debug("\n\n")
             @client_sparql.insert_data(op[:graph])
           when 'query_delete'
             str_query = SPARQL::Client::Update::DeleteData.new(op[:graph], graph: @name_graph).to_s
-            puts "\n\nDELETE QUERY (AS ROLLBACK QUERY):\n\n"
-            puts str_query
-            puts "\n\n"
+            @logger.debug("\n\nDELETE QUERY (AS ROLLBACK QUERY):\n\n")
+            @logger.debug(str_query)
+            @logger.debug("\n\n")
             @client_sparql.delete_data(op[:graph])
           end
         end

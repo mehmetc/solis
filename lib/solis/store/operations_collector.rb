@@ -10,6 +10,7 @@ module Solis
     module OperationsCollector
       # Expects:
       # - @ops
+      # - @logger
 
       def save_id_with_type(id, type, mode=Solis::Store::SaveMode::PRE_DELETE_PEERS_IF_DIFF_SET)
 
@@ -21,7 +22,7 @@ module Solis
           "content" => [id, 'has_type', type]
         }
 
-        puts op
+        @logger.debug(op)
 
         @ops << op
 
@@ -39,7 +40,7 @@ module Solis
           "content" => [id, name_attr, val_attr, type_attr]
         }
 
-        puts op
+        @logger.debug(op)
 
         @ops << op
 
@@ -57,7 +58,7 @@ module Solis
           "content" => [id, name_attr]
         }
 
-        puts op
+        @logger.debug(op)
 
         @ops << op
 
@@ -77,7 +78,7 @@ module Solis
           "content" => [id, namespace]
         }
 
-        puts op
+        @logger.debug(op)
 
         @ops << op
 
@@ -95,7 +96,7 @@ module Solis
           "content" => [id]
         }
 
-        puts op
+        @logger.debug(op)
 
         @ops << op
 
@@ -113,7 +114,7 @@ module Solis
           "content" => [id]
         }
 
-        puts op
+        @logger.debug(op)
 
         @ops << op
 

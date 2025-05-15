@@ -14,6 +14,7 @@ module Solis
       model = params[:model]
       raise Solis::Error::BadParameter, "One of :prefix, :namespace, :uri is missing" unless (model.keys & [:prefix, :namespace, :uri]).size == 3
       @logger = params[:logger] || Solis.logger([STDOUT])
+      @logger.level = Logger::INFO
       @namespace = model[:namespace]
       @prefix = model[:prefix]
       @uri = model[:uri]

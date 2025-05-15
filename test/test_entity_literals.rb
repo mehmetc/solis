@@ -1,6 +1,6 @@
 require "test_helper"
 
-class TestEntityDestroy < Minitest::Test
+class TestEntityLiterals < Minitest::Test
 
   def setup
     super

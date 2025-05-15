@@ -84,8 +84,8 @@ module Solis
         # flatten + expand + clean internal data before validating it
         flattened_ordered_expanded = to_jsonld_flattened_ordered_expanded
         Solis::Utils::JSONLD.clean_flattened_expanded_from_unset_data!(flattened_ordered_expanded['@graph'])
-        puts "=== flattened + deps sorted + expanded + cleaned JSON-LD:"
-        puts JSON.pretty_generate(flattened_ordered_expanded)
+        @model.logger.debug("=== flattened + deps sorted + expanded + cleaned JSON-LD:")
+        @model.logger.debug(JSON.pretty_generate(flattened_ordered_expanded))
 
         # validate literals
         # conform_literals, messages_literals = Solis::Utils::JSONLD.validate_literals(
@@ -105,19 +105,15 @@ module Solis
             messages_literals << [statement.subject.to_s, statement.predicate.to_s, e.message]
           end
         end
-        puts conform_literals
-        puts messages_literals
 
         # add hierarchy triples
         flattened_ordered_expanded['@context'].merge!(Solis::Utils::JSONLD.make_jsonld_hierarchy_context)
         flattened_ordered_expanded['@graph'].concat(Solis::Utils::JSONLD.make_jsonld_triples_from_hierarchy(@model))
-        puts "=== flattened + deps sorted + expanded + cleaned + hierarchy JSON-LD:"
-        puts JSON.pretty_generate(flattened_ordered_expanded)
+        @model.logger.debug("=== flattened + deps sorted + expanded + cleaned + hierarchy JSON-LD:")
+        @model.logger.debug(JSON.pretty_generate(flattened_ordered_expanded))
 
         # validate agains SHACL
         conform_shacl, messages_shacl = @model.validator.execute(flattened_ordered_expanded, :jsonld)
-        puts conform_shacl
-        puts messages_shacl
 
         [conform_literals, messages_literals, conform_shacl, messages_shacl]
 
@@ -286,8 +282,8 @@ module Solis
 
       def expand_obj(obj)
 
-        puts "======= object:"
-        puts JSON.pretty_generate(obj)
+        @model.logger.debug("======= object:")
+        @model.logger.debug(JSON.pretty_generate(obj))
         context_datatypes = Solis::Utils::JSONLD.make_jsonld_datatypes_context_from_model(obj, @model)
 
         context = {
@@ -295,9 +291,9 @@ module Solis
         }
         context.merge!(context_datatypes)
 
-        puts "======= compacted single object:"
+        @model.logger.debug("======= compacted single object:")
         hash_jsonld_compacted = Solis::Utils::JSONLD.json_object_to_jsonld(obj, context)
-        puts JSON.pretty_generate(hash_jsonld_compacted)
+        @model.logger.debug(JSON.pretty_generate(hash_jsonld_compacted))
 
         # benefits of expansion:
         # - all properties names are expanded to URIs
@@ -316,19 +312,19 @@ module Solis
 
       def to_jsonld_flattened_ordered_expanded
 
-        puts "=== internal JSON full:"
-        puts JSON.pretty_generate(get_internal_data)
+        @model.logger.debug("=== internal JSON full:")
+        @model.logger.debug(JSON.pretty_generate(get_internal_data))
 
         hash_data_jsonld = to_jsonld(get_internal_data)
-        puts "=== internal JSON-LD:"
-        puts JSON.pretty_generate(hash_data_jsonld)
+        @model.logger.debug("=== internal JSON-LD:")
+        @model.logger.debug(JSON.pretty_generate(hash_data_jsonld))
 
         flattened = Solis::Utils::JSONLD.flatten_jsonld(hash_data_jsonld)
-        puts "=== flattened JSON-LD:"
-        puts JSON.pretty_generate(flattened)
+        @model.logger.debug("=== flattened JSON-LD:")
+        @model.logger.debug(JSON.pretty_generate(flattened))
         flattened_ordered = Solis::Utils::JSONLD.sort_flat_jsonld_by_deps(flattened)
-        puts "=== flattened + deps sorted JSON-LD:"
-        puts JSON.pretty_generate(flattened_ordered)
+        @model.logger.debug("=== flattened + deps sorted JSON-LD:")
+        @model.logger.debug(JSON.pretty_generate(flattened_ordered))
 
         # expand single items
         flattened_ordered_expanded = deep_copy(flattened_ordered)
@@ -336,8 +332,8 @@ module Solis
         flattened_ordered_expanded['@graph'].map! do |obj|
           expand_obj(obj)
         end
-        puts "=== flattened + deps sorted + expanded JSON-LD:"
-        puts JSON.pretty_generate(flattened_ordered_expanded)
+        @model.logger.debug("=== flattened + deps sorted + expanded JSON-LD:")
+        @model.logger.debug(JSON.pretty_generate(flattened_ordered_expanded))
 
         flattened_ordered_expanded
 
@@ -345,8 +341,8 @@ module Solis
 
       def save_instance(hash_jsonld_expanded)
 
-        puts "======= expanded single object:"
-        puts JSON.pretty_generate(hash_jsonld_expanded)
+        @model.logger.debug("======= expanded single object:")
+        @model.logger.debug(JSON.pretty_generate(hash_jsonld_expanded))
 
         data = hash_jsonld_expanded
 
