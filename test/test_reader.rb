@@ -19,7 +19,7 @@ class TestSolis < Minitest::Test
   end
 
   def test_read_from_stringio
-    assert_includes(@solis.list, 'https://example.com/Car')
+    assert_includes(@solis.model.entity.list(namespace: true), 'https://example.com/Car')
   end
 
   def test_read_from_uri
@@ -32,13 +32,14 @@ class TestSolis < Minitest::Test
         content_type: 'application/rdf+xml'}
     }
     solis = Solis.new(config)
-    assert_includes(solis.list, 'http://id.loc.gov/ontologies/bibframe/Title')
+    assert_includes(solis.model.entity.list, 'Title')
     #TODO: test more
-    # File.open('bibframe.ttl', 'wb') do |f|
-    #   f.puts solis.to_shacl
-    # end
+    File.open('bibframe.ttl', 'wb') do |f|
+      f.puts solis.model.writer
+    end
   end
 
+  #TODO: make it do something
   def test_load_from_google_sheet
     graph = {
       uri: 'https://127.0.0.1:8890/sparql',
@@ -51,11 +52,14 @@ class TestSolis < Minitest::Test
         namespace: 'https://data.odis.be/',
         prefix: 'odis',
         uri: 'google+sheet://18JDgCfr2CLl_jATuvFTcpu-a5T6CWAgJwTwEqtSe8YE',
-        config_path: 'test/resources/correct'
+        config_path: 'test/resources/correct',
+        config_name: 'test_config.yml'
       }
     }
 
     solis = Solis.new(config)
+
+    pp solis.model.entity.list
 
     #models = Solis::Model::Reader.from_uri('google+sheet://18JDgCfr2CLl_jATuvFTcpu-a5T6CWAgJwTwEqtSe8YE')
 

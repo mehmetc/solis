@@ -11,12 +11,12 @@ class SHACLParser
   def parse_shapes
     shapes = {}
 
-    shapes_graph.query([nil, RDF.type, RDF::Vocab::SHACL.NodeShape]) do |shape|
+    @shapes_graph.query([nil, RDF.type, RDF::Vocab::SHACL.NodeShape]) do |shape|
       class_uri = shape.subject.to_s
       shape_name = shapes_graph.query([shape.subject, RDF::Vocab::SHACL.name, nil]).first_object.to_s
       shapes[shape_name] = {properties: {}, shape: {raw: shape, uri: class_uri}}
 
-      shapes_graph.query([shape.subject, RDF::Vocab::SHACL.property, nil]) do |property_shape|
+      @shapes_graph.query([shape.subject, RDF::Vocab::SHACL.property, nil]) do |property_shape|
         property_uri = property_shape.object
         property_info = extract_property_info(property_uri)
 

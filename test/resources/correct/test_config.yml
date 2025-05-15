@@ -1,0 +1,4 @@
+:key: YOUR_GOOGLE_KEY
+:cache: ./cache
+:namespace: https://example.com/
+:prefix: e

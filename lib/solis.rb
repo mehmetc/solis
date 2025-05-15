@@ -9,6 +9,7 @@ require_relative 'solis/store'
 module Solis
   def self.new(*params)
     params_hash = params.reduce({}) {|h,pairs| pairs.each {|k,v| h[k] = v}; h}
-    Solis::Model.new(params_hash)
+    raise Solis::Error::BadParameter, "Please provide a {store: Solis::Store::Memory.new()}" unless params_hash[:store]
+    Data.define(:store, :model).new(store: params_hash[:store], model: Solis::Model.new(params_hash))
   end
 end
