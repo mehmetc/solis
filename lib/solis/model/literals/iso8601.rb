@@ -21,6 +21,18 @@ module Solis
           end
         end
 
+        class Duration < RDF::Literal
+          DATATYPE = RDF::URI('http://www.w3.org/2006/time#Duration')
+          def valid?
+            begin
+              ISO8601i::Duration.new(value)
+              true
+            rescue
+              false
+            end
+          end
+        end
+
       end
     end
   end
