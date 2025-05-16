@@ -2,140 +2,140 @@
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<_:g183768Shape> a sh:NodeShape;
-  sh:name "_:g183768";
-  sh:node _:g183768;
-  sh:targetClass _:g183768 .
+<_:g184888Shape> a sh:NodeShape;
+  sh:name "_:g184888";
+  sh:node _:g184888;
+  sh:targetClass _:g184888 .
 
-<_:g183848Shape> a sh:NodeShape;
-  sh:name "_:g183848";
-  sh:node _:g183848;
-  sh:targetClass _:g183848 .
+<_:g184968Shape> a sh:NodeShape;
+  sh:name "_:g184968";
+  sh:node _:g184968;
+  sh:targetClass _:g184968 .
 
-<_:g184000Shape> a sh:NodeShape;
-  sh:name "_:g184000";
-  sh:node _:g184000;
-  sh:targetClass _:g184000 .
+<_:g185120Shape> a sh:NodeShape;
+  sh:name "_:g185120";
+  sh:node _:g185120;
+  sh:targetClass _:g185120 .
 
-<_:g184224Shape> a sh:NodeShape;
-  sh:name "_:g184224";
-  sh:node _:g184224;
-  sh:targetClass _:g184224 .
+<_:g185344Shape> a sh:NodeShape;
+  sh:name "_:g185344";
+  sh:node _:g185344;
+  sh:targetClass _:g185344 .
 
-<_:g184272Shape> a sh:NodeShape;
-  sh:name "_:g184272";
-  sh:node _:g184272;
-  sh:targetClass _:g184272 .
+<_:g185392Shape> a sh:NodeShape;
+  sh:name "_:g185392";
+  sh:node _:g185392;
+  sh:targetClass _:g185392 .
 
-<_:g184616Shape> a sh:NodeShape;
-  sh:name "_:g184616";
-  sh:node _:g184616;
-  sh:targetClass _:g184616 .
+<_:g185736Shape> a sh:NodeShape;
+  sh:name "_:g185736";
+  sh:node _:g185736;
+  sh:targetClass _:g185736 .
 
-<_:g184776Shape> a sh:NodeShape;
-  sh:name "_:g184776";
-  sh:node _:g184776;
-  sh:targetClass _:g184776 .
+<_:g185896Shape> a sh:NodeShape;
+  sh:name "_:g185896";
+  sh:node _:g185896;
+  sh:targetClass _:g185896 .
 
-<_:g184824Shape> a sh:NodeShape;
-  sh:name "_:g184824";
-  sh:node _:g184824;
-  sh:targetClass _:g184824 .
+<_:g185944Shape> a sh:NodeShape;
+  sh:name "_:g185944";
+  sh:node _:g185944;
+  sh:targetClass _:g185944 .
 
-<_:g185288Shape> a sh:NodeShape;
-  sh:name "_:g185288";
-  sh:node _:g185288;
-  sh:targetClass _:g185288 .
+<_:g186408Shape> a sh:NodeShape;
+  sh:name "_:g186408";
+  sh:node _:g186408;
+  sh:targetClass _:g186408 .
 
-<_:g185536Shape> a sh:NodeShape;
-  sh:name "_:g185536";
-  sh:node _:g185536;
-  sh:targetClass _:g185536 .
+<_:g186648Shape> a sh:NodeShape;
+  sh:name "_:g186648";
+  sh:node _:g186648;
+  sh:targetClass _:g186648 .
 
-<_:g185584Shape> a sh:NodeShape;
-  sh:name "_:g185584";
-  sh:node _:g185584;
-  sh:targetClass _:g185584 .
+<_:g186680Shape> a sh:NodeShape;
+  sh:name "_:g186680";
+  sh:node _:g186680;
+  sh:targetClass _:g186680 .
 
-<_:g185952Shape> a sh:NodeShape;
-  sh:name "_:g185952";
-  sh:node _:g185952;
-  sh:targetClass _:g185952 .
+<_:g186992Shape> a sh:NodeShape;
+  sh:name "_:g186992";
+  sh:node _:g186992;
+  sh:targetClass _:g186992 .
 
-<_:g185984Shape> a sh:NodeShape;
-  sh:name "_:g185984";
-  sh:node _:g185984;
-  sh:targetClass _:g185984 .
+<_:g187024Shape> a sh:NodeShape;
+  sh:name "_:g187024";
+  sh:node _:g187024;
+  sh:targetClass _:g187024 .
 
-<_:g186104Shape> a sh:NodeShape;
-  sh:name "_:g186104";
-  sh:node _:g186104;
-  sh:targetClass _:g186104 .
+<_:g187136Shape> a sh:NodeShape;
+  sh:name "_:g187136";
+  sh:node _:g187136;
+  sh:targetClass _:g187136 .
 
-<_:g186424Shape> a sh:NodeShape;
-  sh:name "_:g186424";
-  sh:node _:g186424;
-  sh:targetClass _:g186424 .
+<_:g187400Shape> a sh:NodeShape;
+  sh:name "_:g187400";
+  sh:node _:g187400;
+  sh:targetClass _:g187400 .
 
-<_:g186520Shape> a sh:NodeShape;
-  sh:name "_:g186520";
-  sh:node _:g186520;
-  sh:targetClass _:g186520 .
+<_:g187480Shape> a sh:NodeShape;
+  sh:name "_:g187480";
+  sh:node _:g187480;
+  sh:targetClass _:g187480 .
 
-<_:g186568Shape> a sh:NodeShape;
-  sh:name "_:g186568";
-  sh:node _:g186568;
-  sh:targetClass _:g186568 .
+<_:g187512Shape> a sh:NodeShape;
+  sh:name "_:g187512";
+  sh:node _:g187512;
+  sh:targetClass _:g187512 .
 
-<_:g186808Shape> a sh:NodeShape;
-  sh:name "_:g186808";
-  sh:node _:g186808;
-  sh:targetClass _:g186808 .
+<_:g187736Shape> a sh:NodeShape;
+  sh:name "_:g187736";
+  sh:node _:g187736;
+  sh:targetClass _:g187736 .
 
-<_:g186928Shape> a sh:NodeShape;
-  sh:name "_:g186928";
-  sh:node _:g186928;
-  sh:targetClass _:g186928 .
+<_:g187848Shape> a sh:NodeShape;
+  sh:name "_:g187848";
+  sh:node _:g187848;
+  sh:targetClass _:g187848 .
 
-<_:g187016Shape> a sh:NodeShape;
-  sh:name "_:g187016";
-  sh:node _:g187016;
-  sh:targetClass _:g187016 .
+<_:g187928Shape> a sh:NodeShape;
+  sh:name "_:g187928";
+  sh:node _:g187928;
+  sh:targetClass _:g187928 .
 
-<_:g187160Shape> a sh:NodeShape;
-  sh:name "_:g187160";
-  sh:node _:g187160;
-  sh:targetClass _:g187160 .
+<_:g188072Shape> a sh:NodeShape;
+  sh:name "_:g188072";
+  sh:node _:g188072;
+  sh:targetClass _:g188072 .
 
-<_:g187216Shape> a sh:NodeShape;
-  sh:name "_:g187216";
-  sh:node _:g187216;
-  sh:targetClass _:g187216 .
+<_:g188160Shape> a sh:NodeShape;
+  sh:name "_:g188160";
+  sh:node _:g188160;
+  sh:targetClass _:g188160 .
 
-<_:g187248Shape> a sh:NodeShape;
-  sh:name "_:g187248";
-  sh:node _:g187248;
-  sh:targetClass _:g187248 .
+<_:g188200Shape> a sh:NodeShape;
+  sh:name "_:g188200";
+  sh:node _:g188200;
+  sh:targetClass _:g188200 .
 
-<_:g187344Shape> a sh:NodeShape;
-  sh:name "_:g187344";
-  sh:node _:g187344;
-  sh:targetClass _:g187344 .
+<_:g188312Shape> a sh:NodeShape;
+  sh:name "_:g188312";
+  sh:node _:g188312;
+  sh:targetClass _:g188312 .
 
-<_:g187376Shape> a sh:NodeShape;
-  sh:name "_:g187376";
-  sh:node _:g187376;
-  sh:targetClass _:g187376 .
+<_:g188344Shape> a sh:NodeShape;
+  sh:name "_:g188344";
+  sh:node _:g188344;
+  sh:targetClass _:g188344 .
 
-<_:g187560Shape> a sh:NodeShape;
-  sh:name "_:g187560";
-  sh:node _:g187560;
-  sh:targetClass _:g187560 .
+<_:g188544Shape> a sh:NodeShape;
+  sh:name "_:g188544";
+  sh:node _:g188544;
+  sh:targetClass _:g188544 .
 
-<_:g187592Shape> a sh:NodeShape;
-  sh:name "_:g187592";
-  sh:node _:g187592;
-  sh:targetClass _:g187592 .
+<_:g188576Shape> a sh:NodeShape;
+  sh:name "_:g188576";
+  sh:node _:g188576;
+  sh:targetClass _:g188576 .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#AlsatianWineShape> a sh:NodeShape;
   sh:name "AlsatianWine";
@@ -149,12 +149,12 @@
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#AnjouShape> a sh:NodeShape;
   sh:name "Anjou";
-  sh:node <_:g187912Shape>;
+  sh:node <_:g188944Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#Anjou> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#BeaujolaisShape> a sh:NodeShape;
   sh:name "Beaujolais";
-  sh:node <_:g187816Shape>;
+  sh:node <_:g188832Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#Beaujolais> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#BordeauxShape> a sh:NodeShape;
@@ -164,17 +164,17 @@
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#BurgundyShape> a sh:NodeShape;
   sh:name "Burgundy";
-  sh:node <_:g187776Shape>;
+  sh:node <_:g188776Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#Burgundy> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#CabernetFrancShape> a sh:NodeShape;
   sh:name "CabernetFranc";
-  sh:node <_:g187664Shape>;
+  sh:node <_:g188656Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#CabernetFranc> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#CabernetSauvignonShape> a sh:NodeShape;
   sh:name "CabernetSauvignon";
-  sh:node <_:g187536Shape>;
+  sh:node <_:g188512Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#CabernetSauvignon> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#CaliforniaWineShape> a sh:NodeShape;
@@ -184,12 +184,12 @@
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#ChardonnayShape> a sh:NodeShape;
   sh:name "Chardonnay";
-  sh:node <_:g187328Shape>;
+  sh:node <_:g188296Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#Chardonnay> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#CheninBlancShape> a sh:NodeShape;
   sh:name "CheninBlanc";
-  sh:node <_:g187192Shape>;
+  sh:node <_:g188120Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#CheninBlanc> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#ChiantiShape> a sh:NodeShape;
@@ -199,7 +199,7 @@
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#CotesDOrShape> a sh:NodeShape;
   sh:name "CotesDOr";
-  sh:node <_:g187048Shape>;
+  sh:node <_:g187960Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#CotesDOr> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#DryRedWineShape> a sh:NodeShape;
@@ -209,7 +209,7 @@
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#DryRieslingShape> a sh:NodeShape;
   sh:name "DryRiesling";
-  sh:node <_:g186904Shape>;
+  sh:node <_:g187824Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#DryRiesling> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#DryWhiteWineShape> a sh:NodeShape;
@@ -249,7 +249,7 @@
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#IceWineShape> a sh:NodeShape;
   sh:name "IceWine";
-  sh:node <_:g186512Shape>;
+  sh:node <_:g187472Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#IceWine> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#LoireShape> a sh:NodeShape;
@@ -259,52 +259,52 @@
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#MargauxShape> a sh:NodeShape;
   sh:name "Margaux";
-  sh:node <_:g186272Shape>;
+  sh:node <_:g187280Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#Margaux> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#MedocShape> a sh:NodeShape;
   sh:name "Medoc";
-  sh:node <_:g186208Shape>;
+  sh:node <_:g187232Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#Medoc> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#MeritageShape> a sh:NodeShape;
   sh:name "Meritage";
-  sh:node <_:g186064Shape>;
+  sh:node <_:g187096Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#Meritage> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#MerlotShape> a sh:NodeShape;
   sh:name "Merlot";
-  sh:node <_:g185928Shape>;
+  sh:node <_:g186968Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#Merlot> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#MeursaultShape> a sh:NodeShape;
   sh:name "Meursault";
-  sh:node <_:g185880Shape>;
+  sh:node <_:g186920Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#Meursault> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#MuscadetShape> a sh:NodeShape;
   sh:name "Muscadet";
-  sh:node <_:g185768Shape>;
+  sh:node <_:g186840Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#Muscadet> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#PauillacShape> a sh:NodeShape;
   sh:name "Pauillac";
-  sh:node <_:g185680Shape>;
+  sh:node <_:g186760Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#Pauillac> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#PetiteSyrahShape> a sh:NodeShape;
   sh:name "PetiteSyrah";
-  sh:node <_:g185504Shape>;
+  sh:node <_:g186624Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#PetiteSyrah> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#PinotBlancShape> a sh:NodeShape;
   sh:name "PinotBlanc";
-  sh:node <_:g185448Shape>;
+  sh:node <_:g186568Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#PinotBlanc> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#PinotNoirShape> a sh:NodeShape;
   sh:name "PinotNoir";
-  sh:node <_:g185392Shape>;
+  sh:node <_:g186512Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#PinotNoir> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#PortShape> a sh:NodeShape;
@@ -314,12 +314,12 @@
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#RedBordeauxShape> a sh:NodeShape;
   sh:name "RedBordeaux";
-  sh:node <_:g185280Shape>;
+  sh:node <_:g186400Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#RedBordeaux> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#RedBurgundyShape> a sh:NodeShape;
   sh:name "RedBurgundy";
-  sh:node <_:g185232Shape>;
+  sh:node <_:g186352Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#RedBurgundy> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#RedTableWineShape> a sh:NodeShape;
@@ -340,7 +340,7 @@
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#RieslingShape> a sh:NodeShape;
   sh:name "Riesling";
-  sh:node <_:g185104Shape>;
+  sh:node <_:g186224Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#Riesling> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#RoseWineShape> a sh:NodeShape;
@@ -350,7 +350,7 @@
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#SancerreShape> a sh:NodeShape;
   sh:name "Sancerre";
-  sh:node <_:g185000Shape>;
+  sh:node <_:g186120Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#Sancerre> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#SauterneShape> a sh:NodeShape;
@@ -365,7 +365,7 @@
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#SemillonOrSauvignonBlancShape> a sh:NodeShape;
   sh:name "SemillonOrSauvignonBlanc";
-  sh:node <_:g184760Shape>;
+  sh:node <_:g185880Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#SemillonOrSauvignonBlanc> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#SemillonShape> a sh:NodeShape;
@@ -375,7 +375,7 @@
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#StEmilionShape> a sh:NodeShape;
   sh:name "StEmilion";
-  sh:node <_:g184680Shape>;
+  sh:node <_:g185800Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#StEmilion> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#SweetRieslingShape> a sh:NodeShape;
@@ -400,16 +400,16 @@
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#ToursShape> a sh:NodeShape;
   sh:name "Tours";
-  sh:node <_:g184512Shape>;
+  sh:node <_:g185632Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#Tours> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#VintageShape> a sh:NodeShape;
   sh:name "Vintage";
-  sh:node <_:g183624Shape>;
+  sh:node <_:g184744Shape>;
   sh:property [
     sh:class <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#VintageYear>;
-    sh:maxCount "1"^^xsd:nonNegativeInteger;
-    sh:minCount "1"^^xsd:nonNegativeInteger;
+    sh:maxCount 1;
+    sh:minCount 1;
     sh:name "hasVintageYear";
     sh:nodeKind sh:IRI;
     sh:path <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#hasVintageYear>
@@ -428,17 +428,17 @@
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#WhiteBordeauxShape> a sh:NodeShape;
   sh:name "WhiteBordeaux";
-  sh:node <_:g183992Shape>;
+  sh:node <_:g185112Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#WhiteBordeaux> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#WhiteBurgundyShape> a sh:NodeShape;
   sh:name "WhiteBurgundy";
-  sh:node <_:g183936Shape>;
+  sh:node <_:g185056Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#WhiteBurgundy> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#WhiteLoireShape> a sh:NodeShape;
   sh:name "WhiteLoire";
-  sh:node <_:g183840Shape>;
+  sh:node <_:g184960Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#WhiteLoire> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#WhiteNonSweetWineShape> a sh:NodeShape;
@@ -488,7 +488,7 @@
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#ZinfandelShape> a sh:NodeShape;
   sh:name "Zinfandel";
-  sh:node <_:g184192Shape>;
+  sh:node <_:g185312Shape>;
   sh:targetClass <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#Zinfandel> .
 
 <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#DessertWineShape> a sh:NodeShape;
@@ -521,7 +521,7 @@
   sh:node <http://www.w3.org/2002/03owlt/miscellaneous/consistent002#PotableLiquidShape>;
   sh:property [
     sh:class <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#WineGrape>;
-    sh:minCount "1"^^xsd:nonNegativeInteger;
+    sh:minCount 1;
     sh:name "madeFromGrape";
     sh:nodeKind sh:IRI;
     sh:path <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#madeFromGrape>
@@ -532,8 +532,8 @@
     sh:path <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#hasWineDescriptor>
   ], [
     sh:class <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#WineColor>;
-    sh:maxCount "1"^^xsd:nonNegativeInteger;
-    sh:minCount "1"^^xsd:nonNegativeInteger;
+    sh:maxCount 1;
+    sh:minCount 1;
     sh:name "hasColor";
     sh:nodeKind sh:IRI;
     sh:path <http://www.w3.org/2002/03owlt/miscellaneous/consistent001#hasColor>

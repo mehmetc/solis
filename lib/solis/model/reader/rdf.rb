@@ -133,16 +133,16 @@ module Solis
                   object = restriction_info_stmt.object
                   case predicate
                   when RDF::OWL.cardinality
-                    cardinality = object
+                    cardinality = RDF::Literal(object.value, datatype: 'http://www.w3.org/2001/XMLSchema#integer')
                     pp [class_uri, property, predicate, cardinality]
                     shacl_graph << [property_shape, RDF::Vocab::SHACL.minCount, cardinality]
                     shacl_graph << [property_shape, RDF::Vocab::SHACL.maxCount, cardinality]
                   when RDF::OWL.minCardinality
-                    min_cardinality = object
+                    min_cardinality = RDF::Literal(object.value, datatype: 'http://www.w3.org/2001/XMLSchema#integer')
                     # add to property shape
                     shacl_graph << [property_shape, RDF::Vocab::SHACL.minCount, min_cardinality]
                   when RDF::OWL.maxCardinality
-                    max_cardinality = object
+                    max_cardinality = RDF::Literal(object.value, datatype: 'http://www.w3.org/2001/XMLSchema#integer')
                     # add to property shape
                     shacl_graph << [property_shape, RDF::Vocab::SHACL.maxCount, max_cardinality]
                   when RDF::OWL.hasValue
