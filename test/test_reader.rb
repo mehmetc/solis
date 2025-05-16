@@ -39,7 +39,7 @@ class TestReader < Minitest::Test
     end
   end
 
-  def test_read_from_uri_more_complex_ontology
+  def test_read_from_uri_wine_ontology
     config = {
       store: Solis::Store::Memory.new(),
       model: {
