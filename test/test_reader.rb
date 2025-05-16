@@ -40,6 +40,9 @@ class TestReader < Minitest::Test
   end
 
   def test_read_from_uri_wine_ontology
+    # Used to test:
+    # - sh:minCount
+    # - sh:maxCount
     config = {
       store: Solis::Store::Memory.new(),
       model: {
@@ -50,6 +53,41 @@ class TestReader < Minitest::Test
     }
     solis = Solis.new(config)
     File.open('./test/resources/wine_shapes.ttl', 'wb') do |f|
+      f.puts solis.model.writer
+    end
+  end
+
+  def test_read_from_uri_family_ontology
+    # Used to test:
+    # - sh:minExclusive
+    # - sh:maxInclusive
+    # See "Teenager" shape.
+    config = {
+      store: Solis::Store::Memory.new(),
+      model: {
+        prefix: 'fm',
+        namespace: 'http://example.org/',
+        uri: 'https://raw.githubusercontent.com/phillord/owl-api/refs/heads/master/contract/src/test/resources/primer.rdfxml.xml',
+        content_type: 'application/rdf+xml'}
+    }
+    solis = Solis.new(config)
+    File.open('./test/resources/family_shapes.ttl', 'wb') do |f|
+      f.puts solis.model.writer
+    end
+  end
+
+  def test_read_from_uri_pizza_ontology
+    # No specific test, but to see ir errors are thrown
+    config = {
+      store: Solis::Store::Memory.new(),
+      model: {
+        prefix: 'pz',
+        namespace: 'http://example.org/',
+        uri: 'https://protege.stanford.edu/ontologies/pizza/pizza.owl',
+        content_type: 'application/rdf+xml'}
+    }
+    solis = Solis.new(config)
+    File.open('./test/resources/pizza_shapes.ttl', 'wb') do |f|
       f.puts solis.model.writer
     end
   end

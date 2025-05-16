@@ -1,0 +1,995 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<_:g183656Shape> a sh:NodeShape;
+  sh:name "_:g183656";
+  sh:node _:g183656;
+  sh:targetClass _:g183656 .
+
+<_:g183776Shape> a sh:NodeShape;
+  sh:name "_:g183776";
+  sh:node _:g183776;
+  sh:targetClass _:g183776 .
+
+<_:g183992Shape> a sh:NodeShape;
+  sh:name "_:g183992";
+  sh:node _:g183992;
+  sh:targetClass _:g183992 .
+
+<_:g184192Shape> a sh:NodeShape;
+  sh:name "_:g184192";
+  sh:node _:g184192;
+  sh:targetClass _:g184192 .
+
+<_:g184320Shape> a sh:NodeShape;
+  sh:name "_:g184320";
+  sh:node _:g184320;
+  sh:targetClass _:g184320 .
+
+<_:g184376Shape> a sh:NodeShape;
+  sh:name "_:g184376";
+  sh:node _:g184376;
+  sh:targetClass _:g184376 .
+
+<_:g184448Shape> a sh:NodeShape;
+  sh:name "_:g184448";
+  sh:node _:g184448;
+  sh:targetClass _:g184448 .
+
+<_:g184480Shape> a sh:NodeShape;
+  sh:name "_:g184480";
+  sh:node _:g184480;
+  sh:targetClass _:g184480 .
+
+<_:g184672Shape> a sh:NodeShape;
+  sh:name "_:g184672";
+  sh:node _:g184672;
+  sh:targetClass _:g184672 .
+
+<_:g184832Shape> a sh:NodeShape;
+  sh:name "_:g184832";
+  sh:node _:g184832;
+  sh:targetClass _:g184832 .
+
+<_:g184952Shape> a sh:NodeShape;
+  sh:name "_:g184952";
+  sh:node _:g184952;
+  sh:targetClass _:g184952 .
+
+<_:g185104Shape> a sh:NodeShape;
+  sh:name "_:g185104";
+  sh:node _:g185104;
+  sh:targetClass _:g185104 .
+
+<_:g185376Shape> a sh:NodeShape;
+  sh:name "_:g185376";
+  sh:node _:g185376;
+  sh:targetClass _:g185376 .
+
+<_:g185536Shape> a sh:NodeShape;
+  sh:name "_:g185536";
+  sh:node _:g185536;
+  sh:targetClass _:g185536 .
+
+<_:g185672Shape> a sh:NodeShape;
+  sh:name "_:g185672";
+  sh:node _:g185672;
+  sh:targetClass _:g185672 .
+
+<_:g185720Shape> a sh:NodeShape;
+  sh:name "_:g185720";
+  sh:node _:g185720;
+  sh:targetClass _:g185720 .
+
+<_:g185872Shape> a sh:NodeShape;
+  sh:name "_:g185872";
+  sh:node _:g185872;
+  sh:targetClass _:g185872 .
+
+<_:g186008Shape> a sh:NodeShape;
+  sh:name "_:g186008";
+  sh:node _:g186008;
+  sh:targetClass _:g186008 .
+
+<_:g186072Shape> a sh:NodeShape;
+  sh:name "_:g186072";
+  sh:node _:g186072;
+  sh:targetClass _:g186072 .
+
+<_:g186096Shape> a sh:NodeShape;
+  sh:name "_:g186096";
+  sh:node _:g186096;
+  sh:targetClass _:g186096 .
+
+<_:g186248Shape> a sh:NodeShape;
+  sh:name "_:g186248";
+  sh:node _:g186248;
+  sh:targetClass _:g186248 .
+
+<_:g186512Shape> a sh:NodeShape;
+  sh:name "_:g186512";
+  sh:node _:g186512;
+  sh:targetClass _:g186512 .
+
+<_:g186656Shape> a sh:NodeShape;
+  sh:name "_:g186656";
+  sh:node _:g186656;
+  sh:targetClass _:g186656 .
+
+<_:g186744Shape> a sh:NodeShape;
+  sh:name "_:g186744";
+  sh:node _:g186744;
+  sh:targetClass _:g186744 .
+
+<_:g186776Shape> a sh:NodeShape;
+  sh:name "_:g186776";
+  sh:node _:g186776;
+  sh:targetClass _:g186776 .
+
+<_:g186880Shape> a sh:NodeShape;
+  sh:name "_:g186880";
+  sh:node _:g186880;
+  sh:targetClass _:g186880 .
+
+<_:g187016Shape> a sh:NodeShape;
+  sh:name "_:g187016";
+  sh:node _:g187016;
+  sh:targetClass _:g187016 .
+
+<_:g187160Shape> a sh:NodeShape;
+  sh:name "_:g187160";
+  sh:node _:g187160;
+  sh:targetClass _:g187160 .
+
+<_:g187272Shape> a sh:NodeShape;
+  sh:name "_:g187272";
+  sh:node _:g187272;
+  sh:targetClass _:g187272 .
+
+<_:g187328Shape> a sh:NodeShape;
+  sh:name "_:g187328";
+  sh:node _:g187328;
+  sh:targetClass _:g187328 .
+
+<_:g187384Shape> a sh:NodeShape;
+  sh:name "_:g187384";
+  sh:node _:g187384;
+  sh:targetClass _:g187384 .
+
+<_:g187432Shape> a sh:NodeShape;
+  sh:name "_:g187432";
+  sh:node _:g187432;
+  sh:targetClass _:g187432 .
+
+<_:g187464Shape> a sh:NodeShape;
+  sh:name "_:g187464";
+  sh:node _:g187464;
+  sh:targetClass _:g187464 .
+
+<_:g187496Shape> a sh:NodeShape;
+  sh:name "_:g187496";
+  sh:node _:g187496;
+  sh:targetClass _:g187496 .
+
+<_:g187592Shape> a sh:NodeShape;
+  sh:name "_:g187592";
+  sh:node _:g187592;
+  sh:targetClass _:g187592 .
+
+<_:g187664Shape> a sh:NodeShape;
+  sh:name "_:g187664";
+  sh:node _:g187664;
+  sh:targetClass _:g187664 .
+
+<_:g187696Shape> a sh:NodeShape;
+  sh:name "_:g187696";
+  sh:node _:g187696;
+  sh:targetClass _:g187696 .
+
+<_:g187712Shape> a sh:NodeShape;
+  sh:name "_:g187712";
+  sh:node _:g187712;
+  sh:targetClass _:g187712 .
+
+<_:g187736Shape> a sh:NodeShape;
+  sh:name "_:g187736";
+  sh:node _:g187736;
+  sh:targetClass _:g187736 .
+
+<_:g187784Shape> a sh:NodeShape;
+  sh:name "_:g187784";
+  sh:node _:g187784;
+  sh:targetClass _:g187784 .
+
+<_:g187816Shape> a sh:NodeShape;
+  sh:name "_:g187816";
+  sh:node _:g187816;
+  sh:targetClass _:g187816 .
+
+<_:g187872Shape> a sh:NodeShape;
+  sh:name "_:g187872";
+  sh:node _:g187872;
+  sh:targetClass _:g187872 .
+
+<_:g187896Shape> a sh:NodeShape;
+  sh:name "_:g187896";
+  sh:node _:g187896;
+  sh:targetClass _:g187896 .
+
+<_:g188024Shape> a sh:NodeShape;
+  sh:name "_:g188024";
+  sh:node _:g188024;
+  sh:targetClass _:g188024 .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#AmericanHotShape> a sh:NodeShape;
+  sh:name "AmericanHot";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ], [
+    sh:hasValue <http://www.co-ode.org/ontologies/pizza/pizza.owl#America>;
+    sh:name "hasCountryOfOrigin";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasCountryOfOrigin>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#AmericanHot> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#AmericanShape> a sh:NodeShape;
+  sh:name "American";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ], [
+    sh:hasValue <http://www.co-ode.org/ontologies/pizza/pizza.owl#America>;
+    sh:name "hasCountryOfOrigin";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasCountryOfOrigin>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#American> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#AnchoviesToppingShape> a sh:NodeShape;
+  sh:name "AnchoviesTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#FishToppingShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#AnchoviesTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#ArtichokeToppingShape> a sh:NodeShape;
+  sh:name "ArtichokeTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#ArtichokeTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#AsparagusToppingShape> a sh:NodeShape;
+  sh:name "AsparagusTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#AsparagusTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#CajunShape> a sh:NodeShape;
+  sh:name "Cajun";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Cajun> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#CajunSpiceToppingShape> a sh:NodeShape;
+  sh:name "CajunSpiceTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#HerbSpiceToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#CajunSpiceTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#CaperToppingShape> a sh:NodeShape;
+  sh:name "CaperTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#CaperTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#CapricciosaShape> a sh:NodeShape;
+  sh:name "Capricciosa";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Capricciosa> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#CaprinaShape> a sh:NodeShape;
+  sh:name "Caprina";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Caprina> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#CheeseyPizzaShape> a sh:NodeShape;
+  sh:description "Any pizza that has at least 1 cheese topping."@en;
+  sh:name "CheeseyPizza";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#CheeseyPizza>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#CheeseyPizza> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#CheeseyVegetableToppingShape> a sh:NodeShape;
+  sh:name "CheeseyVegetableTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#CheeseToppingShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#CheeseyVegetableTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#ChickenToppingShape> a sh:NodeShape;
+  sh:name "ChickenTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#MeatToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#ChickenTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#CountryShape> a sh:NodeShape;
+  sh:name "Country";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#Country>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Country> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#DeepPanBaseShape> a sh:NodeShape;
+  sh:name "DeepPanBase";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaBaseShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#DeepPanBase> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#FiorentinaShape> a sh:NodeShape;
+  sh:name "Fiorentina";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Fiorentina> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#FourCheesesToppingShape> a sh:NodeShape;
+  sh:name "FourCheesesTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#CheeseToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#FourCheesesTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#FourSeasonsShape> a sh:NodeShape;
+  sh:name "FourSeasons";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#FourSeasons> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#FruttiDiMareShape> a sh:NodeShape;
+  sh:name "FruttiDiMare";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#FruttiDiMare> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#GarlicToppingShape> a sh:NodeShape;
+  sh:name "GarlicTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#GarlicTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#GiardinieraShape> a sh:NodeShape;
+  sh:name "Giardiniera";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Giardiniera> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#GoatsCheeseToppingShape> a sh:NodeShape;
+  sh:name "GoatsCheeseTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#CheeseToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#GoatsCheeseTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#GorgonzolaToppingShape> a sh:NodeShape;
+  sh:name "GorgonzolaTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#CheeseToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#GorgonzolaTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#HotGreenPepperToppingShape> a sh:NodeShape;
+  sh:name "HotGreenPepperTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#GreenPepperToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#HotGreenPepperTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#HotShape> a sh:NodeShape;
+  sh:name "Hot";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#SpicinessShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Hot> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#HotSpicedBeefToppingShape> a sh:NodeShape;
+  sh:name "HotSpicedBeefTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#MeatToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#HotSpicedBeefTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#IceCreamShape> a sh:NodeShape;
+  sh:name "IceCream";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#FoodShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#IceCream> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#InterestingPizzaShape> a sh:NodeShape;
+  sh:description "Any pizza that has at least 3 toppings. Note that this is a cardinality constraint on the hasTopping property and NOT a qualified cardinality constraint (QCR). A QCR would specify from which class the members in this relationship must be. eg has at least 3 toppings from PizzaTopping. This is currently not supported in OWL."@en;
+  sh:name "InterestingPizza";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#InterestingPizza>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#InterestingPizza> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#JalapenoPepperToppingShape> a sh:NodeShape;
+  sh:name "JalapenoPepperTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PepperToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#JalapenoPepperTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#LaReineShape> a sh:NodeShape;
+  sh:name "LaReine";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#LaReine> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#LeekToppingShape> a sh:NodeShape;
+  sh:name "LeekTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#LeekTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#MargheritaShape> a sh:NodeShape;
+  sh:name "Margherita";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Margherita> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#MeatyPizzaShape> a sh:NodeShape;
+  sh:description "Any pizza that has at least one meat topping"@en;
+  sh:name "MeatyPizza";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#MeatyPizza>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#MeatyPizza> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#MediumShape> a sh:NodeShape;
+  sh:name "Medium";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#SpicinessShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Medium> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#MildShape> a sh:NodeShape;
+  sh:name "Mild";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#SpicinessShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Mild> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#MixedSeafoodToppingShape> a sh:NodeShape;
+  sh:name "MixedSeafoodTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#FishToppingShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#MixedSeafoodTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#MozzarellaToppingShape> a sh:NodeShape;
+  sh:name "MozzarellaTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#CheeseToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ], [
+    sh:hasValue <http://www.co-ode.org/ontologies/pizza/pizza.owl#Italy>;
+    sh:name "hasCountryOfOrigin";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasCountryOfOrigin>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#MozzarellaTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#MushroomShape> a sh:NodeShape;
+  sh:name "Mushroom";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Mushroom> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#MushroomToppingShape> a sh:NodeShape;
+  sh:name "MushroomTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#MushroomTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#NapoletanaShape> a sh:NodeShape;
+  sh:name "Napoletana";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ], [
+    sh:hasValue <http://www.co-ode.org/ontologies/pizza/pizza.owl#Italy>;
+    sh:name "hasCountryOfOrigin";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasCountryOfOrigin>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Napoletana> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#NonVegetarianPizzaShape> a sh:NodeShape;
+  sh:description "Any Pizza that is not a VegetarianPizza"@en;
+  sh:name "NonVegetarianPizza";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NonVegetarianPizza>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#NonVegetarianPizza> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#OliveToppingShape> a sh:NodeShape;
+  sh:name "OliveTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#OliveTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#ParmaHamToppingShape> a sh:NodeShape;
+  sh:name "ParmaHamTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#HamToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#ParmaHamTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#ParmenseShape> a sh:NodeShape;
+  sh:name "Parmense";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Parmense> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#ParmesanToppingShape> a sh:NodeShape;
+  sh:name "ParmesanTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#CheeseToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#ParmesanTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#PeperonataToppingShape> a sh:NodeShape;
+  sh:name "PeperonataTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PepperToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#PeperonataTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#PeperoniSausageToppingShape> a sh:NodeShape;
+  sh:name "PeperoniSausageTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#MeatToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#PeperoniSausageTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#PetitPoisToppingShape> a sh:NodeShape;
+  sh:name "PetitPoisTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#PetitPoisTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#PineKernelsShape> a sh:NodeShape;
+  sh:name "PineKernels";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NutToppingShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#PineKernels> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#PolloAdAstraShape> a sh:NodeShape;
+  sh:name "PolloAdAstra";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#PolloAdAstra> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#PrawnsToppingShape> a sh:NodeShape;
+  sh:name "PrawnsTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#FishToppingShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#PrawnsTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#PrinceCarloShape> a sh:NodeShape;
+  sh:name "PrinceCarlo";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#PrinceCarlo> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#QuattroFormaggiShape> a sh:NodeShape;
+  sh:name "QuattroFormaggi";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#QuattroFormaggi> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#RealItalianPizzaShape> a sh:NodeShape;
+  sh:description "Any Pizza that has the country of origin, Italy.  RealItalianPizzas must also only have ThinAndCrispy bases."@en;
+  sh:name "RealItalianPizza";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#RealItalianPizza>;
+  sh:property [
+    sh:name "hasBase";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasBase>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#RealItalianPizza> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#RedOnionToppingShape> a sh:NodeShape;
+  sh:name "RedOnionTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#OnionToppingShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#RedOnionTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#RocketToppingShape> a sh:NodeShape;
+  sh:name "RocketTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#RocketTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#RosaShape> a sh:NodeShape;
+  sh:name "Rosa";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Rosa> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#RosemaryToppingShape> a sh:NodeShape;
+  sh:name "RosemaryTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#HerbSpiceToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#RosemaryTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#SicilianaShape> a sh:NodeShape;
+  sh:name "Siciliana";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Siciliana> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#SlicedTomatoToppingShape> a sh:NodeShape;
+  sh:name "SlicedTomatoTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#SlicedTomatoTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#SloppyGiuseppeShape> a sh:NodeShape;
+  sh:name "SloppyGiuseppe";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#SloppyGiuseppe> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#SohoShape> a sh:NodeShape;
+  sh:name "Soho";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Soho> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#SpicyPizzaEquivalentShape> a sh:NodeShape;
+  sh:name "SpicyPizzaEquivalent";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#SpicyPizzaEquivalent>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#SpicyPizzaEquivalent> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#SpicyPizzaShape> a sh:NodeShape;
+  sh:description "Any pizza that has a spicy topping is a SpicyPizza"@en;
+  sh:name "SpicyPizza";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#SpicyPizza>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#SpicyPizza> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#SpicyToppingShape> a sh:NodeShape;
+  sh:description "Any pizza topping that has spiciness Hot"@en;
+  sh:name "SpicyTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#SpicyTopping>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#SpicyTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#SpinachToppingShape> a sh:NodeShape;
+  sh:name "SpinachTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#SpinachTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#SultanaToppingShape> a sh:NodeShape;
+  sh:name "SultanaTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#FruitToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#SultanaTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#SundriedTomatoToppingShape> a sh:NodeShape;
+  sh:name "SundriedTomatoTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#SundriedTomatoTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#SweetPepperToppingShape> a sh:NodeShape;
+  sh:name "SweetPepperTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PepperToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#SweetPepperTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#ThinAndCrispyBaseShape> a sh:NodeShape;
+  sh:name "ThinAndCrispyBase";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaBaseShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#ThinAndCrispyBase> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#ThinAndCrispyPizzaShape> a sh:NodeShape;
+  sh:name "ThinAndCrispyPizza";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#ThinAndCrispyPizza>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#ThinAndCrispyPizza> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#TobascoPepperSauceShape> a sh:NodeShape;
+  sh:name "TobascoPepperSauce";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#SauceToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#TobascoPepperSauce> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#UnclosedPizzaShape> a sh:NodeShape;
+  sh:name "UnclosedPizza";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#UnclosedPizza> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetarianPizzaEquivalent1Shape> a sh:NodeShape;
+  sh:name "VegetarianPizzaEquivalent1";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetarianPizzaEquivalent1>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetarianPizzaEquivalent1> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetarianPizzaEquivalent2Shape> a sh:NodeShape;
+  sh:name "VegetarianPizzaEquivalent2";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetarianPizzaEquivalent2>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetarianPizzaEquivalent2> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetarianPizzaShape> a sh:NodeShape;
+  sh:description "Any pizza that does not have fish topping and does not have meat topping is a VegetarianPizza. Note that instances of this class do not need to have any toppings at all."@en;
+  sh:name "VegetarianPizza";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetarianPizza>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetarianPizza> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetarianToppingShape> a sh:NodeShape;
+  sh:name "VegetarianTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetarianTopping>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetarianTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#VenezianaShape> a sh:NodeShape;
+  sh:name "Veneziana";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape>;
+  sh:property [
+    sh:name "hasTopping";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ], [
+    sh:hasValue <http://www.co-ode.org/ontologies/pizza/pizza.owl#Italy>;
+    sh:name "hasCountryOfOrigin";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasCountryOfOrigin>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Veneziana> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#DomainConceptShape> a sh:NodeShape;
+  sh:name "DomainConcept";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#DomainConcept>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#DomainConcept> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#FruitToppingShape> a sh:NodeShape;
+  sh:name "FruitTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaToppingShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#FruitTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#GreenPepperToppingShape> a sh:NodeShape;
+  sh:name "GreenPepperTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PepperToppingShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#GreenPepperTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#HamToppingShape> a sh:NodeShape;
+  sh:name "HamTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#MeatToppingShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#HamTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#NutToppingShape> a sh:NodeShape;
+  sh:name "NutTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#NutTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#OnionToppingShape> a sh:NodeShape;
+  sh:name "OnionTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#OnionTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#SauceToppingShape> a sh:NodeShape;
+  sh:name "SauceTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaToppingShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#SauceTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#ValuePartitionShape> a sh:NodeShape;
+  sh:name "ValuePartition";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#ValuePartition>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#ValuePartition> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#HerbSpiceToppingShape> a sh:NodeShape;
+  sh:name "HerbSpiceTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaToppingShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#HerbSpiceTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaBaseShape> a sh:NodeShape;
+  sh:name "PizzaBase";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#FoodShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaBase> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaShape> a sh:NodeShape;
+  sh:name "Pizza";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#FoodShape>;
+  sh:property [
+    sh:class <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaBase>;
+    sh:name "hasBase";
+    sh:nodeKind sh:IRI;
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasBase>
+  ], [
+    sh:class <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaTopping>;
+    sh:name "hasTopping";
+    sh:nodeKind sh:IRI;
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasTopping>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Pizza> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoToppingShape> a sh:NodeShape;
+  sh:name "TomatoTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#FishToppingShape> a sh:NodeShape;
+  sh:name "FishTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaToppingShape>;
+  sh:property [
+    sh:name "hasSpiciness";
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasSpiciness>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#FishTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#SpicinessShape> a sh:NodeShape;
+  sh:name "Spiciness";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#ValuePartitionShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Spiciness> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#FoodShape> a sh:NodeShape;
+  sh:name "Food";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#DomainConceptShape>;
+  sh:property [
+    sh:class <http://www.co-ode.org/ontologies/pizza/pizza.owl#Food>;
+    sh:name "hasIngredient";
+    sh:nodeKind sh:IRI;
+    sh:path <http://www.co-ode.org/ontologies/pizza/pizza.owl#hasIngredient>
+  ];
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#Food> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#MeatToppingShape> a sh:NodeShape;
+  sh:name "MeatTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaToppingShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#MeatTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#PepperToppingShape> a sh:NodeShape;
+  sh:name "PepperTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableToppingShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#PepperTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#CheeseToppingShape> a sh:NodeShape;
+  sh:name "CheeseTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaToppingShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#CheeseTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaToppingShape> a sh:NodeShape;
+  sh:name "PizzaTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#FoodShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableToppingShape> a sh:NodeShape;
+  sh:name "VegetableTopping";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaToppingShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping> .
+
+<http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizzaShape> a sh:NodeShape;
+  sh:name "NamedPizza";
+  sh:node <http://www.co-ode.org/ontologies/pizza/pizza.owl#PizzaShape>;
+  sh:targetClass <http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizza> .
