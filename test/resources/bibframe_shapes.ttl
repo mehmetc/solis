@@ -1,0 +1,1899 @@
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+bf:AbbreviatedTitleShape a sh:NodeShape;
+  sh:description "Title as abbreviated for citation, indexing, and/or identification";
+  sh:name "http://id.loc.gov/ontologies/bibframe/AbbreviatedTitle";
+  sh:node bf:VariantTitleShape;
+  sh:targetClass bf:AbbreviatedTitle .
+
+bf:AccessPolicyShape a sh:NodeShape;
+  sh:description "Access restrictions and allowances regarding access to a resource, e.g., lending policy, access restrictions, embargos";
+  sh:name "http://id.loc.gov/ontologies/bibframe/AccessPolicy";
+  sh:node bf:UsageAndAccessPolicyShape;
+  sh:targetClass bf:AccessPolicy .
+
+bf:AccessionNumberShape a sh:NodeShape;
+  sh:description "Accession Number";
+  sh:name "http://id.loc.gov/ontologies/bibframe/AccessionNumber";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:AccessionNumber .
+
+bf:AcquisitionSourceShape a sh:NodeShape;
+  sh:description "Information about an organization, person, etc., from which a resource may be obtained";
+  sh:name "http://id.loc.gov/ontologies/bibframe/AcquisitionSource";
+  sh:node bf:AcquisitionSource;
+  sh:targetClass bf:AcquisitionSource .
+
+bf:AdminMetadataShape a sh:NodeShape;
+  sh:description "Metadata about the metadata, especially provenance information";
+  sh:name "http://id.loc.gov/ontologies/bibframe/AdminMetadata";
+  sh:node bf:AdminMetadata;
+  sh:property [
+    sh:class bf:DescriptionLevel;
+    sh:description "Designation of the descriptive content of the metadata";
+    sh:name "http://id.loc.gov/ontologies/bibframe/descriptionLevel";
+    sh:nodeKind sh:IRI;
+    sh:path bf:descriptionLevel
+  ], [
+    sh:class bf:AdminMetadata;
+    sh:description "Relates an Administrative metadata resource to the resource it captures information about.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/adminMetadataFor";
+    sh:nodeKind sh:IRI;
+    sh:path bf:adminMetadataFor
+  ], [
+    sh:class bf:AdminMetadata;
+    sh:description "Link to the metadata that was the source of the data";
+    sh:name "http://id.loc.gov/ontologies/bibframe/derivedFrom";
+    sh:nodeKind sh:IRI;
+    sh:path bf:derivedFrom
+  ], [
+    sh:datatype bf:date;
+    sh:description "Date or date and time on which the metadata was modified";
+    sh:name "http://id.loc.gov/ontologies/bibframe/changeDate";
+    sh:path bf:changeDate
+  ], [
+    sh:datatype bf:date;
+    sh:description "Date or date and time on which the original metadata first created";
+    sh:name "http://id.loc.gov/ontologies/bibframe/creationDate";
+    sh:path bf:creationDate
+  ], [
+    sh:class bf:DescriptionConventions;
+    sh:description "Rules used for the descriptive content of the resource description";
+    sh:name "http://id.loc.gov/ontologies/bibframe/descriptionConventions";
+    sh:nodeKind sh:IRI;
+    sh:path bf:descriptionConventions
+  ], [
+    sh:class bf:Language;
+    sh:description "Language used for the metadata";
+    sh:name "http://id.loc.gov/ontologies/bibframe/descriptionLanguage";
+    sh:nodeKind sh:IRI;
+    sh:path bf:descriptionLanguage
+  ], [
+    sh:class bf:GenerationProcess;
+    sh:description "Indication of the program or process used to generate the description by application of a particular transformation";
+    sh:name "http://id.loc.gov/ontologies/bibframe/generationProcess";
+    sh:nodeKind sh:IRI;
+    sh:path bf:generationProcess
+  ], [
+    sh:class bf:AdminMetadata;
+    sh:description "Agency that modified a description";
+    sh:name "http://id.loc.gov/ontologies/bibframe/descriptionModifier";
+    sh:nodeKind sh:IRI;
+    sh:path bf:descriptionModifier
+  ], [
+    sh:class bf:DescriptionAuthentication;
+    sh:description "Indication of specific types of reviews that have been carried out on the description information";
+    sh:name "http://id.loc.gov/ontologies/bibframe/descriptionAuthentication";
+    sh:nodeKind sh:IRI;
+    sh:path bf:descriptionAuthentication
+  ], [
+    sh:datatype bf:date;
+    sh:description "Date of conversion of the metadata from another format";
+    sh:name "http://id.loc.gov/ontologies/bibframe/generationDate";
+    sh:path bf:generationDate
+  ];
+  sh:targetClass bf:AdminMetadata .
+
+bf:AnsiShape a sh:NodeShape;
+  sh:description "American National Standards Institute identifier";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Ansi";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Ansi .
+
+bf:AppliedMaterialShape a sh:NodeShape;
+  sh:description "Physical or chemical substance applied to a base material of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/AppliedMaterial";
+  sh:node bf:MaterialShape;
+  sh:targetClass bf:AppliedMaterial .
+
+bf:ArchivalShape a sh:NodeShape;
+  sh:description "Resources organically created, accumulated, and/or used by a person, family, or organization in the course of conduct of affairs and preserved because of their continuing value";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Archival";
+  sh:node bf:InstanceShape;
+  sh:targetClass bf:Archival .
+
+bf:ArrangementShape a sh:NodeShape;
+  sh:description "Resource that represents an arrangement of another resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Arrangement";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:Arrangement .
+
+bf:AspectRatioShape a sh:NodeShape;
+  sh:description "Proportional relationship between an image's width and its height";
+  sh:name "http://id.loc.gov/ontologies/bibframe/AspectRatio";
+  sh:node bf:AspectRatio;
+  sh:targetClass bf:AspectRatio .
+
+bf:AudioIssueNumberShape a sh:NodeShape;
+  sh:description "Number assigned by publishers of sound recordings to identify the issue designation, or serial identification, of the resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/AudioIssueNumber";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:AudioIssueNumber .
+
+bf:AudioTakeShape a sh:NodeShape;
+  sh:description "Identifier assigned to the smallest identifiable unit of a recording session, e.g., a specific recording of an individual song";
+  sh:name "http://id.loc.gov/ontologies/bibframe/AudioTake";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:AudioTake .
+
+bf:BarcodeShape a sh:NodeShape;
+  sh:description "Optical machine-readable representation of data relating to the item to which it is attached";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Barcode";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Barcode .
+
+bf:BaseMaterialShape a sh:NodeShape;
+  sh:description "Underlying physical material of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/BaseMaterial";
+  sh:node bf:MaterialShape;
+  sh:targetClass bf:BaseMaterial .
+
+bf:BindingShape a sh:NodeShape;
+  sh:description "Information about methods used to bind a published or unpublished resource, or other binding information";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Binding";
+  sh:node bf:Binding;
+  sh:targetClass bf:Binding .
+
+bf:BookFormatShape a sh:NodeShape;
+  sh:description "Result of folding a printed sheet to form a gathering of leaves";
+  sh:name "http://id.loc.gov/ontologies/bibframe/BookFormat";
+  sh:node bf:BookFormat;
+  sh:targetClass bf:BookFormat .
+
+bf:BroadcastStandardShape a sh:NodeShape;
+  sh:description "System used to format a video resource for television broadcast, e.g., HDTV, PAL";
+  sh:name "http://id.loc.gov/ontologies/bibframe/BroadcastStandard";
+  sh:node bf:VideoCharacteristicShape;
+  sh:targetClass bf:BroadcastStandard .
+
+bf:CaptureShape a sh:NodeShape;
+  sh:description "Information about place and date associated with the capture (i.e., recording, filming, etc.) of the content of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Capture";
+  sh:node bf:Capture;
+  sh:targetClass bf:Capture .
+
+bf:CaptureStorageShape a sh:NodeShape;
+  sh:description "Specifies the sound capture and storage technique used on a sound recording resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/CaptureStorage";
+  sh:node bf:SoundCharacteristicShape;
+  sh:targetClass bf:CaptureStorage .
+
+bf:CarrierShape a sh:NodeShape;
+  sh:description "Categorization reflecting the format of the storage medium and housing of a carrier";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Carrier";
+  sh:node bf:Carrier;
+  sh:targetClass bf:Carrier .
+
+bf:CartographicDataTypeShape a sh:NodeShape;
+  sh:description "Data type for encoding of geospatial information in a cartographic resource, e.g., raster, vector, point";
+  sh:name "http://id.loc.gov/ontologies/bibframe/CartographicDataType";
+  sh:node bf:DigitalCharacteristicShape;
+  sh:targetClass bf:CartographicDataType .
+
+bf:CartographicObjectTypeShape a sh:NodeShape;
+  sh:description "Object type for encoding of geospatial information in a cartographic resource, e.g., point, line, polygon";
+  sh:name "http://id.loc.gov/ontologies/bibframe/CartographicObjectType";
+  sh:node bf:DigitalCharacteristicShape;
+  sh:targetClass bf:CartographicObjectType .
+
+bf:CartographicShape a sh:NodeShape;
+  sh:description "Content that represents the whole or part of the earth, any celestial body, or imaginary place at any scale";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Cartographic";
+  sh:node bf:Cartographic;
+  sh:property [
+    sh:datatype xsd:string;
+    sh:description "System for identifying the location of a celestial object in the sky covered by the cartographic content of a resource using the angles of right ascension and declination.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/ascensionAndDeclination";
+    sh:path bf:ascensionAndDeclination
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Mathematical system for identifying the area covered by the cartographic content of a resource, expressed either by means of longitude and latitude on the surface of planets or by the angles of right ascension and declination for celestial cartographic content.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/coordinates";
+    sh:path bf:coordinates
+  ], [
+    sh:datatype xsd:string;
+    sh:description "One of two points of intersection of the ecliptic and the celestial equator, occupied by the sun when its declination is 0 degrees.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/equinox";
+    sh:path bf:equinox
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Coordinate pairs that identify the closed non-intersecting boundary of the area contained within the G-polygon outer ring that is excluded.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/exclusionGRing";
+    sh:path bf:exclusionGRing
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Coordinate pairs that identify the closed non-intersecting boundary of the area covered.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/outerGRing";
+    sh:path bf:outerGRing
+  ], [
+    sh:class bf:Projection;
+    sh:description "Method or system used to represent the surface of the earth or of a celestial sphere on a plane.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/projection";
+    sh:nodeKind sh:IRI;
+    sh:path bf:projection
+  ];
+  sh:targetClass bf:Cartographic .
+
+bf:CartographyShape a sh:NodeShape;
+  sh:description "Resource that shows spatial information, including maps, atlases, globes, digital, and other cartographic resources";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Cartography";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:Cartography .
+
+bf:ChronologyShape a sh:NodeShape;
+  sh:description "Dates associated with issues or items held";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Chronology";
+  sh:node bf:EnumerationAndChronologyShape;
+  sh:targetClass bf:Chronology .
+
+bf:ClassificationDdcShape a sh:NodeShape;
+  sh:description "Dewey Decimal Classification number used for subject access";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ClassificationDdc";
+  sh:node bf:ClassificationShape;
+  sh:targetClass bf:ClassificationDdc .
+
+bf:ClassificationLccShape a sh:NodeShape;
+  sh:description "Library of Congress Classification number used for subject access";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ClassificationLcc";
+  sh:node bf:ClassificationShape;
+  sh:targetClass bf:ClassificationLcc .
+
+bf:ClassificationNalShape a sh:NodeShape;
+  sh:description "National Library of Agriculter number used for subject access";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ClassificationNal";
+  sh:node bf:ClassificationShape;
+  sh:targetClass bf:ClassificationNal .
+
+bf:ClassificationNlmShape a sh:NodeShape;
+  sh:description "National Library of Medicine Classification number used for subject access";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ClassificationNlm";
+  sh:node bf:ClassificationShape;
+  sh:targetClass bf:ClassificationNlm .
+
+bf:ClassificationUdcShape a sh:NodeShape;
+  sh:description "Universal Decimal Classification number used for subject access";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ClassificationUdc";
+  sh:node bf:ClassificationShape;
+  sh:targetClass bf:ClassificationUdc .
+
+bf:CodenShape a sh:NodeShape;
+  sh:description "Identifier for scientific and technical periodical titles assigned by the International CODEN Section of Chemical Abstracts Service";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Coden";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Coden .
+
+bf:CollectionArrangementShape a sh:NodeShape;
+  sh:description "Information about the organization and arrangement of a collection of items";
+  sh:name "http://id.loc.gov/ontologies/bibframe/CollectionArrangement";
+  sh:node bf:CollectionArrangement;
+  sh:property [
+    sh:class bf:CollectionArrangement;
+    sh:description "Relates an Arrangement resource to that which it describes.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/collectionArrangementOf";
+    sh:nodeKind sh:IRI;
+    sh:path bf:collectionArrangementOf
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Pattern of arrangement of materials within a unit.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/pattern";
+    sh:path bf:pattern
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Hierarchical position of the described materials relative to other material from the same source.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/hierarchicalLevel";
+    sh:path bf:hierarchicalLevel
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Manner in which the resource is divided into smaller units.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/collectionOrganization";
+    sh:path bf:collectionOrganization
+  ];
+  sh:targetClass bf:CollectionArrangement .
+
+bf:CollectionShape a sh:NodeShape;
+  sh:description "Aggregation of resources, generally gathered together artificially";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Collection";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:Collection .
+
+bf:CollectiveTitleShape a sh:NodeShape;
+  sh:description "Title for a compilation of resources";
+  sh:name "http://id.loc.gov/ontologies/bibframe/CollectiveTitle";
+  sh:node bf:VariantTitleShape;
+  sh:targetClass bf:CollectiveTitle .
+
+bf:ColorContentShape a sh:NodeShape;
+  sh:description "Color characteristics of a resource, e.g., black and white, multicolored, etc.";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ColorContent";
+  sh:node bf:ColorContent;
+  sh:targetClass bf:ColorContent .
+
+bf:ContentAccessibilityShape a sh:NodeShape;
+  sh:description "Information that assists those with a sensory impairment for greater understanding of content, e.g., captions";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ContentAccessibility";
+  sh:node bf:ContentAccessibility;
+  sh:targetClass bf:ContentAccessibility .
+
+bf:ContentShape a sh:NodeShape;
+  sh:description "Categorization reflecting the fundamental form of communication in which the content is expressed and the human sense through which it is intended to be perceived";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Content";
+  sh:node bf:Content;
+  sh:targetClass bf:Content .
+
+bf:CopyrightNumberShape a sh:NodeShape;
+  sh:description "Identifier assigned to a copyright registration or legal deposit";
+  sh:name "http://id.loc.gov/ontologies/bibframe/CopyrightNumber";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:CopyrightNumber .
+
+bf:CopyrightRegistrationShape a sh:NodeShape;
+  sh:description "Copyright or Legal Deposit registration information";
+  sh:name "http://id.loc.gov/ontologies/bibframe/CopyrightRegistration";
+  sh:node bf:CopyrightRegistration;
+  sh:targetClass bf:CopyrightRegistration .
+
+bf:CoverArtShape a sh:NodeShape;
+  sh:description "Cover illustration of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/CoverArt";
+  sh:node bf:CoverArt;
+  sh:targetClass bf:CoverArt .
+
+bf:DatasetShape a sh:NodeShape;
+  sh:description "Data encoded in a defined structure, including numeric data, environmental data, etc., used by applications software";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Dataset";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:Dataset .
+
+bf:DescriptionAuthenticationShape a sh:NodeShape;
+  sh:description "Indication of specific types of reviews that have been carried out on the description information";
+  sh:name "http://id.loc.gov/ontologies/bibframe/DescriptionAuthentication";
+  sh:node bf:DescriptionAuthentication;
+  sh:targetClass bf:DescriptionAuthentication .
+
+bf:DescriptionConventionsShape a sh:NodeShape;
+  sh:description "Rules used for the descriptive content of the resource description";
+  sh:name "http://id.loc.gov/ontologies/bibframe/DescriptionConventions";
+  sh:node bf:DescriptionConventions;
+  sh:targetClass bf:DescriptionConventions .
+
+bf:DescriptionLevelShape a sh:NodeShape;
+  sh:description "Designation of the descriptive content of the metadata";
+  sh:name "http://id.loc.gov/ontologies/bibframe/DescriptionLevel";
+  sh:node bf:DescriptionLevel;
+  sh:targetClass bf:DescriptionLevel .
+
+bf:DissertationIdentifierShape a sh:NodeShape;
+  sh:description "Identifier assigned to a thesis or dissertation for identification purposes";
+  sh:name "http://id.loc.gov/ontologies/bibframe/DissertationIdentifier";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:DissertationIdentifier .
+
+bf:DissertationShape a sh:NodeShape;
+  sh:description "Information about a work presented as part of the formal requirements for an academic degree";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Dissertation";
+  sh:node bf:Dissertation;
+  sh:property [
+    sh:datatype xsd:string;
+    sh:description "Degree for which author was a candidate.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/degree";
+    sh:path bf:degree
+  ], [
+    sh:class bf:Dissertation;
+    sh:description "Name of degree granting institution.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/grantingInstitution";
+    sh:nodeKind sh:IRI;
+    sh:path bf:grantingInstitution
+  ];
+  sh:targetClass bf:Dissertation .
+
+bf:DistributionShape a sh:NodeShape;
+  sh:description "Information relating to distribution of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Distribution";
+  sh:node bf:ProvisionActivityShape;
+  sh:targetClass bf:Distribution .
+
+bf:DoiShape a sh:NodeShape;
+  sh:description "Digital Object Identifier";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Doi";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Doi .
+
+bf:EanShape a sh:NodeShape;
+  sh:description "International Article Identifier";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Ean";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Ean .
+
+bf:EidrShape a sh:NodeShape;
+  sh:description "Entertainment Identifier Registry";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Eidr";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Eidr .
+
+bf:ElectronicShape a sh:NodeShape;
+  sh:description "Resource that is intended for manipulation by a computer, accessed either directly or remotely";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Electronic";
+  sh:node bf:InstanceShape;
+  sh:targetClass bf:Electronic .
+
+bf:EmulsionShape a sh:NodeShape;
+  sh:description "Suspension of light-sensitive chemicals used as a coating on a microfilm or microfiche, e.g., silver halide";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Emulsion";
+  sh:node bf:Emulsion;
+  sh:targetClass bf:Emulsion .
+
+bf:EncodedBitrateShape a sh:NodeShape;
+  sh:description "Speed at which streaming audio, video, etc., is designed to play, e.g., 32 kbps";
+  sh:name "http://id.loc.gov/ontologies/bibframe/EncodedBitrate";
+  sh:node bf:DigitalCharacteristicShape;
+  sh:targetClass bf:EncodedBitrate .
+
+bf:EncodingFormatShape a sh:NodeShape;
+  sh:description "Schema, standard, etc., used to encode the digital content of a resource, e.g., MP3, XML, JPEG";
+  sh:name "http://id.loc.gov/ontologies/bibframe/EncodingFormat";
+  sh:node bf:DigitalCharacteristicShape;
+  sh:targetClass bf:EncodingFormat .
+
+bf:EnumerationShape a sh:NodeShape;
+  sh:description "Numbering or other enumeration associated with issues or items held";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Enumeration";
+  sh:node bf:EnumerationAndChronologyShape;
+  sh:targetClass bf:Enumeration .
+
+bf:EventShape a sh:NodeShape;
+  sh:description "Something that happens at a certain time and location, such as a performance, speech, or athletic event";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Event";
+  sh:node bf:Event;
+  sh:property [
+    sh:class bf:Work;
+    sh:description "Work whose content is the described event";
+    sh:name "http://id.loc.gov/ontologies/bibframe/eventContent";
+    sh:nodeKind sh:IRI;
+    sh:path bf:eventContent
+  ];
+  sh:targetClass bf:Event .
+
+bf:ExtentShape a sh:NodeShape;
+  sh:description "Number and type of units and/or subunits making up a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Extent";
+  sh:node bf:Extent;
+  sh:targetClass bf:Extent .
+
+bf:FamilyShape a sh:NodeShape;
+  sh:description "Two or more persons related by birth, marriage, adoption, civil union, or similar legal status, or who otherwise present themselves as a family";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Family";
+  sh:node bf:AgentShape;
+  sh:targetClass bf:Family .
+
+bf:FileSizeShape a sh:NodeShape;
+  sh:description "Number of bytes in a digital file, e.g., 162 KB";
+  sh:name "http://id.loc.gov/ontologies/bibframe/FileSize";
+  sh:node bf:DigitalCharacteristicShape;
+  sh:targetClass bf:FileSize .
+
+bf:FileTypeShape a sh:NodeShape;
+  sh:description "General type of data content encoded in a computer file, e.g., text file, audio file";
+  sh:name "http://id.loc.gov/ontologies/bibframe/FileType";
+  sh:node bf:DigitalCharacteristicShape;
+  sh:targetClass bf:FileType .
+
+bf:FingerprintShape a sh:NodeShape;
+  sh:description "Identifier that is used to assist in the identification of antiquarian books by recording information comprising groups of characters taken from specified positions on specified pages of the book";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Fingerprint";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Fingerprint .
+
+bf:FontSizeShape a sh:NodeShape;
+  sh:description "Size of the type used to represent the characters and symbols in a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/FontSize";
+  sh:node bf:FontSize;
+  sh:targetClass bf:FontSize .
+
+bf:FrequencyShape a sh:NodeShape;
+  sh:description "Information about intervals at which the parts of a serially produced resource or the updates to an integrating resource are issued";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Frequency";
+  sh:node bf:Frequency;
+  sh:targetClass bf:Frequency .
+
+bf:GenerationProcessShape a sh:NodeShape;
+  sh:description "Indication of the program or process used to generate the description by application of a particular transformation";
+  sh:name "http://id.loc.gov/ontologies/bibframe/GenerationProcess";
+  sh:node bf:GenerationProcess;
+  sh:targetClass bf:GenerationProcess .
+
+bf:GenerationShape a sh:NodeShape;
+  sh:description "Relationship between an original carrier and the carrier of a reproduction made from the original";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Generation";
+  sh:node bf:Generation;
+  sh:targetClass bf:Generation .
+
+bf:GenreFormShape a sh:NodeShape;
+  sh:description "Form category or genre to which a resource belongs";
+  sh:name "http://id.loc.gov/ontologies/bibframe/GenreForm";
+  sh:node bf:GenreForm;
+  sh:targetClass bf:GenreForm .
+
+bf:GeographicCoverageShape a sh:NodeShape;
+  sh:description "Geographic coverage of the content of the resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/GeographicCoverage";
+  sh:node bf:GeographicCoverage;
+  sh:targetClass bf:GeographicCoverage .
+
+bf:GrooveCharacteristicShape a sh:NodeShape;
+  sh:description "Groove width of an analog disc or the groove pitch of an analog cylinder, e.g., coarse groove, microgroove";
+  sh:name "http://id.loc.gov/ontologies/bibframe/GrooveCharacteristic";
+  sh:node bf:SoundCharacteristicShape;
+  sh:targetClass bf:GrooveCharacteristic .
+
+bf:Gtin14NumberShape a sh:NodeShape;
+  sh:description "14-digit number assigned to identify trade items as various packaging levels that encompasses EAN/UCC-128 and ITF-14";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Gtin14Number";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Gtin14Number .
+
+bf:HdlShape a sh:NodeShape;
+  sh:description "Unique and persistent identifier for digital objects developed by the Corporation for National Research Initiatives";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Hdl";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Hdl .
+
+bf:HubShape a sh:NodeShape;
+  sh:description "An abstract resource that functions as a bridge between two Works";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Hub";
+  sh:node bf:Hub;
+  sh:targetClass bf:Hub .
+
+bf:IllustrationShape a sh:NodeShape;
+  sh:description "Information about content intended to illustrate a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Illustration";
+  sh:node bf:Illustration;
+  sh:targetClass bf:Illustration .
+
+bf:ImmediateAcquisitionShape a sh:NodeShape;
+  sh:description "Information about the circumstances, e.g., source, date, method, under which the resource was directly acquired";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ImmediateAcquisition";
+  sh:node bf:ImmediateAcquisition;
+  sh:targetClass bf:ImmediateAcquisition .
+
+bf:IntegratingShape a sh:NodeShape;
+  sh:description "Resource that is added to or changed by updates that do not remain discrete but are integrated into the whole";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Integrating";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:Integrating .
+
+bf:IntendedAudienceShape a sh:NodeShape;
+  sh:description "Information that identifies the specific intended or target audience or intellectual level for which the content described is considered appropriate; also used to record interest and motivation levels and special learner characteristics";
+  sh:name "http://id.loc.gov/ontologies/bibframe/IntendedAudience";
+  sh:node bf:IntendedAudience;
+  sh:targetClass bf:IntendedAudience .
+
+bf:IsanShape a sh:NodeShape;
+  sh:description "International Standard Audiovisual Number";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Isan";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Isan .
+
+bf:IsbnShape a sh:NodeShape;
+  sh:description "International Standard Book Number";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Isbn";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Isbn .
+
+bf:IsmnShape a sh:NodeShape;
+  sh:description "International Standard Music Number";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Ismn";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Ismn .
+
+bf:IsniShape a sh:NodeShape;
+  sh:description "International Standard Name Identifier, a unique, persistent reference number for the identities of contributors to creative works";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Isni";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Isni .
+
+bf:IsoShape a sh:NodeShape;
+  sh:description "International Organization for Standardization standard number";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Iso";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Iso .
+
+bf:IsrcShape a sh:NodeShape;
+  sh:description "International Standard Recording Code";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Isrc";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Isrc .
+
+bf:IssnLShape a sh:NodeShape;
+  sh:description "International Standard Serial Number that links together various media versions of a continuing resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/IssnL";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:IssnL .
+
+bf:IssnShape a sh:NodeShape;
+  sh:description "International Standard Serial Number";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Issn";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Issn .
+
+bf:IssuanceShape a sh:NodeShape;
+  sh:description "Information about whether a resource is issued in one or more parts, the way it is updated, and its intended termination";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Issuance";
+  sh:node bf:Issuance;
+  sh:targetClass bf:Issuance .
+
+bf:IstcShape a sh:NodeShape;
+  sh:description "International Standard Text Code, a numbering system developed to enable the unique identification of textual works";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Istc";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Istc .
+
+bf:IswcShape a sh:NodeShape;
+  sh:description "International Standard Musical Work Code, a unique, persistent reference number for the identification of musical works";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Iswc";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Iswc .
+
+bf:ItemShape a sh:NodeShape;
+  sh:description "Single example of an Instance";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Item";
+  sh:node bf:Item;
+  sh:property [
+    sh:class bf:EnumerationAndChronology;
+    sh:description "Numbering and dates of issues or items held.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/enumerationAndChronology";
+    sh:nodeKind sh:IRI;
+    sh:path bf:enumerationAndChronology
+  ], [
+    sh:class bf:Item;
+    sh:description "Entity holding the item or from which it is available.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/heldBy";
+    sh:nodeKind sh:IRI;
+    sh:path bf:heldBy
+  ], [
+    sh:class bf:Sublocation;
+    sh:description "Specific place within the holding entity where the item is located or made available.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/sublocation";
+    sh:nodeKind sh:IRI;
+    sh:path bf:sublocation
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Location in the holding agency where the item is shelved or stored.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/physicalLocation";
+    sh:path bf:physicalLocation
+  ], [
+    sh:class bf:ShelfMark;
+    sh:description "Piece identifier, such as a call or other type of number.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/shelfMark";
+    sh:nodeKind sh:IRI;
+    sh:path bf:shelfMark
+  ], [
+    sh:class bf:ImmediateAcquisition;
+    sh:description "Information about the circumstances, e.g., source, date, method, under which the resource was directly acquired.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/immediateAcquisition";
+    sh:nodeKind sh:IRI;
+    sh:path bf:immediateAcquisition
+  ], [
+    sh:class bf:Instance;
+    sh:description "Instance for which the described Item is an example";
+    sh:name "http://id.loc.gov/ontologies/bibframe/itemOf";
+    sh:nodeKind sh:IRI;
+    sh:path bf:itemOf
+  ];
+  sh:targetClass bf:Item .
+
+bf:JurisdictionShape a sh:NodeShape;
+  sh:description "Legal or political unit administering a geographic area";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Jurisdiction";
+  sh:node bf:AgentShape;
+  sh:targetClass bf:Jurisdiction .
+
+bf:KeyTitleShape a sh:NodeShape;
+  sh:description "Unique title for a continuing resource that is assigned by the ISSN International Center in conjunction with an ISSN";
+  sh:name "http://id.loc.gov/ontologies/bibframe/KeyTitle";
+  sh:node bf:VariantTitleShape;
+  sh:targetClass bf:KeyTitle .
+
+bf:KitShape a sh:NodeShape;
+  sh:description "Resource that contains a mixture of various components issued as a unit and intended primarily for instructional purposes";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Kit";
+  sh:node bf:MixedMaterialShape;
+  sh:targetClass bf:Kit .
+
+bf:LanguageShape a sh:NodeShape;
+  sh:description "Language entity";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Language";
+  sh:node bf:Language;
+  sh:targetClass bf:Language .
+
+bf:LayoutShape a sh:NodeShape;
+  sh:description "Arrangement of text, images, tactile notation, etc., in a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Layout";
+  sh:node bf:Layout;
+  sh:targetClass bf:Layout .
+
+bf:LcOverseasAcqShape a sh:NodeShape;
+  sh:description "Identification number assigned by the Library of Congress to works acquired through one of its collaborative overseas acquisition programs";
+  sh:name "http://id.loc.gov/ontologies/bibframe/LcOverseasAcq";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:LcOverseasAcq .
+
+bf:LccnShape a sh:NodeShape;
+  sh:description "Library of Congress Control Number that identifies a resource description";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Lccn";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Lccn .
+
+bf:LocalShape a sh:NodeShape;
+  sh:description "Identifier established locally and not a standard number";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Local";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Local .
+
+bf:ManufactureShape a sh:NodeShape;
+  sh:description "Information relating to manufacture of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Manufacture";
+  sh:node bf:ProvisionActivityShape;
+  sh:targetClass bf:Manufacture .
+
+bf:ManuscriptShape a sh:NodeShape;
+  sh:description "Resource which is written in handwriting or typescript";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Manuscript";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:Manuscript .
+
+bf:MatrixNumberShape a sh:NodeShape;
+  sh:description "Matrix identifier assigned to the master from which a specific sound recording was pressed";
+  sh:name "http://id.loc.gov/ontologies/bibframe/MatrixNumber";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:MatrixNumber .
+
+bf:MediaShape a sh:NodeShape;
+  sh:description "Categorization reflecting the general type of intermediation device required to view, play, run, etc., the content of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Media";
+  sh:node bf:Media;
+  sh:targetClass bf:Media .
+
+bf:MeetingShape a sh:NodeShape;
+  sh:description "Gathering of individuals or representatives of various bodies for the purpose of discussing and/or acting on topics of common interest";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Meeting";
+  sh:node bf:AgentShape;
+  sh:targetClass bf:Meeting .
+
+bf:MicroformShape a sh:NodeShape;
+  sh:description "Resource that contains microimages, either transparent or opaque, that may be reproductions of existing textual or graphic materials or may be original publications";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Microform";
+  sh:node bf:InstanceShape;
+  sh:targetClass bf:Microform .
+
+bf:ModificationShape a sh:NodeShape;
+  sh:description "Information relating to modification of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Modification";
+  sh:node bf:ProvisionActivityShape;
+  sh:targetClass bf:Modification .
+
+bf:MonographShape a sh:NodeShape;
+  sh:description "Resource that is issued as a single physical unit or intangible single logical unit";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Monograph";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:Monograph .
+
+bf:MountShape a sh:NodeShape;
+  sh:description "Physical material or object used for the support or backing to which the base material of a resource has been attached";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Mount";
+  sh:node bf:Mount;
+  sh:targetClass bf:Mount .
+
+bf:MovementNotationShape a sh:NodeShape;
+  sh:description "Information on the symbol system used to convey the content of a movement resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/MovementNotation";
+  sh:node bf:NotationShape;
+  sh:targetClass bf:MovementNotation .
+
+bf:MovingImageShape a sh:NodeShape;
+  sh:description "Images intended to be perceived as moving, including motion pictures (using live action and/or animation) or video recordings of performances or events";
+  sh:name "http://id.loc.gov/ontologies/bibframe/MovingImage";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:MovingImage .
+
+bf:MultimediaShape a sh:NodeShape;
+  sh:description "Electronic resource which is a computer program or consists of multiple media types that are software driven, such as videogames";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Multimedia";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:Multimedia .
+
+bf:MusicAudioShape a sh:NodeShape;
+  sh:description "Music resource expressed in an audible form";
+  sh:name "http://id.loc.gov/ontologies/bibframe/MusicAudio";
+  sh:node bf:AudioShape;
+  sh:targetClass bf:MusicAudio .
+
+bf:MusicDistributorNumberShape a sh:NodeShape;
+  sh:description "Identifier appearing on a resource assigned by a distributor to a specific audio recording, notated music publication, music-related publication, or videorecording";
+  sh:name "http://id.loc.gov/ontologies/bibframe/MusicDistributorNumber";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:MusicDistributorNumber .
+
+bf:MusicEnsembleShape a sh:NodeShape;
+  sh:description "Ensemble for which a musical work is appropriate";
+  sh:name "http://id.loc.gov/ontologies/bibframe/MusicEnsemble";
+  sh:node bf:EnsembleShape;
+  sh:targetClass bf:MusicEnsemble .
+
+bf:MusicFormatShape a sh:NodeShape;
+  sh:description "Layout for content of a resource that is presented in the form of musical notation";
+  sh:name "http://id.loc.gov/ontologies/bibframe/MusicFormat";
+  sh:node bf:MusicFormat;
+  sh:targetClass bf:MusicFormat .
+
+bf:MusicInstrumentShape a sh:NodeShape;
+  sh:description "Instrument for which a musical work is appropriate";
+  sh:name "http://id.loc.gov/ontologies/bibframe/MusicInstrument";
+  sh:node bf:MusicInstrument;
+  sh:property [
+    sh:datatype xsd:string;
+    sh:description "Specific role of instrument, such as alternate, doubling, solo, ensemble.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/instrumentalType";
+    sh:path bf:instrumentalType
+  ];
+  sh:targetClass bf:MusicInstrument .
+
+bf:MusicMediumShape a sh:NodeShape;
+  sh:description "Summary statement of the medium for a musical work";
+  sh:name "http://id.loc.gov/ontologies/bibframe/MusicMedium";
+  sh:node bf:MusicMedium;
+  sh:targetClass bf:MusicMedium .
+
+bf:MusicNotationShape a sh:NodeShape;
+  sh:description "Information on the symbol system used to convey the content of a music resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/MusicNotation";
+  sh:node bf:NotationShape;
+  sh:targetClass bf:MusicNotation .
+
+bf:MusicPlateShape a sh:NodeShape;
+  sh:description "Identifiers assigned by a music publisher or printer to the printing plates for the notated portion of a notated music publication, or an identifier that emulates the printing plate tradition in contemporary publications";
+  sh:name "http://id.loc.gov/ontologies/bibframe/MusicPlate";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:MusicPlate .
+
+bf:MusicPublisherNumberShape a sh:NodeShape;
+  sh:description "Identifier assigned to a notated music publication other than an issue, matrix, or plate number";
+  sh:name "http://id.loc.gov/ontologies/bibframe/MusicPublisherNumber";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:MusicPublisherNumber .
+
+bf:MusicVoiceShape a sh:NodeShape;
+  sh:description "Voice for which a musical work is appropriate";
+  sh:name "http://id.loc.gov/ontologies/bibframe/MusicVoice";
+  sh:node bf:MusicVoice;
+  sh:property [
+    sh:datatype xsd:string;
+    sh:description "Specific type of voice group, such as chorus, solo.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/voiceType";
+    sh:path bf:voiceType
+  ];
+  sh:targetClass bf:MusicVoice .
+
+bf:NbnShape a sh:NodeShape;
+  sh:description "National Bibliography Number that identifies a resource description";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Nbn";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Nbn .
+
+bf:NonMusicAudioShape a sh:NodeShape;
+  sh:description "Resource expressed in an audible form, including spoken word and other non-musical sounds";
+  sh:name "http://id.loc.gov/ontologies/bibframe/NonMusicAudio";
+  sh:node bf:AudioShape;
+  sh:targetClass bf:NonMusicAudio .
+
+bf:NotatedMovementShape a sh:NodeShape;
+  sh:description "Graphic, non-realized representations of movement intended to be perceived visually, e.g. dance";
+  sh:name "http://id.loc.gov/ontologies/bibframe/NotatedMovement";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:NotatedMovement .
+
+bf:NotatedMusicShape a sh:NodeShape;
+  sh:description "Graphic, non-realized representations of musical works intended to be perceived visually";
+  sh:name "http://id.loc.gov/ontologies/bibframe/NotatedMusic";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:NotatedMusic .
+
+bf:NoteShape a sh:NodeShape;
+  sh:description "Information, usually in textual form, on attributes of a resource or some aspect of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Note";
+  sh:node bf:Note;
+  sh:property [
+    sh:class bf:Note;
+    sh:description "Relates a Note resource to the resource to which the note pertains.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/noteFor";
+    sh:nodeKind sh:IRI;
+    sh:path bf:noteFor
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Type of note.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/noteType";
+    sh:path bf:noteType
+  ];
+  sh:targetClass bf:Note .
+
+bf:ObjectCountShape a sh:NodeShape;
+  sh:description "Number of objects in encoded geospatial information in a cartographic resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ObjectCount";
+  sh:node bf:DigitalCharacteristicShape;
+  sh:targetClass bf:ObjectCount .
+
+bf:ObjectShape a sh:NodeShape;
+  sh:description "Resource in a form intended to be perceived visually in three-dimensions, including man-made objects such as models, sculptures, clothing, and toys, as well as naturally occurring objects such as specimens mounted for viewing";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Object";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:Object .
+
+bf:OclcNumberShape a sh:NodeShape;
+  sh:description "Identifier assigned by OCLC";
+  sh:name "http://id.loc.gov/ontologies/bibframe/OclcNumber";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:OclcNumber .
+
+bf:OrganizationShape a sh:NodeShape;
+  sh:description "Corporation or group of persons and/or organizations that acts, or may act, as a unit";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Organization";
+  sh:node bf:AgentShape;
+  sh:targetClass bf:Organization .
+
+bf:ParallelTitleShape a sh:NodeShape;
+  sh:description "Title in another language and/or script";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ParallelTitle";
+  sh:node bf:VariantTitleShape;
+  sh:targetClass bf:ParallelTitle .
+
+bf:PersonShape a sh:NodeShape;
+  sh:description "Individual or identity established by an individual (either alone or in collaboration with one or more other individuals)";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Person";
+  sh:node <http://xmlns.com/foaf/0.1/PersonShape>;
+  sh:targetClass bf:Person .
+
+bf:PlaceShape a sh:NodeShape;
+  sh:description "Geographic location";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Place";
+  sh:node bf:Place;
+  sh:targetClass bf:Place .
+
+bf:PlaybackChannelsShape a sh:NodeShape;
+  sh:description "Configuration/number of sound channels used to make a recording, such as one channel for a monophonic recording, e.g., mono, stereo, quadraphonic, surround";
+  sh:name "http://id.loc.gov/ontologies/bibframe/PlaybackChannels";
+  sh:node bf:SoundCharacteristicShape;
+  sh:targetClass bf:PlaybackChannels .
+
+bf:PlaybackCharacteristicShape a sh:NodeShape;
+  sh:description "Equalization system, noise reduction system, etc., used in making an audio recording, e.g., CCIR standard, CX encoded, Dolby";
+  sh:name "http://id.loc.gov/ontologies/bibframe/PlaybackCharacteristic";
+  sh:node bf:SoundCharacteristicShape;
+  sh:targetClass bf:PlaybackCharacteristic .
+
+bf:PlayingSpeedShape a sh:NodeShape;
+  sh:description "Speed at which an audio carrier must be operated to produce the sound intended, e.g., 78 rpm, 19 cm/s";
+  sh:name "http://id.loc.gov/ontologies/bibframe/PlayingSpeed";
+  sh:node bf:SoundCharacteristicShape;
+  sh:targetClass bf:PlayingSpeed .
+
+bf:PolarityShape a sh:NodeShape;
+  sh:description "Relationship of the colors and tones in an image to the colors and tones of the object reproduced";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Polarity";
+  sh:node bf:Polarity;
+  sh:targetClass bf:Polarity .
+
+bf:PostalRegistrationShape a sh:NodeShape;
+  sh:description "Number assigned to a publication for which the specified postal service permits the use of a special mailing class privilege";
+  sh:name "http://id.loc.gov/ontologies/bibframe/PostalRegistration";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:PostalRegistration .
+
+bf:PresentationFormatShape a sh:NodeShape;
+  sh:description "Format used in the production of a projected image, e.g., Cinerama, IMAX";
+  sh:name "http://id.loc.gov/ontologies/bibframe/PresentationFormat";
+  sh:node bf:ProjectionCharacteristicShape;
+  sh:targetClass bf:PresentationFormat .
+
+bf:PrimaryContributionShape a sh:NodeShape;
+  sh:description "Contribution for which the agent is the name chosen as the name part of the name and title access point";
+  sh:name "http://id.loc.gov/ontologies/bibframe/PrimaryContribution";
+  sh:node bf:ContributionShape;
+  sh:targetClass bf:PrimaryContribution .
+
+bf:PrintShape a sh:NodeShape;
+  sh:description "Resource that is printed";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Print";
+  sh:node bf:InstanceShape;
+  sh:targetClass bf:Print .
+
+bf:ProductionMethodShape a sh:NodeShape;
+  sh:description "Process used to produce a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ProductionMethod";
+  sh:node bf:ProductionMethod;
+  sh:targetClass bf:ProductionMethod .
+
+bf:ProductionShape a sh:NodeShape;
+  sh:description "Information relating to production of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Production";
+  sh:node bf:ProvisionActivityShape;
+  sh:targetClass bf:Production .
+
+bf:ProjectionShape a sh:NodeShape;
+  sh:description "Method or system used to represent the surface of the earth or of a celestial sphere on a plane";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Projection";
+  sh:node bf:Projection;
+  sh:targetClass bf:Projection .
+
+bf:ProjectionSpeedShape a sh:NodeShape;
+  sh:description "Speed at which a projected carrier must be operated to produce the moving image intended, e.g., 20 fps";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ProjectionSpeed";
+  sh:node bf:ProjectionCharacteristicShape;
+  sh:targetClass bf:ProjectionSpeed .
+
+bf:PubFrequencyShape a sh:NodeShape;
+  sh:description "Information about the publication frequency of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/PubFrequency";
+  sh:node bf:PubFrequency;
+  sh:targetClass bf:PubFrequency .
+
+bf:PublicationShape a sh:NodeShape;
+  sh:description "Information relating to publication of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Publication";
+  sh:node bf:ProvisionActivityShape;
+  sh:targetClass bf:Publication .
+
+bf:PublisherNumberShape a sh:NodeShape;
+  sh:description "Number assigned by a publisher that is not one of the specific defined types";
+  sh:name "http://id.loc.gov/ontologies/bibframe/PublisherNumber";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:PublisherNumber .
+
+bf:RecordingMediumShape a sh:NodeShape;
+  sh:description "Type of medium used to record sound on an audio carrier, e.g., magnetic, optical";
+  sh:name "http://id.loc.gov/ontologies/bibframe/RecordingMedium";
+  sh:node bf:SoundCharacteristicShape;
+  sh:targetClass bf:RecordingMedium .
+
+bf:RecordingMethodShape a sh:NodeShape;
+  sh:description "Method used to encode audio content for playback, e.g., analog, digital";
+  sh:name "http://id.loc.gov/ontologies/bibframe/RecordingMethod";
+  sh:node bf:SoundCharacteristicShape;
+  sh:targetClass bf:RecordingMethod .
+
+bf:ReductionRatioShape a sh:NodeShape;
+  sh:description "Size of a micro-image in relation to the original from which it was produced";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ReductionRatio";
+  sh:node bf:ReductionRatio;
+  sh:targetClass bf:ReductionRatio .
+
+bf:RegionalEncodingShape a sh:NodeShape;
+  sh:description "Identification of the region of the world for which a videodisc has been encoded, e.g., region 4";
+  sh:name "http://id.loc.gov/ontologies/bibframe/RegionalEncoding";
+  sh:node bf:DigitalCharacteristicShape;
+  sh:targetClass bf:RegionalEncoding .
+
+bf:RelationShape a sh:NodeShape;
+  sh:description "Associated resource and its relationship to the resource being described";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Relation";
+  sh:node bf:Relation;
+  sh:property [
+    sh:class bf:Relation;
+    sh:description "Associated resource";
+    sh:name "http://id.loc.gov/ontologies/bibframe/associatedResource";
+    sh:nodeKind sh:IRI;
+    sh:path bf:associatedResource
+  ], [
+    sh:class bf:Relationship;
+    sh:description "Type of relationship between resources";
+    sh:name "http://id.loc.gov/ontologies/bibframe/relationship";
+    sh:nodeKind sh:IRI;
+    sh:path bf:relationship
+  ];
+  sh:targetClass bf:Relation .
+
+bf:RelationshipShape a sh:NodeShape;
+  sh:description "Type of relationship between resources";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Relationship";
+  sh:node bf:Relationship;
+  sh:targetClass bf:Relationship .
+
+bf:ReliefShape a sh:NodeShape;
+  sh:description "Relief term specified on a cartographic resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Relief";
+  sh:node bf:Relief;
+  sh:targetClass bf:Relief .
+
+bf:ReportNumberShape a sh:NodeShape;
+  sh:description "Identification number of a technical report that is not a Standard Technical Report Number";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ReportNumber";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:ReportNumber .
+
+bf:ResolutionShape a sh:NodeShape;
+  sh:description "Clarity or fineness of detail in a digital image, expressed by the measurement of the image in pixels, etc., e.g., 3.1 megapixels";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Resolution";
+  sh:node bf:DigitalCharacteristicShape;
+  sh:targetClass bf:Resolution .
+
+bf:RetentionPolicyShape a sh:NodeShape;
+  sh:description "Policy of holding institution for retaining resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/RetentionPolicy";
+  sh:node bf:UsageAndAccessPolicyShape;
+  sh:targetClass bf:RetentionPolicy .
+
+bf:ReviewShape a sh:NodeShape;
+  sh:description "Review of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Review";
+  sh:node bf:Review;
+  sh:targetClass bf:Review .
+
+bf:RoleShape a sh:NodeShape;
+  sh:description "Function played or provided by a contributor, e.g., author or illustrator";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Role";
+  sh:node bf:Role;
+  sh:targetClass bf:Role .
+
+bf:ScaleShape a sh:NodeShape;
+  sh:description "Ratio of the dimensions of a form contained or embodied in a resource to the dimensions of the entity it represents, e.g., for images or cartographic resources";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Scale";
+  sh:node bf:Scale;
+  sh:targetClass bf:Scale .
+
+bf:ScriptShape a sh:NodeShape;
+  sh:description "Information on the script, or symbol system used to convey the content of a text resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Script";
+  sh:node bf:NotationShape;
+  sh:targetClass bf:Script .
+
+bf:SerialShape a sh:NodeShape;
+  sh:description "Resource that is issued in successive parts, usually numbered, that has no predetermined conclusion";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Serial";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:Serial .
+
+bf:SeriesShape a sh:NodeShape;
+  sh:description "Resource with a collective title that applies to a group of separate resources, each of which also has its own title";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Series";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:Series .
+
+bf:ShelfMarkDdcShape a sh:NodeShape;
+  sh:description "Shelf mark based on Dewey Decimal Classification";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ShelfMarkDdc";
+  sh:node bf:ShelfMarkShape;
+  sh:targetClass bf:ShelfMarkDdc .
+
+bf:ShelfMarkLccShape a sh:NodeShape;
+  sh:description "Shelf mark based on Library of Congress Classification";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ShelfMarkLcc";
+  sh:node bf:ShelfMarkShape;
+  sh:targetClass bf:ShelfMarkLcc .
+
+bf:ShelfMarkNlmShape a sh:NodeShape;
+  sh:description "Shelf mark based on National Library of Medicine Classification";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ShelfMarkNlm";
+  sh:node bf:ShelfMarkShape;
+  sh:targetClass bf:ShelfMarkNlm .
+
+bf:ShelfMarkUdcShape a sh:NodeShape;
+  sh:description "Shelf mark based on Universal Decimal Classification";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ShelfMarkUdc";
+  sh:node bf:ShelfMarkShape;
+  sh:targetClass bf:ShelfMarkUdc .
+
+bf:SiciShape a sh:NodeShape;
+  sh:description "Serial Item and Contribution Identifier";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Sici";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Sici .
+
+bf:SoundContentShape a sh:NodeShape;
+  sh:description "Indication of whether the production of sound is an integral part of the resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/SoundContent";
+  sh:node bf:SoundContent;
+  sh:targetClass bf:SoundContent .
+
+bf:SourceShape a sh:NodeShape;
+  sh:description "Resource from which value or label came or was derived";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Source";
+  sh:node bf:Source;
+  sh:targetClass bf:Source .
+
+bf:StatusShape a sh:NodeShape;
+  sh:description "Designation of the validity or position of something, e.g., whether something is incorrect or available";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Status";
+  sh:node bf:Status;
+  sh:targetClass bf:Status .
+
+bf:StillImageShape a sh:NodeShape;
+  sh:description "Resource expressed through line, shape, shading, etc., intended to be perceived visually as a still image or images in two dimensions, including two-dimensional images and slides and transparencies";
+  sh:name "http://id.loc.gov/ontologies/bibframe/StillImage";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:StillImage .
+
+bf:StockNumberShape a sh:NodeShape;
+  sh:description "Identification number used for stock purposes and assigned by agencies such as distributors, publishers, or vendors";
+  sh:name "http://id.loc.gov/ontologies/bibframe/StockNumber";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:StockNumber .
+
+bf:StrnShape a sh:NodeShape;
+  sh:description "Standard Technical Report Number";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Strn";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Strn .
+
+bf:StudyNumberShape a sh:NodeShape;
+  sh:description "Identification number for a computer data file";
+  sh:name "http://id.loc.gov/ontologies/bibframe/StudyNumber";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:StudyNumber .
+
+bf:SublocationShape a sh:NodeShape;
+  sh:description "Specific place within the holding entity where the item is located or made available";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Sublocation";
+  sh:node bf:Sublocation;
+  sh:targetClass bf:Sublocation .
+
+bf:SummaryShape a sh:NodeShape;
+  sh:description "Description of the content of a resource, such as an abstract, summary, etc.";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Summary";
+  sh:node bf:Summary;
+  sh:targetClass bf:Summary .
+
+bf:SupplementaryContentShape a sh:NodeShape;
+  sh:description "Index, bibliography, appendix, etc. intended to supplement the primary content of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/SupplementaryContent";
+  sh:node bf:SupplementaryContent;
+  sh:targetClass bf:SupplementaryContent .
+
+bf:SystemRequirementShape a sh:NodeShape;
+  sh:description "Equipment or system requirements beyond what is normal and obvious for the type of carrier or type of file, such as make and model of equipment or hardware, operating system, amount of memory, programming language, other necessary software, any plug-ins or peripherals required to play, view, or run the resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/SystemRequirement";
+  sh:node bf:SystemRequirement;
+  sh:targetClass bf:SystemRequirement .
+
+bf:TableOfContentsShape a sh:NodeShape;
+  sh:description "Table of contents of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/TableOfContents";
+  sh:node bf:TableOfContents;
+  sh:targetClass bf:TableOfContents .
+
+bf:TactileNotationShape a sh:NodeShape;
+  sh:description "Information on the symbol system used to convey the content of a tactile resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/TactileNotation";
+  sh:node bf:NotationShape;
+  sh:targetClass bf:TactileNotation .
+
+bf:TactileShape a sh:NodeShape;
+  sh:description "Resource that is intended to be perceived by touch";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Tactile";
+  sh:node bf:InstanceShape;
+  sh:targetClass bf:Tactile .
+
+bf:TapeConfigShape a sh:NodeShape;
+  sh:description "Number of tracks on an audiotape, e.g., 12 track";
+  sh:name "http://id.loc.gov/ontologies/bibframe/TapeConfig";
+  sh:node bf:SoundCharacteristicShape;
+  sh:targetClass bf:TapeConfig .
+
+bf:TemporalShape a sh:NodeShape;
+  sh:description "Chronological period";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Temporal";
+  sh:node bf:Temporal;
+  sh:targetClass bf:Temporal .
+
+bf:TextShape a sh:NodeShape;
+  sh:description "Resource intended to be perceived visually and understood through the use of language in written or spoken form";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Text";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:Text .
+
+bf:TopicShape a sh:NodeShape;
+  sh:description "Concept or area of knowledge";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Topic";
+  sh:node bf:Topic;
+  sh:targetClass bf:Topic .
+
+bf:TrackConfigShape a sh:NodeShape;
+  sh:description "Configuration of the audio track on a sound-track film, e.g., center track, edge track";
+  sh:name "http://id.loc.gov/ontologies/bibframe/TrackConfig";
+  sh:node bf:SoundCharacteristicShape;
+  sh:targetClass bf:TrackConfig .
+
+bf:TransliteratedTitleShape a sh:NodeShape;
+  sh:description "Title transliterated from one script to another";
+  sh:name "http://id.loc.gov/ontologies/bibframe/TransliteratedTitle";
+  sh:node bf:VariantTitleShape;
+  sh:targetClass bf:TransliteratedTitle .
+
+bf:UnitShape a sh:NodeShape;
+  sh:description "Units in which a value is expressed";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Unit";
+  sh:node bf:Unit;
+  sh:targetClass bf:Unit .
+
+bf:UpcShape a sh:NodeShape;
+  sh:description "Universal Product Code";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Upc";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Upc .
+
+bf:UrnShape a sh:NodeShape;
+  sh:description "Uniform Resource Name";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Urn";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:Urn .
+
+bf:UsePolicyShape a sh:NodeShape;
+  sh:description "Usage limitations placed on a resource with respect to reproduction, publication, exhibition, etc.";
+  sh:name "http://id.loc.gov/ontologies/bibframe/UsePolicy";
+  sh:node bf:UsageAndAccessPolicyShape;
+  sh:targetClass bf:UsePolicy .
+
+bf:VideoFormatShape a sh:NodeShape;
+  sh:description "Standard, etc., used to encode the analog video content of a resource, e.g., Beta, 8mm";
+  sh:name "http://id.loc.gov/ontologies/bibframe/VideoFormat";
+  sh:node bf:VideoCharacteristicShape;
+  sh:targetClass bf:VideoFormat .
+
+bf:VideoRecordingNumberShape a sh:NodeShape;
+  sh:description "Number assigned by a publisher to a video recording";
+  sh:name "http://id.loc.gov/ontologies/bibframe/VideoRecordingNumber";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:VideoRecordingNumber .
+
+bf:ContributionShape a sh:NodeShape;
+  sh:description "Agent and role with respect to the resource being described";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Contribution";
+  sh:node bf:Contribution;
+  sh:property [
+    sh:class bf:Contribution;
+    sh:description "Relates a contribution resource, which associates an Agent and Role together, to the relevant resource";
+    sh:name "http://id.loc.gov/ontologies/bibframe/contributionOf";
+    sh:nodeKind sh:IRI;
+    sh:path bf:contributionOf
+  ], [
+    sh:class bf:Role;
+    sh:description "Function provided by a contributor, e.g., author, illustrator, etc.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/role";
+    sh:nodeKind sh:IRI;
+    sh:path bf:role
+  ];
+  sh:targetClass bf:Contribution .
+
+bf:EnsembleShape a sh:NodeShape;
+  sh:description "Ensemble";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Ensemble";
+  sh:node bf:Ensemble;
+  sh:property [
+    sh:datatype xsd:string;
+    sh:description "Specific type of ensemble, such as orchestra, band, guitar ensemble.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/ensembleType";
+    sh:path bf:ensembleType
+  ];
+  sh:targetClass bf:Ensemble .
+
+bf:MixedMaterialShape a sh:NodeShape;
+  sh:description "Resource comprised of multiple types which is not driven by software, e.g. an archival collection of text, photographs and sound recordings";
+  sh:name "http://id.loc.gov/ontologies/bibframe/MixedMaterial";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:MixedMaterial .
+
+bf:TitleShape a sh:NodeShape;
+  sh:description "Title information relating to a resource: work title, preferred title, instance title, transcribed title, translated title, variant form of title, etc.";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Title";
+  sh:node bf:Title;
+  sh:property [
+    sh:class bf:Title;
+    sh:description "Relates a title resource to that which it is the title of.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/titleOf";
+    sh:nodeKind sh:IRI;
+    sh:path bf:titleOf
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Title being addressed. Possible title component.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/mainTitle";
+    sh:path bf:mainTitle
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Word, character, or group of words and/or characters that contains the remainder of the title after the main title. Possible title component.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/subtitle";
+    sh:path bf:subtitle
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Part or section enumeration of a title. Possible title component.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/partNumber";
+    sh:path bf:partNumber
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Part or section name of a title. Possible title component.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/partName";
+    sh:path bf:partName
+  ];
+  sh:targetClass bf:Title .
+
+bf:AudioShape a sh:NodeShape;
+  sh:description "Resources expressed in an audible form, including music or other sounds";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Audio";
+  sh:node bf:WorkShape;
+  sh:targetClass bf:Audio .
+
+bf:EnumerationAndChronologyShape a sh:NodeShape;
+  sh:description "Numbering or other enumeration and dates associated with issues or items held";
+  sh:name "http://id.loc.gov/ontologies/bibframe/EnumerationAndChronology";
+  sh:node bf:EnumerationAndChronology;
+  sh:targetClass bf:EnumerationAndChronology .
+
+bf:MaterialShape a sh:NodeShape;
+  sh:description "Substance or composition of the resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Material";
+  sh:node bf:Material;
+  sh:targetClass bf:Material .
+
+bf:ProjectionCharacteristicShape a sh:NodeShape;
+  sh:description "Technical specification relating to the projection of a motion picture film";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ProjectionCharacteristic";
+  sh:node bf:ProjectionCharacteristic;
+  sh:targetClass bf:ProjectionCharacteristic .
+
+bf:VideoCharacteristicShape a sh:NodeShape;
+  sh:description "Technical specification relating to the encoding of video images in a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/VideoCharacteristic";
+  sh:node bf:VideoCharacteristic;
+  sh:targetClass bf:VideoCharacteristic .
+
+bf:UsageAndAccessPolicyShape a sh:NodeShape;
+  sh:description "General statement of allowances and restrictions on access to a resource, including retention, reproduction, access, and lending";
+  sh:name "http://id.loc.gov/ontologies/bibframe/UsageAndAccessPolicy";
+  sh:node bf:UsageAndAccessPolicy;
+  sh:targetClass bf:UsageAndAccessPolicy .
+
+bf:AgentShape a sh:NodeShape;
+  sh:description "Entity having a role in a resource, such as a person or organization";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Agent";
+  sh:node <http://xmlns.com/foaf/0.1/AgentShape>;
+  sh:targetClass bf:Agent .
+
+bf:NotationShape a sh:NodeShape;
+  sh:description "Information on the alphabet, script, or symbol system used to convey the content of the resource, including specialized scripts, typefaces, tactile notation, movement notation, and musical notation";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Notation";
+  sh:node bf:Notation;
+  sh:targetClass bf:Notation .
+
+bf:ShelfMarkShape a sh:NodeShape;
+  sh:description "Piece/item identifier, such as a call or other type of number";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ShelfMark";
+  sh:node bf:IdentifierShape;
+  sh:targetClass bf:ShelfMark .
+
+bf:ClassificationShape a sh:NodeShape;
+  sh:description "System of coding and organizing materials according to their subject";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Classification";
+  sh:node bf:Classification;
+  sh:property [
+    sh:datatype xsd:string;
+    sh:description "Designates whether the classification number is from the standard or optional part of a schedule or table.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/schedulePart";
+    sh:path bf:schedulePart
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Edition of the classification scheme, such as full, abridged or a number, when a classification scheme designates editions.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/edition";
+    sh:path bf:edition
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Number attached to a classification string that indicates a particular item.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/itemPortion";
+    sh:path bf:itemPortion
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Classification number (single class number or beginning number of a span) that indicates the subject by applying a formal system of coding and organizing resources.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/classificationPortion";
+    sh:path bf:classificationPortion
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Ending number of classification number span.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/spanEnd";
+    sh:path bf:spanEnd
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Number of the table from which the classification number in a subdivision entry is taken, e.g., a DDC table.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/table";
+    sh:path bf:table
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Sequence number or other identifier for an internal classification sub arrangement or add in a classification scheme.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/tableSeq";
+    sh:path bf:tableSeq
+  ];
+  sh:targetClass bf:Classification .
+
+bf:InstanceShape a sh:NodeShape;
+  sh:description "Resource reflecting an individual, material embodiment of a Work";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Instance";
+  sh:node bf:Instance;
+  sh:property [
+    sh:class bf:Instance;
+    sh:description "Categorization reflecting the format of the storage medium and housing of a carrier.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/carrier";
+    sh:nodeKind sh:IRI;
+    sh:path bf:carrier
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Statement relating to any persons, families, or corporate bodies responsible for the creation of, or contributing to the content of a resource; usually transcribed.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/responsibilityStatement";
+    sh:path bf:responsibilityStatement
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Information identifying the edition or version of the resource and associated statements of responsibility for the edition; usually transcribed.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/editionStatement";
+    sh:path bf:editionStatement
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Enumeration of the edition; usually transcribed.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/editionEnumeration";
+    sh:path bf:editionEnumeration
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Statement relating to providers of a resource; usually transcribed.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/provisionActivityStatement";
+    sh:path bf:provisionActivityStatement
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Statement of the series the resource is in; usually transcribed; includes the ISSN if applicable.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/seriesStatement";
+    sh:path bf:seriesStatement
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Statement of the subseries the resource is in; usually transcribed; includes the ISSN if applicable.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/subseriesStatement";
+    sh:path bf:subseriesStatement
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Subseries enumeration of the resource; usually transcribed.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/subseriesEnumeration";
+    sh:path bf:subseriesEnumeration
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Statement related to the distribution of the resources; usually transcribed.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/distributionStatement";
+    sh:path bf:distributionStatement
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Statement related to the manufacture of the resources; usually transcribed.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/manufactureStatement";
+    sh:path bf:manufactureStatement
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Statement related to the production of the resources; usually transcribed.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/productionStatement";
+    sh:path bf:productionStatement
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Statement related to the publication of the resources; usually transcribed.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/publicationStatement";
+    sh:path bf:publicationStatement
+  ], [
+    sh:class bf:ProvisionActivity;
+    sh:description "Place, name, and/or date information relating to the publication, printing, distribution, issue, release, production, etc. of a resource.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/provisionActivity";
+    sh:nodeKind sh:IRI;
+    sh:path bf:provisionActivity
+  ], [
+    sh:class bf:Relief;
+    sh:description "Relief term specified on a cartographic resource";
+    sh:name "http://id.loc.gov/ontologies/bibframe/relief";
+    sh:nodeKind sh:IRI;
+    sh:path bf:relief
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Measurements of the carrier or carriers and/or the container of a resource.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/dimensions";
+    sh:path bf:dimensions
+  ], [
+    sh:class bf:Instance;
+    sh:description "Relates a Material resource to that which it is the base material of.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/baseMaterialOf";
+    sh:nodeKind sh:IRI;
+    sh:path bf:baseMaterialOf
+  ], [
+    sh:class bf:Instance;
+    sh:description "Relates a Material resource to that which it is the applied material of.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/appliedMaterialOf";
+    sh:nodeKind sh:IRI;
+    sh:path bf:appliedMaterialOf
+  ], [
+    sh:class bf:Emulsion;
+    sh:description "Suspension of light-sensitive chemicals used as a coating on a microfilm or microfiche, e.g., silver halide.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/emulsion";
+    sh:nodeKind sh:IRI;
+    sh:path bf:emulsion
+  ], [
+    sh:class bf:Instance;
+    sh:description "Physical material or object used for the support or backing to which the base material of a resource has been attached.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/mount";
+    sh:nodeKind sh:IRI;
+    sh:path bf:mount
+  ], [
+    sh:class bf:ProductionMethod;
+    sh:description "Process used to produce a resource.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/productionMethod";
+    sh:nodeKind sh:IRI;
+    sh:path bf:productionMethod
+  ], [
+    sh:class bf:Generation;
+    sh:description "Relationship between an original carrier and the carrier of a reproduction made from the original.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/generation";
+    sh:nodeKind sh:IRI;
+    sh:path bf:generation
+  ], [
+    sh:class bf:Layout;
+    sh:description "Arrangement of text, images, tactile notation, etc., in a resource.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/layout";
+    sh:nodeKind sh:IRI;
+    sh:path bf:layout
+  ], [
+    sh:class bf:BookFormat;
+    sh:description "Result of folding a printed sheet to form a gathering of leaves.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/bookFormat";
+    sh:nodeKind sh:IRI;
+    sh:path bf:bookFormat
+  ], [
+    sh:class bf:FontSize;
+    sh:description "Size of the type used to represent the characters and symbols in a resource.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/fontSize";
+    sh:nodeKind sh:IRI;
+    sh:path bf:fontSize
+  ], [
+    sh:class bf:Polarity;
+    sh:description "Relationship of the colors and tones in an image to the colors and tones of the object reproduced.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/polarity";
+    sh:nodeKind sh:IRI;
+    sh:path bf:polarity
+  ], [
+    sh:class bf:ReductionRatio;
+    sh:description "Size of a micro-image in relation to the original from which it was produced.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/reductionRatio";
+    sh:nodeKind sh:IRI;
+    sh:path bf:reductionRatio
+  ], [
+    sh:class bf:SoundCharacteristic;
+    sh:description "Technical specification relating to the encoding of sound in a resource.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/soundCharacteristic";
+    sh:nodeKind sh:IRI;
+    sh:path bf:soundCharacteristic
+  ], [
+    sh:class bf:ProjectionCharacteristic;
+    sh:description "Technical specification relating to the projection of a motion picture film.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/projectionCharacteristic";
+    sh:nodeKind sh:IRI;
+    sh:path bf:projectionCharacteristic
+  ], [
+    sh:class bf:VideoCharacteristic;
+    sh:description "Technical specification relating to the encoding of video images in a resource";
+    sh:name "http://id.loc.gov/ontologies/bibframe/videoCharacteristic";
+    sh:nodeKind sh:IRI;
+    sh:path bf:videoCharacteristic
+  ], [
+    sh:class bf:DigitalCharacteristic;
+    sh:description "Technical specification relating to the digital encoding of text, image, audio, video, and other types of data in a resource.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/digitalCharacteristic";
+    sh:nodeKind sh:IRI;
+    sh:path bf:digitalCharacteristic
+  ], [
+    sh:class bf:SystemRequirement;
+    sh:description "Equipment or system requirement beyond what is normal and obvious for the type of carrier or type of file, such as make and model of equipment or hardware, operating system, amount of memory, programming language, other necessary software, any plug-ins or peripherals required to play, view, or run the resource, etc.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/systemRequirement";
+    sh:nodeKind sh:IRI;
+    sh:path bf:systemRequirement
+  ], [
+    sh:class bf:Instance;
+    sh:description "A method used to bind a published or unpublished resource,or other binding information.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/binding";
+    sh:nodeKind sh:IRI;
+    sh:path bf:binding
+  ], [
+    sh:class bf:Work;
+    sh:description "Work the Instance described instantiates or manifests; used to connect Instances to Works in the BIBFRAME structure";
+    sh:name "http://id.loc.gov/ontologies/bibframe/instanceOf";
+    sh:nodeKind sh:IRI;
+    sh:path bf:instanceOf
+  ], [
+    sh:class bf:Item;
+    sh:description "Item which is an example of the described Instance";
+    sh:name "http://id.loc.gov/ontologies/bibframe/hasItem";
+    sh:nodeKind sh:IRI;
+    sh:path bf:hasItem
+  ], [
+    sh:class bf:Instance;
+    sh:description "Resource that reproduces another Resource";
+    sh:name "http://id.loc.gov/ontologies/bibframe/hasReproduction";
+    sh:nodeKind sh:IRI;
+    sh:path bf:hasReproduction
+  ], [
+    sh:class bf:Instance;
+    sh:description "Resource that is a reproduction of another Resource";
+    sh:name "http://id.loc.gov/ontologies/bibframe/reproductionOf";
+    sh:nodeKind sh:IRI;
+    sh:path bf:reproductionOf
+  ];
+  sh:targetClass bf:Instance .
+
+bf:ProvisionActivityShape a sh:NodeShape;
+  sh:description "Information about the agent or place relating to the publication, printing, distribution, issue, release, or production of a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/ProvisionActivity";
+  sh:node bf:ProvisionActivity;
+  sh:targetClass bf:ProvisionActivity .
+
+bf:VariantTitleShape a sh:NodeShape;
+  sh:description "Title associated with the resource that is different from the Work or Instance title";
+  sh:name "http://id.loc.gov/ontologies/bibframe/VariantTitle";
+  sh:node bf:TitleShape;
+  sh:property [
+    sh:datatype xsd:string;
+    sh:description "Type of title variation, e.g., acronym, cover, spine, earlier, later, series version.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/variantType";
+    sh:path bf:variantType
+  ];
+  sh:targetClass bf:VariantTitle .
+
+bf:DigitalCharacteristicShape a sh:NodeShape;
+  sh:description "Technical specification relating to the digital encoding of text, image, audio, video, and other types of data in a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/DigitalCharacteristic";
+  sh:node bf:DigitalCharacteristic;
+  sh:targetClass bf:DigitalCharacteristic .
+
+bf:SoundCharacteristicShape a sh:NodeShape;
+  sh:description "Technical specification relating to the encoding of sound in a resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/SoundCharacteristic";
+  sh:node bf:SoundCharacteristic;
+  sh:targetClass bf:SoundCharacteristic .
+
+bf:WorkShape a sh:NodeShape;
+  sh:description "Resource reflecting a conceptual essence of a cataloging resource";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Work";
+  sh:node bf:Work;
+  sh:property [
+    sh:class bf:Work;
+    sh:description "Categorization reflecting the fundamental form of communication in which the content is expressed and the human sense through which it is intended to be perceived.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/content";
+    sh:nodeKind sh:IRI;
+    sh:path bf:content
+  ], [
+    sh:class bf:Work;
+    sh:datatype bf:date;
+    sh:description "Date or date range associated with the creation of a Work.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/originDate";
+    sh:nodeKind sh:IRI;
+    sh:path bf:originDate
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Information about the history of a Work.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/historyOfWork";
+    sh:path bf:historyOfWork
+  ], [
+    sh:class bf:MusicMedium;
+    sh:description "Instrumental, vocal, and/or other medium of performance for which a musical resource was originally conceived, written or performed.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/musicMedium";
+    sh:nodeKind sh:IRI;
+    sh:path bf:musicMedium
+  ], [
+    sh:class bf:MusicInstrument;
+    sh:description "Instrument for which a musical Work is appropriate.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/instrument";
+    sh:nodeKind sh:IRI;
+    sh:path bf:instrument
+  ], [
+    sh:class bf:Ensemble;
+    sh:description "Ensemble applicable to the Work.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/ensemble";
+    sh:nodeKind sh:IRI;
+    sh:path bf:ensemble
+  ], [
+    sh:class bf:MusicVoice;
+    sh:description "Voice for which a musical work is appropriate, such as soprano, tenor, mixed.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/voice";
+    sh:nodeKind sh:IRI;
+    sh:path bf:voice
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Numeric designation for musical works consecutively numbered in music reference sources.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/musicSerialNumber";
+    sh:path bf:musicSerialNumber
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Numeric designation of a musical work assigned by a composer, publisher, or a musicologist.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/musicOpusNumber";
+    sh:path bf:musicOpusNumber
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Numeric designation for a musical work as found in a thematic index for the composer.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/musicThematicNumber";
+    sh:path bf:musicThematicNumber
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Pitch and mode for music.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/musicKey";
+    sh:path bf:musicKey
+  ], [
+    sh:datatype bf:date;
+    sh:description "Date of legal work, or promulgation of a law, or signing of a treaty.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/legalDate";
+    sh:path bf:legalDate
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Term or terms that identify works such as arranged for music, vulgate for religious work, etc.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/version";
+    sh:path bf:version
+  ], [
+    sh:datatype bf:date;
+    sh:description "The date or date range during which the resource is accurate.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/validDate";
+    sh:path bf:validDate
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Time period coverage of the content of the resource.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/temporalCoverage";
+    sh:path bf:temporalCoverage
+  ], [
+    sh:class bf:Instance;
+    sh:description "Instance is related to described Work ; used to connect Works to Instances in the BIBFRAME structure";
+    sh:name "http://id.loc.gov/ontologies/bibframe/hasInstance";
+    sh:nodeKind sh:IRI;
+    sh:path bf:hasInstance
+  ], [
+    sh:class bf:Event;
+    sh:description "Event that is the content of the described work";
+    sh:name "http://id.loc.gov/ontologies/bibframe/eventContentOf";
+    sh:nodeKind sh:IRI;
+    sh:path bf:eventContentOf
+  ], [
+    sh:class bf:Work;
+    sh:description "Relates one resource to another of which it is an arrangement of the first";
+    sh:name "http://id.loc.gov/ontologies/bibframe/arrangement";
+    sh:nodeKind sh:IRI;
+    sh:path bf:arrangement
+  ], [
+    sh:class bf:Work;
+    sh:description "Relates an arrangement to the resource of which it is an arrangement.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/arrangementOf";
+    sh:nodeKind sh:IRI;
+    sh:path bf:arrangementOf
+  ];
+  sh:targetClass bf:Work .
+
+bf:IdentifierShape a sh:NodeShape;
+  sh:description "Token or name that is associated with a resource, such as a URI or an ISBN";
+  sh:name "http://id.loc.gov/ontologies/bibframe/Identifier";
+  sh:node bf:Identifier;
+  sh:property [
+    sh:class bf:Identifier;
+    sh:description "Resource that is associated with a character string that serves to differentiate one resource from another.";
+    sh:name "http://id.loc.gov/ontologies/bibframe/identifies";
+    sh:nodeKind sh:IRI;
+    sh:path bf:identifies
+  ];
+  sh:targetClass bf:Identifier .

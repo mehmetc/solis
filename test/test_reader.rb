@@ -1,6 +1,6 @@
 require "test_helper"
 
-class TestSolis < Minitest::Test
+class TestReader < Minitest::Test
   def setup
     super
     @shacl = File.read('test/resources/car/car_shacl.ttl')
@@ -34,7 +34,7 @@ class TestSolis < Minitest::Test
     solis = Solis.new(config)
     assert_includes(solis.model.entity.list, 'Title')
     #TODO: test more
-    File.open('bibframe.ttl', 'wb') do |f|
+    File.open('./test/resources/bibframe_shapes.ttl', 'wb') do |f|
       f.puts solis.model.writer
     end
   end
@@ -49,7 +49,7 @@ class TestSolis < Minitest::Test
         content_type: 'application/rdf+xml'}
     }
     solis = Solis.new(config)
-    File.open('wine_shapes.ttl', 'wb') do |f|
+    File.open('./test/resources/wine_shapes.ttl', 'wb') do |f|
       f.puts solis.model.writer
     end
   end
