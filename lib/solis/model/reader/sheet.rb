@@ -14,13 +14,13 @@ module Solis
             if use_cache?(spreadsheet_id, options)
               return read_from_cache(spreadsheet_id)
             else
-              sheets = fetch_sheets(key, spreadsheet_id)
-              validate(sheets)
+              sheet = fetch_sheet(key, spreadsheet_id)
+              validate(sheet)
 
-              if sheets.is_a?(Hash)
-                references = extract_references(sheets, spreadsheet_id)
+              if sheet.is_a?(Hash)
+                references = extract_references(sheet, spreadsheet_id)
               else
-                references = sheets
+                references = sheet
               end
 
               datas = process_references(key, references)
@@ -54,7 +54,7 @@ module Solis
             JSON.parse(::File.read(cache_file), { symbolize_names: true })
           end
 
-          def fetch_sheets(key, spreadsheet_id)
+          def fetch_sheet(key, spreadsheet_id)
             Solis.logger.info("from source #{spreadsheet_id}")
             session = SimpleSheets.new(key, spreadsheet_id)
             session.key = key
@@ -65,6 +65,12 @@ module Solis
               sheets[sheet.title] = sheet
             end
             sheets
+          rescue => e
+            if e.message =~ /code = 400/
+              raise Solis::Error::NotAllowed, 'Google Auth key is invalid/missing.'
+            elsif e.message =~ /code = 403/
+              raise Solis::Error::NotAllowed, 'Google Sheet not shared.'
+            end
           end
 
           def extract_references(sheets, spreadsheet_id)
@@ -90,7 +96,7 @@ module Solis
             datas = []
             references.each do |ref|
               sheet_id = spreadsheet_id_from_url(ref[:sheet_url])
-              sheet_data = fetch_sheets(key, sheet_id)
+              sheet_data = fetch_sheet(key, sheet_id)
 
               if sheet_data.key?("_PREFIXES")
                 datas << parse(sheet_data, follow: true)

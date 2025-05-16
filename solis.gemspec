@@ -35,18 +35,19 @@ Gem::Specification.new do |spec|
 
   # Uncomment to register a new dependency of your gem
   # spec.add_dependency "example-gem", "~> 1.0"
-  spec.add_dependency "json", "~> 2.9"
+  spec.add_dependency "json", "~> 2.12"
   spec.add_dependency "linkeddata", "~> 3.3"
-  spec.add_dependency "graphiti", "~> 1.7"
+  spec.add_dependency "graphiti", "~> 1.8"
   spec.add_dependency "graphiti_graphql", "~> 0.1"
-  spec.add_dependency "data_collector"
+  spec.add_dependency "data_collector", "~> 0.62"
   spec.add_dependency "abbrev"
   spec.add_dependency "csv"
   spec.add_dependency "mutex_m"
   spec.add_dependency "ostruct"
   spec.add_dependency 'google_drive', '~> 3.0'
-  spec.add_dependency 'json-ld', '~> 3.3.2'
-  spec.add_dependency 'shacl', '~> 0.4.1'
+  # these are part of linkeddata and do not have to imported separately
+  # spec.add_dependency 'json-ld', '~> 3.3.2'
+  # spec.add_dependency 'shacl', '~> 0.4.1'
   spec.add_dependency 'tsort', '~> 0.2.0'
   spec.add_dependency 'securerandom', '~> 0.4.1'
   spec.add_dependency 'iso8601', '~> 0.13.0'
