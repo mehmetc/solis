@@ -254,12 +254,14 @@ module Solis
         # in case, in the future, diff algorithms are used,
         # deep_copy() would recreate all internal objects ref,
         # not fooling them.
-        deep_copy(self.to_h).stringify_keys
+        obj = deep_copy(self.to_h).stringify_keys
+        obj
       end
 
       def set_internal_data(obj)
         # deep_copy(): see get_internal_data
-        self.marshal_load(deep_copy(obj).symbolize_keys)
+        obj2 = deep_copy(obj)
+        self.marshal_load(obj2.symbolize_keys)
       end
 
       def to_jsonld(hash_data_json)
