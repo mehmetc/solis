@@ -19,3 +19,4 @@ Gemfile.lock
 lib/solis/next
 .rake_tasks~
 *.tmp
+*_shapes.ttl
