@@ -1466,4 +1466,99 @@ class TestSHACLValidator < Minitest::Test
 
   end
 
+  def test_overwrite_datatype_when_ihneriting
+
+    # SHACL shapes for "color" are both enabled:
+    # there is no data that is, at the same time, both string and integer ...
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+
+      example:CarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a car entity" ;
+              sh:targetClass  example:Car;
+              sh:name         "Car";
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color" ;
+                                sh:description "Color of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+      .
+
+      example:ElectricCarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a electric car entity" ;
+              sh:targetClass  example:ElectricCar;
+              sh:name         "ElectricCar";
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color" ;
+                                sh:description "Color of the car" ;
+                                sh:datatype    xsd:integer ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+      .
+
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+          "@context": {
+            "@vocab": "https://example.com/",
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+            "rdfs:subClassOf": {
+              "@type": "@id"
+            }
+          },
+        "@graph": [
+          {
+            "@id": "https://example.com/ElectricCar",
+            "rdfs:subClassOf": "https://example.com/Car"
+          },
+          {
+            "@id": "http://schema.org/my_car",
+            "@type": "ElectricCar",
+            "color": "abc"
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    # pp messages
+    assert_equal(conform, false)
+
+    hash_data_jsonld = JSON.parse %(
+      {
+          "@context": {
+            "@vocab": "https://example.com/",
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+            "rdfs:subClassOf": {
+              "@type": "@id"
+            }
+          },
+        "@graph": [
+          {
+            "@id": "https://example.com/ElectricCar",
+            "rdfs:subClassOf": "https://example.com/Car"
+          },
+          {
+            "@id": "http://schema.org/my_car",
+            "@type": "ElectricCar",
+            "color": 123
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    # pp messages
+    assert_equal(conform, false)
+
+  end
+
 end
