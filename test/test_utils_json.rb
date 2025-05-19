@@ -43,7 +43,7 @@ class TestUtilsJSON < Minitest::Test
       }
     )
 
-    hash_data_jsonld = Solis::Utils::JSON.deep_replace_prefix_in_name_attr(hash_data_json, '_', '@')
+    hash_data_jsonld = Solis::Utils::JSONUtils.deep_replace_prefix_in_name_attr(hash_data_json, '_', '@')
 
     assert_equal(hash_data_jsonld['@id'], "http://schema.org/my_car")
     assert_equal(hash_data_jsonld['door']['window']['glass']['@id'], "http://schema.org/my_glass")

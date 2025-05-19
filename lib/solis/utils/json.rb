@@ -2,7 +2,7 @@
 
 module Solis
   module Utils
-    module JSON
+    module JSONUtils
 
       def self.deep_replace_prefix_in_name_attr(obj, prefix_old, prefix_new)
         obj2 = Marshal.load(Marshal.dump(obj))
