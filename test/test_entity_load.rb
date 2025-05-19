@@ -19,17 +19,17 @@ class TestEntityLoad < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "driving_license": {
-              "@id": "https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a",
+              "_id": "https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a",
               "address": {
-                "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+                "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
                 "street": "fake street",
                 "number": [1, 15]
               }
@@ -48,7 +48,7 @@ class TestEntityLoad < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9"
+        "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9"
       }
     )
 
@@ -88,17 +88,17 @@ class TestEntityLoad < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "driving_license": {
-              "@id": "https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a",
+              "_id": "https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a",
               "address": {
-                "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+                "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
                 "street": "fake street",
                 "number": [1, 15]
               }
@@ -117,7 +117,7 @@ class TestEntityLoad < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/non-existing-id"
+        "_id": "https://example.com/non-existing-id"
       }
     )
 
@@ -132,7 +132,7 @@ class TestEntityLoad < Minitest::Test
     )
 
     person = Solis::Model::Entity.new(data, @model, 'Person', store)
-    assert_equal(person['@id'].nil?, false)
+    assert_equal(person['_id'].nil?, false)
 
     assert_raises(Solis::Model::Entity::LoadError) do
       person.load

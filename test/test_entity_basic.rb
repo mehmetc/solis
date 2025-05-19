@@ -20,15 +20,15 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -38,8 +38,8 @@ class TestEntityBasic < Minitest::Test
 
     car = Solis::Model::Entity.new(data, @model, 'Car', nil)
 
-    assert_equal(car['@id'], "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be")
-    assert_equal(car.owners[0]['address']['@id'], "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea")
+    assert_equal(car['_id'], "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be")
+    assert_equal(car.owners[0]['address']['_id'], "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea")
 
   end
 
@@ -62,9 +62,9 @@ class TestEntityBasic < Minitest::Test
 
     car = Solis::Model::Entity.new(data, @model, 'Car', nil)
 
-    assert_equal(car['@id'].nil?, false)
-    assert_equal(car.owners[0]['@id'].nil?, false)
-    assert_equal(car.owners[0]['address']['@id'].nil?, false)
+    assert_equal(car['_id'].nil?, false)
+    assert_equal(car.owners[0]['_id'].nil?, false)
+    assert_equal(car.owners[0]['address']['_id'].nil?, false)
 
   end
 
@@ -72,15 +72,15 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -92,15 +92,15 @@ class TestEntityBasic < Minitest::Test
 
     data_2 = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": "black",
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "other fake street"
             }
           }
@@ -119,15 +119,15 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -143,7 +143,7 @@ class TestEntityBasic < Minitest::Test
         "brand": "nissan",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "john smith"
           }
         ]
@@ -161,15 +161,15 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -183,7 +183,7 @@ class TestEntityBasic < Minitest::Test
       {
         "color": "black",
         "brand": {
-          "@id": "bla-bla-bla",
+          "_id": "bla-bla-bla",
           "attr": "value"
         }
       }
@@ -202,15 +202,15 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -226,7 +226,7 @@ class TestEntityBasic < Minitest::Test
         "brand": "nissan",
         "owners": [
           {
-            "@id": "https://example.com/12345-non-existing",
+            "_id": "https://example.com/12345-non-existing",
             "name": "john smith"
           }
         ]
@@ -258,7 +258,7 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": []
@@ -273,10 +273,10 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+        "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
         "name": "jon doe",
         "address": {
-          "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+          "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
           "street": "fake street"
         }
       }
@@ -294,7 +294,7 @@ class TestEntityBasic < Minitest::Test
         "brand": "nissan",
         "owners": [
           {
-            "@id": "https://example.com/non-existing-id",
+            "_id": "https://example.com/non-existing-id",
             "name": "john smith"
           }
         ]
@@ -316,7 +316,7 @@ class TestEntityBasic < Minitest::Test
         "brand": "nissan",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "john smith"
           }
         ]
@@ -345,7 +345,7 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": []
@@ -358,10 +358,10 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+        "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
         "name": "jon doe",
         "address": {
-          "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+          "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
           "street": "fake street"
         }
       }
@@ -377,7 +377,7 @@ class TestEntityBasic < Minitest::Test
         "brand": "nissan",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "john smith"
           }
         ]
@@ -397,15 +397,15 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -433,15 +433,15 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -457,7 +457,7 @@ class TestEntityBasic < Minitest::Test
         "brand": "@unset",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "john smith"
           }
         ]
@@ -474,15 +474,15 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -510,15 +510,15 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -534,7 +534,7 @@ class TestEntityBasic < Minitest::Test
         "brand": "@unset",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "john smith",
             "address": "@unset"
           }

@@ -20,7 +20,7 @@ class TestEntityLiterals < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "demolishing_year_forecast": "2030-06~",
@@ -39,7 +39,7 @@ class TestEntityLiterals < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "demolishing_year_forecast": "bla-bla",
