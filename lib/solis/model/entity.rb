@@ -5,6 +5,7 @@ require 'json'
 require 'ostruct'
 
 require_relative '../utils/jsonld'
+require_relative '../utils/json'
 
 
 module Solis
@@ -170,7 +171,8 @@ module Solis
           Solis::Utils::JSONLD.infer_jsonld_types_from_model!(obj, @model, @type)
         end
         # "plays" the patch on instance
-        patch_internal(obj, obj_patch, _opts)
+        _obj_patch = Solis::Utils::JSONUtils.deep_replace_prefix_in_name_attr(obj_patch, '_', '@')
+        patch_internal(obj, _obj_patch, _opts)
         set_internal_data(obj)
         # in case new references are added, get them an "id" where missing
         add_ids_if_not_exists!
@@ -255,12 +257,14 @@ module Solis
         # deep_copy() would recreate all internal objects ref,
         # not fooling them.
         obj = deep_copy(self.to_h).stringify_keys
+        obj = Solis::Utils::JSONUtils.deep_replace_prefix_in_name_attr(obj, '_', '@')
         obj
       end
 
       def set_internal_data(obj)
         # deep_copy(): see get_internal_data
         obj2 = deep_copy(obj)
+        obj2 = Solis::Utils::JSONUtils.deep_replace_prefix_in_name_attr(obj2, '@', '_')
         self.marshal_load(obj2.symbolize_keys)
       end
 

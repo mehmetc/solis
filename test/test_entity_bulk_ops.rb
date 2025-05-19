@@ -22,7 +22,7 @@ class TestEntityBulkOps < Minitest::Test
 
     data_1 = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota"
       }
@@ -30,7 +30,7 @@ class TestEntityBulkOps < Minitest::Test
 
     data_2 = JSON.parse %(
       {
-        "@id": "https://example.com/77f77a12-d05a-4872-b789-e25219302e8a",
+        "_id": "https://example.com/77f77a12-d05a-4872-b789-e25219302e8a",
         "color": "pink",
         "brand": "subaru"
       }
