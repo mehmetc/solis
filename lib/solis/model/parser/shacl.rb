@@ -12,9 +12,9 @@ class SHACLParser
     shapes = {}
 
     @shapes_graph.query([nil, RDF.type, RDF::Vocab::SHACL.NodeShape]) do |shape|
-      class_uri = shape.subject.to_s
+      shape_uri = shape.subject.to_s
       shape_name = shapes_graph.query([shape.subject, RDF::Vocab::SHACL.name, nil]).first_object.to_s
-      shapes[shape_name] = {properties: {}, uri: class_uri, nodes: [], closed: false}
+      shapes[shape_name] = {properties: {}, uri: shape_uri, nodes: [], closed: false}
 
       @shapes_graph.query([shape.subject, RDF::Vocab::SHACL.node, nil]) do |stmt|
         node_name = stmt.object.to_s
@@ -77,6 +77,10 @@ module SHACLSHapes
 
   def self.get_property_class_for_shape(shapes, name_shape, name_property)
     shapes.dig(name_shape, :properties, name_property, :constraints, :class)
+  end
+
+  def self.get_parent_shapes_for_shape(shapes, name_shape)
+    shapes.dig(name_shape, :nodes) || []
   end
 
   def self.shape_exists?(shapes, name_shape)

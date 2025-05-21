@@ -219,11 +219,11 @@ module Solis
       end
 
       def get_info
-        @model.shapes[@type]
+        @model.get_info_for_entity(@type)
       end
 
       def get_properties_info
-        @model.shapes[@type][:properties]
+        @model.get_properties_info_for_entity(@type)
       end
 
       def to_pretty_jsonld
