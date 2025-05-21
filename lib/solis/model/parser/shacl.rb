@@ -21,6 +21,8 @@ class SHACLParser
         shapes[shape_name][:nodes] << node_name
       end
 
+      shapes[shape_name][:target_class] = @shapes_graph.first_object([shape.subject, RDF::Vocab::SHACL.targetClass, nil])&.to_s
+
       shapes[shape_name][:closed] = @shapes_graph.first_object([shape.subject, RDF::Vocab::SHACL.closed, nil])
       shapes[shape_name][:closed] = false if shapes[shape_name][:closed].nil?
 
