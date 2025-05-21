@@ -415,7 +415,35 @@ module Solis
             @logger.debug(str_query)
             @logger.debug("\n\n")
 
-            @client_sparql.delete_insert(delete['graph'], insert['graph'], nil)
+            method_di = 1
+
+            case method_di
+            when 1
+              # this works
+
+              @client_sparql.delete_insert(delete['graph'], insert['graph'], nil)
+            when 2
+              # this does not, which is strange because the DELETE/WHERE query works
+              # when using @client_sparql.query(str_query, update: true).
+              # It would be nice to have it running so we can use the raw SPARQL query string
+              # and be sure it is not internally split into DELETE + INSERT.
+
+              # str_query = "WITH <#{@name_graph}>"
+              # unless delete['graph'].empty?
+              #   str_query += "\nDELETE {\n#{delete['graph'].dump(:ntriples)}}"
+              # end
+              # unless insert['graph'].empty?
+              #   str_query += "\nINSERT {\n#{insert['graph'].dump(:ntriples)}}"
+              # end
+              # # str_query += "\nWHERE { }\n"
+              # # str_query += "\nWHERE { ?s ?p ?o }\n"
+              # puts str_query
+
+              @client_sparql.query(str_query, update: true)
+              # @client_sparql.instance_variable_set("@op", :update)
+              # puts @client_sparql.instance_variable_get("@op")
+              # SPARQL.execute(str_query, @client_sparql.url, update: true)
+            end
 
           end
 
