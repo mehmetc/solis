@@ -8,7 +8,6 @@ example:CarShape
     a sh:NodeShape;
     sh:description  "Abstract shape that describes a car entity" ;
     sh:targetClass  example:Car;
-    sh:node         example:Car;
     sh:name         "Car";
     sh:property     [ sh:path        example:color;
                       sh:name        "color" ;
