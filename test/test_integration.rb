@@ -30,6 +30,10 @@ class TestIntegration < Minitest::Test
     # create a ttl string object
     sioc_shacl = @solis.model.writer
 
+    File.open('./test/resources/sioc_shapes.ttl', 'wb') do |f|
+      f.puts sioc_shacl
+    end
+
     # check if the generated SHACL is valid
     shacl_shacl = Solis::Model::Reader.from_uri(uri: 'file://test/resources/shacl-shacl.ttl', content_type: 'text/turtle')
     validator = Solis::SHACLValidatorV2.new(shacl_shacl.dump(:ttl), :ttl, @opts)

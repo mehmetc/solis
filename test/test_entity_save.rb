@@ -9,7 +9,7 @@ class TestEntitySave < Minitest::Test
     dir_tmp = File.join(__dir__, './data')
 
     @model_1 = Solis::Model.new(model: {
-      uri: "file://test/resources/car/car_shacl_2.ttl",
+      uri: "file://test/resources/car/car_test_entity_save.ttl",
       prefix: 'ex',
       namespace: @name_graph,
       tmp_dir: dir_tmp
@@ -19,7 +19,7 @@ class TestEntitySave < Minitest::Test
       'ElectricCar' => ['Car']
     }
     @model_2 = Solis::Model.new(model: {
-                                  uri: "file://test/resources/car/car_shacl_2.ttl",
+                                  uri: "file://test/resources/car/car_test_entity_save.ttl",
                                   prefix: 'ex',
                                   namespace: @name_graph,
                                   tmp_dir: dir_tmp,

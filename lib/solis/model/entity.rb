@@ -218,6 +218,14 @@ module Solis
         id_op
       end
 
+      def get_info
+        @model.get_info_for_entity(@type)
+      end
+
+      def get_properties_info
+        @model.get_properties_info_for_entity(@type)
+      end
+
       def to_pretty_jsonld
         hash_data_jsonld = to_jsonld(get_internal_data)
         JSON.pretty_generate(hash_data_jsonld)
