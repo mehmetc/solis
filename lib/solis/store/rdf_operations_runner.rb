@@ -142,6 +142,11 @@ module Solis
         result or result_literal
       end
 
+      def ask_if_subject_exists(s)
+        result = @client_sparql.ask.whether([s, :p, :o]).true?
+        result
+      end
+
       def run_read_operations(ops_generic)
         res = ops_generic.map do |op|
           case op['name']
@@ -155,6 +160,10 @@ module Solis
             id = op['content'][0]
             o = RDF::URI(id)
             r = ask_if_object_is_referenced(o)
+          when 'ask_if_id_exists'
+            id = op['content'][0]
+            s = RDF::URI(id)
+            r = ask_if_subject_exists(s)
           end
           [op['id'], r]
         end.to_h

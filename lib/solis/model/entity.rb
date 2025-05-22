@@ -202,6 +202,16 @@ module Solis
         res
       end
 
+      def exists?
+        check_store_exists
+        obj = get_internal_data
+        check_obj_has_id(obj)
+        id = obj['@id']
+        id_op = @store.ask_if_id_exists(id)
+        res = @store.run_operations(ids=[id_op])[id_op]
+        res
+      end
+
       def destroy(delayed=false)
         check_store_exists
         obj = get_internal_data
