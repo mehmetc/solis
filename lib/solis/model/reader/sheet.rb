@@ -35,12 +35,12 @@ module Solis
           private
 
           def setup_config(options)
-            DataCollector::ConfigFile.path = options[:config_path] if options[:config_path]
-            DataCollector::ConfigFile.name = options[:config_name] if options[:config_name]
+            Solis.config.path = options[:config_path] if options[:config_path]
+            Solis.config.name = options[:config_name] if options[:config_name]
           end
 
           def cache_dir
-            DataCollector::ConfigFile.include?(:cache) ? DataCollector::ConfigFile[:cache] : '/tmp'
+            Solis.config.include?(:cache) ? Solis.config[:cache] : '/tmp'
           end
 
           def use_cache?(spreadsheet_id, options)
@@ -70,6 +70,8 @@ module Solis
               raise Solis::Error::NotAllowed, 'Google Auth key is invalid/missing.'
             elsif e.message =~ /code = 403/
               raise Solis::Error::NotAllowed, 'Google Sheet not shared.'
+            elsif e.message =~ /NOT FOUND/
+              raise Solis::Error::NotFound, e.message
             end
           end
 

@@ -1,0 +1,35 @@
+@prefix example: <https://example.com/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+example:AgentShape
+    a sh:NodeShape ;
+    sh:description "Abstract shape that describes an agent entity" ;
+    sh:targetClass example:Agent ;
+    sh:name "Agent" ;
+    sh:property
+        [
+            sh:path example:name ;
+            sh:name "name" ;
+            sh:description "name of the agent" ;
+            sh:datatype xsd:string ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] .
+
+example:PersonShape
+    a sh:NodeShape ;
+    sh:node example:Agent ;
+    sh:description "Person entity" ;
+    sh:targetClass example:Person ;
+    sh:name "Person" ;
+    sh:property
+        [
+            sh:path example:name ;
+            sh:name "name" ;
+            sh:description "name of the person" ;
+            sh:datatype xsd:integer ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] .

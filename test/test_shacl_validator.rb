@@ -1390,4 +1390,46 @@ class TestSHACLValidator < Minitest::Test
 
   end
 
+  def test_inherited_change_property
+    Solis.config.path = 'test/resources/config'
+
+    @shacl = File.read('test/resources/person_shacl.ttl')
+
+    config = {
+      cache_dir: '/tmp/cache',
+      store: Solis::Store::Memory.new(),
+      model: {
+        prefix: 'example',
+        namespace: 'https://example.com/',
+        uri: StringIO.new(@shacl),
+        content_type: 'text/turtle'
+      }
+    }
+    solis = Solis.new(config)
+
+    person_shacl = solis.model.writer
+
+    # check if the generated SHACL is valid
+    shacl_shacl = Solis::Model::Reader.from_uri(uri: 'file://test/resources/shacl-shacl.ttl', content_type: 'text/turtle')
+    validator = Solis::SHACLValidatorV2.new(shacl_shacl.dump(:ttl), :ttl, @opts)
+    conform, messages = validator.execute(RDF::Graph.new.from_ttl(person_shacl), :graph)
+
+    assert_equal(conform, true)
+
+    person_string = {
+      name: "John Doe"
+    }
+
+    person_integer = {
+      name: 1
+    }
+
+    person_entity = solis.model.entity.new('Person', person_integer)
+    #person_entity = solis.model.entity.new('Agent', person_string)
+    puts person_entity.to_pretty_jsonld
+    validator = Solis::SHACLValidatorV2.new(person_shacl, :ttl, @opts)
+    conform, messages = validator.execute(JSON.parse(person_entity.to_pretty_jsonld), :jsonld)
+    pp messages
+    assert_equal(conform, true)
+  end
 end
