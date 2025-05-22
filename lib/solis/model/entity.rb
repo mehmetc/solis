@@ -80,13 +80,31 @@ module Solis
         add_ids_if_not_exists!
       end
 
-      def validate
+      def to_pre_validate_jsonld
 
         # flatten + expand + clean internal data before validating it
         flattened_ordered_expanded = to_jsonld_flattened_ordered_expanded
         Solis::Utils::JSONLD.clean_flattened_expanded_from_unset_data!(flattened_ordered_expanded['@graph'])
         @model.logger.debug("=== flattened + deps sorted + expanded + cleaned JSON-LD:")
         @model.logger.debug(JSON.pretty_generate(flattened_ordered_expanded))
+
+        # add hierarchy triples
+        flattened_ordered_expanded['@context'].merge!(Solis::Utils::JSONLD.make_jsonld_hierarchy_context)
+        flattened_ordered_expanded['@graph'].concat(Solis::Utils::JSONLD.make_jsonld_triples_from_hierarchy(@model))
+        @model.logger.debug("=== flattened + deps sorted + expanded + cleaned + hierarchy JSON-LD:")
+        @model.logger.debug(JSON.pretty_generate(flattened_ordered_expanded))
+
+        flattened_ordered_expanded
+
+      end
+
+      def to_pretty_pre_validate_jsonld
+        JSON.pretty_generate(to_pre_validate_jsonld)
+      end
+
+      def validate
+
+        flattened_ordered_expanded = to_pre_validate_jsonld
 
         # validate literals
         # conform_literals, messages_literals = Solis::Utils::JSONLD.validate_literals(
@@ -106,12 +124,6 @@ module Solis
             messages_literals << [statement.subject.to_s, statement.predicate.to_s, e.message]
           end
         end
-
-        # add hierarchy triples
-        flattened_ordered_expanded['@context'].merge!(Solis::Utils::JSONLD.make_jsonld_hierarchy_context)
-        flattened_ordered_expanded['@graph'].concat(Solis::Utils::JSONLD.make_jsonld_triples_from_hierarchy(@model))
-        @model.logger.debug("=== flattened + deps sorted + expanded + cleaned + hierarchy JSON-LD:")
-        @model.logger.debug(JSON.pretty_generate(flattened_ordered_expanded))
 
         # validate agains SHACL
         conform_shacl, messages_shacl = @model.validator.execute(flattened_ordered_expanded, :jsonld)

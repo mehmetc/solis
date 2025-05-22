@@ -1508,6 +1508,80 @@ class TestSHACLValidator < Minitest::Test
     pp messages
     assert_equal(conform, true)
   end
+
+  def test_inherited_change_property_2
+
+    # NOTE:
+    # the only difference with previous test is that before:
+    #     sh:node example:Agent
+    # while now:
+    #     sh:node example:AgentShape
+    # As defined in https://www.w3.org/TR/shacl/#NodeConstraintComponent,
+    # sh:node predicate always wants a SHAPE object.
+    # However, in the tests sometimes it uses a CLASS, which seems out of specifications.
+    # When this happens, my understanding is that sh:node is simply ignored by the validator,
+    # and the information about sub-classing is lost, that is why assertions in test_inherited_change_property
+    # where passing .... to be discussed
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh: <http://www.w3.org/ns/shacl#> .
+      @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+      example:AgentShape
+          a sh:NodeShape ;
+          sh:description "Abstract shape that describes an agent entity" ;
+          sh:targetClass example:Agent ;
+          sh:name "Agent" ;
+          sh:property
+              [
+                  sh:path example:name ;
+                  sh:name "name" ;
+                  sh:description "name of the agent" ;
+                  sh:datatype xsd:string ;
+                  sh:minCount 1 ;
+                  sh:maxCount 1 ;
+              ] .
+
+      example:PersonShape
+          a sh:NodeShape ;
+          sh:node example:AgentShape ;
+          sh:description "Person entity" ;
+          sh:targetClass example:Person ;
+          sh:name "Person" ;
+          sh:property
+              [
+                  sh:path example:name ;
+                  sh:name "name" ;
+                  sh:description "name of the person" ;
+                  sh:datatype xsd:integer ;
+                  sh:minCount 1 ;
+                  sh:maxCount 1 ;
+              ] .
+
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/"
+        },
+        "@graph": [
+          {
+            "@type": "Person",
+            "name": 1
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    # pp messages
+    assert_equal(conform, false)
+
+  end
   def test_overwrite_datatype_when_inheriting_1
 
     # SHACL shapes for "color" are both enabled:
