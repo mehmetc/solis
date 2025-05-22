@@ -3,9 +3,12 @@ require "test_helper"
 class TestReader < Minitest::Test
   def setup
     super
+    Solis.config.path = 'test/resources/config'
+
     @shacl = File.read('test/resources/car/car_shacl.ttl')
 
     config = {
+      cache_dir: '/tmp/cache',
       store: Solis::Store::Memory.new(),
       model: {
         prefix: 'e',
@@ -94,16 +97,10 @@ class TestReader < Minitest::Test
 
   #TODO: make it do something
   def test_load_from_google_sheet
-    config = {
-      store: Solis::Store::Memory.new(),
-      model: {
-        namespace: 'https://solis.libis.be/',
-        prefix: 'solis',
-        uri: 'google+sheet://11APPpKYfNfUdAN5_hj_x-B_Ck2zdZlnZZcgSyUvR8As',
-        config_path: 'test/resources/correct',
-        config_name: 'test_config.yml'
-      }
-    }
+    Solis.config.name = 'google_config.yml'
+
+    config = Solis.config.to_h
+    config[:store] = Solis::Store::Memory.new()
 
     solis = Solis.new(config)
     all_entities = solis.model.entity.list

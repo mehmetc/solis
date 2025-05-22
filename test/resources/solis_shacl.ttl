@@ -1,0 +1,323 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix solis: <https://solis.libis.be/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+solis:AuditShape a sh:NodeShape;
+  sh:description "Audit trail";
+  sh:name "Audit";
+  sh:node solis:BaseEntityShape;
+  sh:property [
+    sh:datatype rdf:JSON;
+    sh:description "Delta of the change";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "diff";
+    sh:path solis:diff
+  ], [
+    sh:class solis:Audit;
+    sh:description "This change follows after change";
+    sh:maxCount 1;
+    sh:name "preceding_change";
+    sh:nodeKind sh:IRI;
+    sh:path solis:preceding_change
+  ], [
+    sh:datatype xsd:dateTime;
+    sh:description "When was the change initiated";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "created_at";
+    sh:path solis:created_at
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Who initiated the change";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "created_by";
+    sh:path solis:created_by
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Why was the change created. one off create, update, delete";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "reason";
+    sh:path solis:reason
+  ], [
+    sh:datatype rdf:JSON;
+    sh:description "useful other data";
+    sh:maxCount 1;
+    sh:name "misc";
+    sh:path solis:misc
+  ];
+  sh:targetClass solis:Audit .
+
+solis:EntityShape a sh:NodeShape;
+  sh:description "Description of an entity definition.";
+  sh:name "Entity";
+  sh:node solis:BaseEntityShape;
+  sh:property [
+    sh:datatype xsd:string;
+    sh:description "Entity name";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "singular";
+    sh:path solis:singular
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Plural name for entity";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "plural";
+    sh:path solis:plural
+  ], [
+    sh:class solis:Entity;
+    sh:description "Entity inherits from";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "subclass_of";
+    sh:nodeKind sh:IRI;
+    sh:path solis:subclass_of
+  ], [
+    sh:datatype xsd:anyURI;
+    sh:description "Context is the same as";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "same_as";
+    sh:path solis:same_as
+  ], [
+    sh:class solis:Namespace;
+    sh:description "Entities belonging to this namespace";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "namespace";
+    sh:nodeKind sh:IRI;
+    sh:path solis:namespace
+  ], [
+    sh:datatype rdfs:label;
+    sh:description "Label used in UI component";
+    sh:maxCount 1;
+    sh:name "label";
+    sh:path solis:label
+  ];
+  sh:targetClass solis:Entity .
+
+solis:NamespaceShape a sh:NodeShape;
+  sh:description "An ontology namespace";
+  sh:name "Namespace";
+  sh:node solis:BaseEntityShape;
+  sh:property [
+    sh:datatype xsd:string;
+    sh:description "Namespace name";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "namespace_name";
+    sh:path solis:namespace_name
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Namespace prefix";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "prefix";
+    sh:path solis:prefix
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Description of the namespace";
+    sh:maxCount 1;
+    sh:name "description";
+    sh:path solis:description
+  ], [
+    sh:class solis:Project;
+    sh:description "The project the namespace belongs to";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "project";
+    sh:nodeKind sh:IRI;
+    sh:path solis:project
+  ];
+  sh:targetClass solis:Namespace .
+
+solis:ProjectShape a sh:NodeShape;
+  sh:description "An ontology project";
+  sh:name "Project";
+  sh:node solis:BaseEntityShape;
+  sh:property [
+    sh:datatype xsd:string;
+    sh:description "Project name";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "project_name";
+    sh:path solis:project_name
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Description of the project";
+    sh:maxCount 1;
+    sh:name "description";
+    sh:path solis:description
+  ], [
+    sh:datatype xsd:boolean;
+    sh:description "Is project enabled";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "active";
+    sh:path solis:active
+  ], [
+    sh:datatype xsd:anyURI;
+    sh:description "Project api url";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "url";
+    sh:path solis:url
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Project url prefix";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "prefix";
+    sh:path solis:prefix
+  ], [
+    sh:datatype xsd:string;
+    sh:description "api bearer token";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "token";
+    sh:path solis:token
+  ], [
+    sh:class solis:Tenant;
+    sh:description "Owner of the project";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "tenant";
+    sh:nodeKind sh:IRI;
+    sh:path solis:tenant
+  ];
+  sh:targetClass solis:Project .
+
+solis:PropertyShape a sh:NodeShape;
+  sh:description "An entity property";
+  sh:name "Property";
+  sh:node solis:BaseEntityShape;
+  sh:property [
+    sh:datatype xsd:string;
+    sh:description "name of the property";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "property_name";
+    sh:path solis:property_name
+  ], [
+    sh:datatype xsd:string;
+    sh:description "description of the property";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "description";
+    sh:path solis:description
+  ], [
+    sh:datatype xsd:integer;
+    sh:description "minimum cardinality";
+    sh:maxCount 1;
+    sh:name "min";
+    sh:path solis:min
+  ], [
+    sh:datatype xsd:integer;
+    sh:description "maximum cardinality";
+    sh:maxCount 1;
+    sh:name "max";
+    sh:path solis:max
+  ], [
+    sh:datatype xsd:anyURI;
+    sh:description "data type of the property";
+    sh:maxCount 1;
+    sh:name "datatype";
+    sh:path solis:datatype
+  ], [
+    sh:datatype xsd:anyURI;
+    sh:description "same as the referenced Context";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "same_as";
+    sh:path solis:same_as
+  ];
+  sh:targetClass solis:Property .
+
+solis:TaskShape a sh:NodeShape;
+  sh:description "a system generated task";
+  sh:name "Task";
+  sh:node solis:BaseEntityShape;
+  sh:targetClass solis:Task .
+
+solis:TenantShape a sh:NodeShape;
+  sh:description "Organization that creates projects and has members";
+  sh:name "Tenant";
+  sh:node solis:BaseEntityShape;
+  sh:property [
+    sh:datatype xsd:string;
+    sh:description "Tenant name";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "tenant_name";
+    sh:path solis:tenant_name
+  ], [
+    sh:class solis:Audit;
+    sh:description "Bio of the tenant";
+    sh:maxCount 1;
+    sh:name "description";
+    sh:nodeKind sh:IRI;
+    sh:path solis:description
+  ], [
+    sh:class solis:User;
+    sh:description "User that is a member of a tenant";
+    sh:name "members";
+    sh:nodeKind sh:IRI;
+    sh:path solis:members
+  ], [
+    sh:class solis:User;
+    sh:description "Owner of the tenant";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "owner";
+    sh:nodeKind sh:IRI;
+    sh:path solis:owner
+  ];
+  sh:targetClass solis:Tenant .
+
+solis:UserShape a sh:NodeShape;
+  sh:description "Solis user";
+  sh:name "User";
+  sh:node solis:BaseEntityShape;
+  sh:property [
+    sh:datatype xsd:string;
+    sh:description "User name";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "user_name";
+    sh:path solis:user_name
+  ], [
+    sh:datatype xsd:string;
+    sh:description "Email of the user";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "email";
+    sh:path solis:email
+  ];
+  sh:targetClass solis:User .
+
+solis:BaseEntityShape a sh:NodeShape;
+  sh:description "Every entity inherits from this. All common properties should be placed inhere";
+  sh:name "BaseEntity";
+  sh:node solis:BaseEntity;
+  sh:property [
+    sh:datatype xsd:string;
+    sh:description "unique record identifier with an ontology";
+    sh:maxCount 1;
+    sh:minCount 1;
+    sh:name "id";
+    sh:path solis:id
+  ], [
+    sh:class solis:Audit;
+    sh:description "audit trail";
+    sh:minCount 1;
+    sh:name "audit";
+    sh:nodeKind sh:IRI;
+    sh:path solis:audit
+  ];
+  sh:targetClass solis:BaseEntity .

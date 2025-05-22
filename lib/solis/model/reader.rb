@@ -1,4 +1,5 @@
 require 'solis/error'
+require 'solis/config'
 require_relative 'reader/sheet'
 require_relative 'reader/rdf'
 require_relative 'reader/shacl'
@@ -11,8 +12,8 @@ module Solis
       def self.from_uri(params)
         data = nil
         params[:content_type] = 'text/turtle' unless params.key?(:content_type)
-        DataCollector::ConfigFile.path = params[:config_path] if params[:config_path]
-        DataCollector::ConfigFile.name = params[:config_name] if params[:config_name]
+        Solis.config.path = params[:config_path] if params[:config_path]
+        Solis.config.name = params[:config_name] if params[:config_name]
 
         if params.keys.include?(:uri) && params[:uri].is_a?(StringIO)
           raise Solis::Error::BadParameter, 'Not a IO object' unless params[:uri].is_a?(StringIO)
@@ -21,8 +22,8 @@ module Solis
           uri = URI.parse(params[:uri])
           case uri.scheme
           when 'google+sheet'
-            raise Solis::Error::MissingParameter, 'Missing key parameter. This is your Google Auth key.' unless params.key?(:key) || DataCollector::ConfigFile.include?(:key)
-            google_key = params[:key] || DataCollector::ConfigFile[:key]
+            raise Solis::Error::MissingParameter, 'Missing key parameter. This is your Google Auth key.' unless params.key?(:key) || Solis.config.include?(:key)
+            google_key = params[:key] || Solis.config[:key]
             spreadsheet_id = uri.host
             data = Sheet.read(google_key, spreadsheet_id, params)
           else

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "solis/version"
+require_relative 'solis/config'
 require_relative 'solis/error'
 require_relative 'solis/logger'
 require_relative 'solis/model'
