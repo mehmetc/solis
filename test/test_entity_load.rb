@@ -54,6 +54,8 @@ class TestEntityLoad < Minitest::Test
 
     person = Solis::Model::Entity.new(data, @model, 'Person', store)
 
+    assert_equal(person.exists?, true)
+
     person.load(deep = true)
     assert_equal(person.driving_license['address']['street'], 'fake street')
 
@@ -122,6 +124,8 @@ class TestEntityLoad < Minitest::Test
     )
 
     person = Solis::Model::Entity.new(data, @model, 'Person', store)
+
+    assert_equal(person.exists?, false)
 
     assert_raises(Solis::Model::Entity::LoadError) do
       person.load

@@ -104,6 +104,24 @@ module Solis
 
       end
 
+      def ask_if_id_exists(id)
+
+        op = {
+          "id" => SecureRandom.uuid,
+          "name" => "ask_if_id_exists",
+          "type" => "read",
+          "opts" => nil,
+          "content" => [id]
+        }
+
+        @logger.debug(op)
+
+        @ops << op
+
+        op['id']
+
+      end
+
       def delete_attributes_for_id(id)
 
         op = {
