@@ -128,9 +128,9 @@ module Solis
 
     def get_properties_info_for_entity(name_entity)
       properties = @shapes[name_entity][:properties]
-      names_parent_classes = get_all_parent_entities_for_entity(name_entity)
-      names_parent_classes.each do |name_parent_class|
-        properties.merge!(@shapes[name_parent_class][:properties])
+      names_entities_parents = get_all_parent_entities_for_entity(name_entity)
+      names_entities_parents.each do |name_entity_parent|
+        properties.merge!(@shapes[name_entity_parent][:properties])
       end
       properties
     end
