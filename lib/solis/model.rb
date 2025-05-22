@@ -44,26 +44,26 @@ module Solis
           Solis::Model::Entity.new(data, self, name, @store)
         end
         def list(options={namespace: false})
-          # data = @graph.query([nil, RDF::Vocab::SHACL.targetClass, nil]).map do |klass|
-          #   options.key?(:namespace) && options[:namespace].eql?(true) ? klass.object.to_s : klass.object.to_s.gsub(@namespace,'')
-          # end
-          @shapes.keys
+          data = @graph.query([nil, RDF::Vocab::SHACL.targetClass, nil]).map do |klass|
+            options.key?(:namespace) && options[:namespace].eql?(true) ? klass.object.to_s : klass.object.to_s.gsub(@namespace,'')
+          end
+          # @shapes.keys
         end
 
         def properties(name)
-          # result = []
-          # @graph.query([nil, RDF::Vocab::SHACL.targetClass, RDF::URI("#{@namespace}#{name}")]) do |klass|
-          #   shape = klass.subject
-          #   @graph.query([shape, RDF::Vocab::SHACL.property, nil]) do |property|
-          #     property_shape =  property.object
-          #     path = @graph.query([property_shape, RDF::Vocab::SHACL.path, nil]).first&.object
-          #     next unless path
-          #     name = @graph.query([property_shape, RDF::Vocab::SHACL.name, nil]).first&.object
-          #     result << name.to_s if name
-          #   end
-          # end
-          # result
-          get_properties_info_for_entity(name).keys
+          result = []
+          @graph.query([nil, RDF::Vocab::SHACL.targetClass, RDF::URI("#{@namespace}#{name}")]) do |klass|
+            shape = klass.subject
+            @graph.query([shape, RDF::Vocab::SHACL.property, nil]) do |property|
+              property_shape =  property.object
+              path = @graph.query([property_shape, RDF::Vocab::SHACL.path, nil]).first&.object
+              next unless path
+              name = @graph.query([property_shape, RDF::Vocab::SHACL.name, nil]).first&.object
+              result << name.to_s if name
+            end
+          end
+          result
+          # get_properties_info_for_entity(name).keys
         end
       end
 
