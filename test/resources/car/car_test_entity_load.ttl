@@ -6,7 +6,6 @@ example:CarShape
     a sh:NodeShape;
     sh:description  "Abstract shape that describes a car entity" ;
     sh:targetClass  example:Car;
-    sh:node         example:Car;
     sh:name         "Car";
     sh:property     [ sh:path        example:color;
                           sh:name        "color" ;
@@ -32,7 +31,6 @@ example:PersonShape
     a sh:NodeShape;
     sh:description  "Abstract shape that describes a person entity" ;
     sh:targetClass  example:Person;
-    sh:node         example:Person;
     sh:name         "Person";
     sh:property     [ sh:path        example:name;
                           sh:name        "name" ;
@@ -53,7 +51,6 @@ example:DrivingLicenseShape
     a sh:NodeShape;
     sh:description  "Abstract shape that describes a driving license" ;
     sh:targetClass  example:DrivingLicense;
-    sh:node         example:DrivingLicense;
     sh:name         "DrivingLicense";
     sh:property     [ sh:path        example:address;
                           sh:name        "address" ;
@@ -69,7 +66,6 @@ example:AddressShape
     a sh:NodeShape;
     sh:description  "Abstract shape that describes an address" ;
     sh:targetClass  example:Address;
-    sh:node         example:Address;
     sh:name         "Address";
     sh:property     [ sh:path        example:street;
                           sh:name        "street" ;

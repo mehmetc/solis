@@ -116,7 +116,7 @@ module Solis
           val_attr = [val_attr] unless val_attr.is_a?(Array)
           val_attr.each do |e|
             if is_object_an_embedded_entity_or_ref(e)
-              type_embedded = model.get_embedded_class_type_for_class_property(type_root, name_attr)
+              type_embedded = model.get_embedded_entity_type_for_entity(type_root, name_attr)
               infer_jsonld_types_from_model!(e, model, type_embedded)
             end
           end
@@ -142,7 +142,7 @@ module Solis
         context = {}
         obj.each do |name_attr, value_attr|
           next if ['@id', '@type'].include?(name_attr)
-          datatype = model.get_datatype_for_class_property(obj['@type'], name_attr)
+          datatype = model.get_datatype_for_entity(obj['@type'], name_attr)
           context[name_attr] = {
             '@type' => datatype
           } unless datatype.nil?
@@ -164,6 +164,10 @@ module Solis
 
       def self.is_object_an_embedded_entity_or_ref(obj)
         obj.is_a?(Hash) and (obj.key?('@id') or (!obj.key?('@value') and !obj.key?('@list') and !obj.key?('@set')))
+      end
+
+      def self.is_object_a_ref(obj)
+        obj.is_a?(Hash) and obj.key?('@id') and (obj.keys - ['@id', '@type']).empty?
       end
 
       def self.add_ids_if_not_exists!(obj, namespace)

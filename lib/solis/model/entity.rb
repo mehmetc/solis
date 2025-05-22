@@ -5,6 +5,7 @@ require 'json'
 require 'ostruct'
 
 require_relative '../utils/jsonld'
+require_relative '../utils/json'
 
 
 module Solis
@@ -12,9 +13,37 @@ module Solis
 
     class Entity < OpenStruct
 
+      class MissingTypeError < StandardError
+        def initialize
+          msg = "entity has no type"
+          super(msg)
+        end
+      end
+
+      class MissingStoreError < StandardError
+        def initialize
+          msg = "entity was provided no store"
+          super(msg)
+        end
+      end
+
+      class MissingOjbectIdError < StandardError
+        def initialize
+          msg = "entity has no @id"
+          super(msg)
+        end
+      end
+
       class MissingRefError < StandardError
         def initialize(ref)
-          msg = "missing ref: #{ref}"
+          msg = "missing ref: '#{ref}'"
+          super(msg)
+        end
+      end
+
+      class PatchTypeMismatchError < StandardError
+        def initialize(ref)
+          msg = "patch for '#{ref}' is an object, but data to patch is not"
           super(msg)
         end
       end
@@ -26,8 +55,25 @@ module Solis
         end
       end
 
+      class LoadError < StandardError
+        def initialize(ref)
+          msg = "no entity with id '#{ref}'"
+          super(msg)
+        end
+      end
+
+      class DestroyError < StandardError
+        def initialize(msg)
+          msg = "#{msg}"
+          super(msg)
+        end
+      end
+
       def initialize(obj, model, type, store)
         @model = model
+        if type.nil?
+          raise MissingTypeError
+        end
         @type = type
         @store = store
         super(hash=obj)
@@ -39,8 +85,8 @@ module Solis
         # flatten + expand + clean internal data before validating it
         flattened_ordered_expanded = to_jsonld_flattened_ordered_expanded
         Solis::Utils::JSONLD.clean_flattened_expanded_from_unset_data!(flattened_ordered_expanded['@graph'])
-        puts "=== flattened + deps sorted + expanded + cleaned JSON-LD:"
-        puts JSON.pretty_generate(flattened_ordered_expanded)
+        @model.logger.debug("=== flattened + deps sorted + expanded + cleaned JSON-LD:")
+        @model.logger.debug(JSON.pretty_generate(flattened_ordered_expanded))
 
         # validate literals
         # conform_literals, messages_literals = Solis::Utils::JSONLD.validate_literals(
@@ -60,19 +106,15 @@ module Solis
             messages_literals << [statement.subject.to_s, statement.predicate.to_s, e.message]
           end
         end
-        puts conform_literals
-        puts messages_literals
 
         # add hierarchy triples
         flattened_ordered_expanded['@context'].merge!(Solis::Utils::JSONLD.make_jsonld_hierarchy_context)
         flattened_ordered_expanded['@graph'].concat(Solis::Utils::JSONLD.make_jsonld_triples_from_hierarchy(@model))
-        puts "=== flattened + deps sorted + expanded + cleaned + hierarchy JSON-LD:"
-        puts JSON.pretty_generate(flattened_ordered_expanded)
+        @model.logger.debug("=== flattened + deps sorted + expanded + cleaned + hierarchy JSON-LD:")
+        @model.logger.debug(JSON.pretty_generate(flattened_ordered_expanded))
 
         # validate agains SHACL
         conform_shacl, messages_shacl = @model.validator.execute(flattened_ordered_expanded, :jsonld)
-        puts conform_shacl
-        puts messages_shacl
 
         [conform_literals, messages_literals, conform_shacl, messages_shacl]
 
@@ -87,6 +129,8 @@ module Solis
       end
 
       def save(delayed=false)
+
+        check_store_exists
 
         conform_literals, messages_literals, conform_shacl, messages_shacl = validate
 
@@ -115,39 +159,71 @@ module Solis
       end
 
       def patch(obj_patch, opts={})
-        # "plays" the patch on instance
+        # make default opts
+        _opts = deep_copy(opts)
+        _opts[:add_missing_refs] = opts[:add_missing_refs] || false
+        _opts[:autoload_missing_refs] = opts[:autoload_missing_refs] || false
+        _opts[:append_attributes] = opts[:append_attributes] || false
+        # get internal data
         obj = get_internal_data
-        patch_internal(obj, obj_patch, opts)
+        # infer type if reference autoload is requested
+        if _opts[:autoload_missing_refs]
+          Solis::Utils::JSONLD.infer_jsonld_types_from_model!(obj, @model, @type)
+        end
+        # "plays" the patch on instance
+        _obj_patch = Solis::Utils::JSONUtils.deep_replace_prefix_in_name_attr(obj_patch, '_', '@')
+        patch_internal(obj, _obj_patch, _opts)
         set_internal_data(obj)
         # in case new references are added, get them an "id" where missing
         add_ids_if_not_exists!
       end
 
       def load(deep=false)
+        check_store_exists
         obj = get_internal_data
+        check_obj_has_id(obj)
         id = obj['@id']
-        @store.get_data_for_id(id, @model.namespace, deep=deep)
-        obj_res = @store.run_operations[0]
+        id_op = @store.get_data_for_id(id, @model.namespace, deep=deep)
+        obj_res = @store.run_operations(ids=[id_op])[id_op]
+        if obj_res.empty?
+          raise LoadError.new(id)
+        end
         replace(obj_res)
         obj_res
       end
 
       def referenced?
+        check_store_exists
         obj = get_internal_data
+        check_obj_has_id(obj)
         id = obj['@id']
-        @store.ask_if_id_is_referenced(id)
-        res = @store.run_operations[0]
+        id_op = @store.ask_if_id_is_referenced(id)
+        res = @store.run_operations(ids=[id_op])[id_op]
         res
       end
 
       def destroy(delayed=false)
+        check_store_exists
         obj = get_internal_data
+        check_obj_has_id(obj)
         id = obj['@id']
-        @store.delete_attributes_for_id(id)
+        id_op = @store.delete_attributes_for_id(id)
         unless delayed
-          res = @store.run_operations[0]
+          res = @store.run_operations(ids=[id_op])[id_op]
+          unless res['success']
+            raise DestroyError.new(res['message'])
+          end
         end
         replace({})
+        id_op
+      end
+
+      def get_info
+        @model.get_info_for_entity(@type)
+      end
+
+      def get_properties_info
+        @model.get_properties_info_for_entity(@type)
       end
 
       def to_pretty_jsonld
@@ -168,6 +244,18 @@ module Solis
 
       private
 
+      def check_store_exists
+        if @store.nil?
+          raise MissingStoreError
+        end
+      end
+
+      def check_obj_has_id(obj)
+        unless obj.key?('@id')
+          raise MissingOjbectIdError
+        end
+      end
+
       def deep_copy(obj)
         Marshal.load(Marshal.dump(obj))
       end
@@ -176,12 +264,16 @@ module Solis
         # in case, in the future, diff algorithms are used,
         # deep_copy() would recreate all internal objects ref,
         # not fooling them.
-        deep_copy(self.to_h).stringify_keys
+        obj = deep_copy(self.to_h).stringify_keys
+        obj = Solis::Utils::JSONUtils.deep_replace_prefix_in_name_attr(obj, '_', '@')
+        obj
       end
 
       def set_internal_data(obj)
         # deep_copy(): see get_internal_data
-        self.marshal_load(deep_copy(obj).symbolize_keys)
+        obj2 = deep_copy(obj)
+        obj2 = Solis::Utils::JSONUtils.deep_replace_prefix_in_name_attr(obj2, '@', '_')
+        self.marshal_load(obj2.symbolize_keys)
       end
 
       def to_jsonld(hash_data_json)
@@ -204,8 +296,8 @@ module Solis
 
       def expand_obj(obj)
 
-        puts "======= object:"
-        puts JSON.pretty_generate(obj)
+        @model.logger.debug("======= object:")
+        @model.logger.debug(JSON.pretty_generate(obj))
         context_datatypes = Solis::Utils::JSONLD.make_jsonld_datatypes_context_from_model(obj, @model)
 
         context = {
@@ -213,9 +305,9 @@ module Solis
         }
         context.merge!(context_datatypes)
 
-        puts "======= compacted single object:"
+        @model.logger.debug("======= compacted single object:")
         hash_jsonld_compacted = Solis::Utils::JSONLD.json_object_to_jsonld(obj, context)
-        puts JSON.pretty_generate(hash_jsonld_compacted)
+        @model.logger.debug(JSON.pretty_generate(hash_jsonld_compacted))
 
         # benefits of expansion:
         # - all properties names are expanded to URIs
@@ -234,19 +326,19 @@ module Solis
 
       def to_jsonld_flattened_ordered_expanded
 
-        puts "=== internal JSON full:"
-        puts JSON.pretty_generate(get_internal_data)
+        @model.logger.debug("=== internal JSON full:")
+        @model.logger.debug(JSON.pretty_generate(get_internal_data))
 
         hash_data_jsonld = to_jsonld(get_internal_data)
-        puts "=== internal JSON-LD:"
-        puts JSON.pretty_generate(hash_data_jsonld)
+        @model.logger.debug("=== internal JSON-LD:")
+        @model.logger.debug(JSON.pretty_generate(hash_data_jsonld))
 
         flattened = Solis::Utils::JSONLD.flatten_jsonld(hash_data_jsonld)
-        puts "=== flattened JSON-LD:"
-        puts JSON.pretty_generate(flattened)
+        @model.logger.debug("=== flattened JSON-LD:")
+        @model.logger.debug(JSON.pretty_generate(flattened))
         flattened_ordered = Solis::Utils::JSONLD.sort_flat_jsonld_by_deps(flattened)
-        puts "=== flattened + deps sorted JSON-LD:"
-        puts JSON.pretty_generate(flattened_ordered)
+        @model.logger.debug("=== flattened + deps sorted JSON-LD:")
+        @model.logger.debug(JSON.pretty_generate(flattened_ordered))
 
         # expand single items
         flattened_ordered_expanded = deep_copy(flattened_ordered)
@@ -254,8 +346,8 @@ module Solis
         flattened_ordered_expanded['@graph'].map! do |obj|
           expand_obj(obj)
         end
-        puts "=== flattened + deps sorted + expanded JSON-LD:"
-        puts JSON.pretty_generate(flattened_ordered_expanded)
+        @model.logger.debug("=== flattened + deps sorted + expanded JSON-LD:")
+        @model.logger.debug(JSON.pretty_generate(flattened_ordered_expanded))
 
         flattened_ordered_expanded
 
@@ -263,8 +355,8 @@ module Solis
 
       def save_instance(hash_jsonld_expanded)
 
-        puts "======= expanded single object:"
-        puts JSON.pretty_generate(hash_jsonld_expanded)
+        @model.logger.debug("======= expanded single object:")
+        @model.logger.debug(JSON.pretty_generate(hash_jsonld_expanded))
 
         data = hash_jsonld_expanded
 
@@ -314,7 +406,7 @@ module Solis
           type_attr = nil # will be defined just soon
           val_attr_patch.each do |item_val_patch|
 
-            if item_val_patch.is_a?(Hash)
+            if Solis::Utils::JSONLD.is_object_an_embedded_entity_or_ref(item_val_patch)
               # patch item is an embedded entity
               type_attr = 'entity'
               if obj[name_attr_patch].is_a?(Array)
@@ -323,27 +415,38 @@ module Solis
                 end
                 if idx.nil?
                   if opts[:add_missing_refs]
-                    obj[name_attr_patch].push(item_val_patch)
-                    # obj_loaded = Entity.new(item_val_patch, @model, obj['@type'], @store).load(deep=true)
-                    # obj[name_attr_patch].push(obj_loaded)
+                    if opts[:autoload_missing_refs]
+                      obj_loaded = Entity.new(item_val_patch, @model, obj['@type'], @store).load(deep=true)
+                      obj[name_attr_patch].push(obj_loaded)
+                    else
+                      obj[name_attr_patch].push(item_val_patch)
+                    end
+                    idx = obj[name_attr_patch].size - 1
+                    patch_internal(obj[name_attr_patch][idx], item_val_patch, opts)
                   else
                     raise MissingRefError.new(item_val_patch['@id'])
                   end
                 else
                   patch_internal(obj[name_attr_patch][idx], item_val_patch, opts)
                 end
-              elsif obj[name_attr_patch].is_a?(Hash)
+              elsif Solis::Utils::JSONLD.is_object_an_embedded_entity_or_ref(obj[name_attr_patch])
                 if obj[name_attr_patch]['@id'] == item_val_patch['@id']
                   patch_internal(obj[name_attr_patch], item_val_patch, opts)
                 else
                   if opts[:add_missing_refs]
-                    obj[name_attr_patch] = item_val_patch
+                    if opts[:autoload_missing_refs]
+                      obj_loaded = Entity.new(item_val_patch, @model, obj['@type'], @store).load(deep=true)
+                      obj[name_attr_patch] = obj_loaded
+                    else
+                      obj[name_attr_patch] = item_val_patch
+                    end
+                    patch_internal(obj[name_attr_patch], item_val_patch, opts)
                   else
                     raise MissingRefError.new(item_val_patch['@id'])
                   end
                 end
               else
-                raise MissingRefError.new(item_val_patch['@id'])
+                raise PatchTypeMismatchError.new(item_val_patch['@id'])
               end
             else
               # patch item is either:

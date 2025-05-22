@@ -9,7 +9,7 @@ class TestEntitySave < Minitest::Test
     dir_tmp = File.join(__dir__, './data')
 
     @model_1 = Solis::Model.new(model: {
-      uri: "file://test/resources/car/car_shacl_2.ttl",
+      uri: "file://test/resources/car/car_test_entity_save.ttl",
       prefix: 'ex',
       namespace: @name_graph,
       tmp_dir: dir_tmp
@@ -19,7 +19,7 @@ class TestEntitySave < Minitest::Test
       'ElectricCar' => ['Car']
     }
     @model_2 = Solis::Model.new(model: {
-                                  uri: "file://test/resources/car/car_shacl_2.ttl",
+                                  uri: "file://test/resources/car/car_test_entity_save.ttl",
                                   prefix: 'ex',
                                   namespace: @name_graph,
                                   tmp_dir: dir_tmp,
@@ -32,15 +32,15 @@ class TestEntitySave < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -64,7 +64,7 @@ class TestEntitySave < Minitest::Test
         "brand": "@unset",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "john smith"
           }
         ]
@@ -101,15 +101,15 @@ class TestEntitySave < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -133,7 +133,7 @@ class TestEntitySave < Minitest::Test
         "brand": "@unset",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "john smith"
           }
         ]
@@ -171,15 +171,15 @@ class TestEntitySave < Minitest::Test
   #
   #   data = JSON.parse %(
   #     {
-  #       "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+  #       "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
   #       "color": ["green", "yellow"],
   #       "brand": "toyota",
   #       "owners": [
   #         {
-  #           "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+  #           "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
   #           "name": "jon doe",
   #           "address": {
-  #             "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+  #             "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
   #             "street": "fake street"
   #           }
   #         }
@@ -192,7 +192,7 @@ class TestEntitySave < Minitest::Test
   #
   #   car = Solis::Model::Entity.new(data, @model_1, 'Car', store)
   #   puts car.to_pretty_jsonld
-  #   puts car['@id']
+  #   puts car['_id']
   #
   #   car.save
   #

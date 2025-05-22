@@ -1,6 +1,6 @@
 require "test_helper"
 
-class TestSolis < Minitest::Test
+class TestWriter < Minitest::Test
   def setup
     super
     @shacl = File.read('test/resources/car/car_shacl.ttl')

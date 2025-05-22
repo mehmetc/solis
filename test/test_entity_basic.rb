@@ -8,7 +8,7 @@ class TestEntityBasic < Minitest::Test
     dir_tmp = File.join(__dir__, './data')
     @name_graph = 'https://example.com/'
     @model = Solis::Model.new(model:{
-                                   uri: "file://test/resources/car/car_test_entity_bulk_basic.ttl",
+                                   uri: "file://test/resources/car/car_test_entity_basic.ttl",
                                    prefix: 'ex',
                                    namespace: @name_graph,
                                    tmp_dir: dir_tmp
@@ -20,15 +20,15 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -38,8 +38,8 @@ class TestEntityBasic < Minitest::Test
 
     car = Solis::Model::Entity.new(data, @model, 'Car', nil)
 
-    assert_equal(car['@id'], "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be")
-    assert_equal(car.owners[0]['address']['@id'], "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea")
+    assert_equal(car['_id'], "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be")
+    assert_equal(car.owners[0]['address']['_id'], "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea")
 
   end
 
@@ -62,9 +62,61 @@ class TestEntityBasic < Minitest::Test
 
     car = Solis::Model::Entity.new(data, @model, 'Car', nil)
 
-    assert_equal(car['@id'].nil?, false)
-    assert_equal(car.owners[0]['@id'].nil?, false)
-    assert_equal(car.owners[0]['address']['@id'].nil?, false)
+    assert_equal(car['_id'].nil?, false)
+    assert_equal(car.owners[0]['_id'].nil?, false)
+    assert_equal(car.owners[0]['address']['_id'].nil?, false)
+
+  end
+
+  def test_entity_get_info
+
+    data = JSON.parse %(
+      {
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "name": "jon doe",
+            "address": {
+              "street": "fake street"
+            }
+          }
+        ]
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', nil)
+
+    info = car.get_info
+
+    assert_equal(info[:uri], 'https://example.com/CarShape')
+    assert_equal(info[:closed], false)
+
+  end
+
+  def test_entity_get_properties_info
+
+    data = JSON.parse %(
+      {
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "name": "jon doe",
+            "address": {
+              "street": "fake street"
+            }
+          }
+        ]
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', nil)
+
+    info = car.get_properties_info
+
+    assert_equal(info['color'].nil?, false)
+    assert_equal(info['color'][:description], 'Color of the car')
 
   end
 
@@ -72,15 +124,15 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -92,15 +144,15 @@ class TestEntityBasic < Minitest::Test
 
     data_2 = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": "black",
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "other fake street"
             }
           }
@@ -119,15 +171,15 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -143,7 +195,7 @@ class TestEntityBasic < Minitest::Test
         "brand": "nissan",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "john smith"
           }
         ]
@@ -157,19 +209,60 @@ class TestEntityBasic < Minitest::Test
 
   end
 
-  def test_entity_patch_add_missing_refs
+  def test_entity_no_partial_patch_on_error
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "street": "fake street"
+            }
+          }
+        ]
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', nil)
+
+    obj_patch = JSON.parse %(
+      {
+        "color": "black",
+        "brand": {
+          "_id": "bla-bla-bla",
+          "attr": "value"
+        }
+      }
+    )
+
+    assert_raises(Solis::Model::Entity::PatchTypeMismatchError) do
+      car.patch(obj_patch)
+    end
+
+    assert_equal(car.color, ["green", "yellow"])
+    assert_equal(car.brand, "toyota")
+
+  end
+
+  def test_entity_patch_add_missing_refs
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "jon doe",
+            "address": {
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -185,7 +278,7 @@ class TestEntityBasic < Minitest::Test
         "brand": "nissan",
         "owners": [
           {
-            "@id": "https://example.com/12345-non-existing",
+            "_id": "https://example.com/12345-non-existing",
             "name": "john smith"
           }
         ]
@@ -199,7 +292,8 @@ class TestEntityBasic < Minitest::Test
     assert_equal((car.color-["green", "yellow"]).size, 0)
 
     car.patch(obj_patch, opts={
-      add_missing_refs: true
+      add_missing_refs: true,
+      autoload_missing_refs: false
     })
 
     assert_equal(car.color, 'black')
@@ -207,19 +301,163 @@ class TestEntityBasic < Minitest::Test
 
   end
 
+  def test_entity_patch_add_missing_refs_with_autoload
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
+
+    # prepare car (without ref to any person) and save
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": []
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', store)
+
+    car.save
+
+    # prepare person and save
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+        "name": "jon doe",
+        "address": {
+          "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+          "street": "fake street"
+        }
+      }
+    )
+
+    person = Solis::Model::Entity.new(data, @model, 'Person', store)
+
+    person.save
+
+    # wrongly patch car by linking to non-existing person
+
+    obj_patch = JSON.parse %(
+      {
+        "color": "black",
+        "brand": "nissan",
+        "owners": [
+          {
+            "_id": "https://example.com/non-existing-id",
+            "name": "john smith"
+          }
+        ]
+      }
+    )
+
+    assert_raises(Solis::Model::Entity::LoadError) do
+      car.patch(obj_patch, opts={
+        add_missing_refs: true,
+        autoload_missing_refs: true
+      })
+    end
+
+    # correctly patch car by linking to existing person
+
+    obj_patch = JSON.parse %(
+      {
+        "color": "black",
+        "brand": "nissan",
+        "owners": [
+          {
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "john smith"
+          }
+        ]
+      }
+    )
+
+    car.patch(obj_patch, opts={
+      add_missing_refs: true,
+      autoload_missing_refs: true
+    })
+
+    assert_equal(car.valid?, true)
+
+    assert_equal(car.color, 'black')
+    assert_equal(car.brand, 'nissan')
+    assert_equal(car.owners[0]['name'], 'john smith')
+
+  end
+
+  def test_entity_patch_add_missing_refs_with_autoload_no_store
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
+
+    # prepare car (without ref to any person)
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": []
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', nil)
+
+    # prepare person and save
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+        "name": "jon doe",
+        "address": {
+          "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+          "street": "fake street"
+        }
+      }
+    )
+
+    person = Solis::Model::Entity.new(data, @model, 'Person', store)
+
+    person.save
+
+    obj_patch = JSON.parse %(
+      {
+        "color": "black",
+        "brand": "nissan",
+        "owners": [
+          {
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "john smith"
+          }
+        ]
+      }
+    )
+
+    assert_raises(Solis::Model::Entity::MissingStoreError) do
+      car.patch(obj_patch, opts={
+        add_missing_refs: true,
+        autoload_missing_refs: true
+      })
+    end
+
+  end
+
   def test_entity_patch_append_attributes
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -247,15 +485,15 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -271,7 +509,7 @@ class TestEntityBasic < Minitest::Test
         "brand": "@unset",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "john smith"
           }
         ]
@@ -288,15 +526,15 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -324,15 +562,15 @@ class TestEntityBasic < Minitest::Test
 
     data = JSON.parse %(
       {
-        "@id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
         "color": ["green", "yellow"],
         "brand": "toyota",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "jon doe",
             "address": {
-              "@id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
               "street": "fake street"
             }
           }
@@ -348,7 +586,7 @@ class TestEntityBasic < Minitest::Test
         "brand": "@unset",
         "owners": [
           {
-            "@id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
             "name": "john smith",
             "address": "@unset"
           }

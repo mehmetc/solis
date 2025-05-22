@@ -10,20 +10,32 @@ module Solis
     module RDFOperationsRunner
       # Expects:
       # - @client_sparql
+      # - @logger
 
-      def run_operations
+      def run_operations(ids_op='all')
         ops_read = []
         ops_write = []
-        @ops.each do |op|
+        indexes = []
+        @ops.each_with_index do |op, index|
+          if ids_op.is_a?(Array)
+            next unless ids_op.include?(op['id'])
+          end
           if op['type'].eql?('read')
             ops_read << op
           else
             ops_write << op
           end
+          indexes << index
         end
-        run_write_operations(ops_write)
-        res = run_read_operations(ops_read)
-        @ops = []
+        res = {}
+        # There must be guaranteed that in the following functions call
+        # all exceptions are handled internally, and return in the results.
+        # This way, @ops can be updated successfully.
+        res.merge!(run_write_operations(ops_write))
+        res.merge!(run_read_operations(ops_read))
+        # remove performed operations from list;
+        # following does not seem thread-safe, but ok for the now ...
+        indexes.sort.reverse_each { |index| @ops.delete_at(index) }
         res
       end
 
@@ -51,7 +63,7 @@ module Solis
         fill_graph_from_subject_root = lambda do |g, s, deep|
           query = @client_sparql.select.where([s, :p, :o])
           query.each_solution do |solution|
-            pp [s, solution.p, solution.o]
+            @logger.debug([s, solution.p, solution.o])
             g << [s, solution.p, solution.o]
             if deep
               # if solution.o.is_a?(RDF::URI) or solution.o.is_a?(RDF::Literal::AnyURI)
@@ -64,7 +76,7 @@ module Solis
         fill_graph_from_subject_root.call(graph, s, deep)
         # turn graph into JSON-LD hash
         jsonld = JSON::LD::API.fromRDF(graph)
-        puts JSON.pretty_generate(jsonld)
+        @logger.debug(JSON.pretty_generate(jsonld))
         # compact @type
         jsonld_compacted = jsonld.map do |obj|
           Solis::Utils::JSONLD.compact_type(obj)
@@ -79,13 +91,13 @@ module Solis
         # jsonld_compacted.map! do |obj|
         #   Solis::Utils::JSONLD.anyuris_to_uris(obj)
         # end
-        puts JSON.pretty_generate(jsonld_compacted)
+        @logger.debug(JSON.pretty_generate(jsonld_compacted))
         f_conv = method(:parse_json_value_from_datatype)
         # compact also the values
         jsonld_compacted.map! do |obj|
           Solis::Utils::JSONLD.compact_values(obj, f_conv)
         end
-        puts JSON.pretty_generate(jsonld_compacted)
+        @logger.debug(JSON.pretty_generate(jsonld_compacted))
         # find the type of the (root) object with URI "s"
         obj_root = jsonld_compacted.find { |e| e['@id'] == s.to_s }
         type = obj_root.nil? ? nil : obj_root['@type']
@@ -104,7 +116,7 @@ module Solis
           }
         )
         jsonld_compacted_framed = JSON::LD::API.frame(jsonld_compacted, frame)
-        puts JSON.pretty_generate(jsonld_compacted_framed)
+        @logger.debug(JSON.pretty_generate(jsonld_compacted_framed))
         # produce result
         res = {}
         # if framing created a "@graph" (empty) attribute,
@@ -113,7 +125,10 @@ module Solis
           res = jsonld_compacted_framed
         end
         res.delete('@context')
-        puts JSON.pretty_generate(res)
+        # puts JSON.pretty_generate(res)
+        # if res.empty?
+        #   raise StandardError, "no entity with id '#{s.to_s}'"
+        # end
         res
       end
 
@@ -135,13 +150,14 @@ module Solis
             namespace = op['content'][1]
             deep = op['opts'] == Solis::Store::GetMode::DEEP
             s = RDF::URI(id)
-            get_data_for_subject(s, namespace, deep)
+            r = get_data_for_subject(s, namespace, deep)
           when 'ask_if_id_is_referenced'
             id = op['content'][0]
             o = RDF::URI(id)
-            ask_if_object_is_referenced(o)
+            r = ask_if_object_is_referenced(o)
           end
-        end
+          [op['id'], r]
+        end.to_h
         res
       end
 
@@ -155,8 +171,10 @@ module Solis
             ops_save << op
           end
         end
-        run_save_operations(ops_save)
-        run_destroy_operations(ops_destroy)
+        res = {}
+        res.merge!(run_save_operations(ops_save))
+        res.merge!(run_destroy_operations(ops_destroy))
+        res
       end
 
       def run_destroy_operations(ops_generic)
@@ -169,7 +187,12 @@ module Solis
             ss << s
           end
         end
-        delete_attributes_for_subjects(ss)
+        r = delete_attributes_for_subjects(ss)
+        res = {}
+        ops_generic.each do |op|
+          res[op['id']] = r
+        end
+        res
       end
 
       def delete_attributes_for_subjects(ss)
@@ -190,9 +213,9 @@ module Solis
               ?s ?p ?o .
             }
           )
-          puts "\n\nDELETE QUERY:\n\n"
-          puts str_query
-          puts "\n\n"
+          @logger.debug("\n\nDELETE QUERY:\n\n")
+          @logger.debug(str_query)
+          @logger.debug("\n\n")
           # run query
           # TODO: repository seems a snapshot of the triple store
           # after the query.
@@ -205,9 +228,18 @@ module Solis
                                                   .where([:s_ref, :p_ref, :s])
                                                   .values(:s, *ss)
                                                   .true?
+          # if subjects_were_referenced
+          #   raise StandardError, "any of these '#{str_ids}' was referenced"
+          # end
+          success = !subjects_were_referenced
+          message = ''
           if subjects_were_referenced
-            raise StandardError, "any of these #{str_ids} was referenced"
+            message = "any of these '#{str_ids}' was referenced"
           end
+          {
+            "success" => success,
+            "message" => message
+          }
         end
       end
 
@@ -255,7 +287,7 @@ module Solis
         end
 
         # begin critical section
-        puts "\n\n-- BEGIN CRITICAL SECTION: \n\n"
+        @logger.debug("\n\n-- BEGIN CRITICAL SECTION: \n\n")
 
         # write graphs
         ops.each do |op|
@@ -339,14 +371,14 @@ module Solis
 
             # run delete query
             str_query = SPARQL::Client::Update::DeleteData.new(delete['graph'], graph: @name_graph).to_s
-            puts "\n\nDELETE QUERY:\n\n"
-            puts str_query
-            puts "\n\n"
+            @logger.debug("\n\nDELETE QUERY:\n\n")
+            @logger.debug(str_query)
+            @logger.debug("\n\n")
             begin
               @client_sparql.delete_data(delete['graph'])
             rescue RuntimeError => e
-              puts "error deleting data: #{e.full_message}"
-              puts "rolling back ..."
+              @logger.debug("error deleting data: #{e.full_message}")
+              @logger.debug("rolling back ...")
               rollback(rollbacks)
               raise RuntimeError, e
             end
@@ -357,14 +389,14 @@ module Solis
 
             # run insert query
             str_query = SPARQL::Client::Update::InsertData.new(insert['graph'], graph: @name_graph).to_s
-            puts "\n\nINSERT QUERY:\n\n"
-            puts str_query
-            puts "\n\n"
+            @logger.debug("\n\nINSERT QUERY:\n\n")
+            @logger.debug(str_query)
+            @logger.debug("\n\n")
             begin
               @client_sparql.insert_data(insert['graph'])
             rescue RuntimeError => e
-              puts "error inserting data: #{e.full_message}"
-              puts "rolling back ..."
+              @logger.debug("error inserting data: #{e.full_message}")
+              @logger.debug("rolling back ...")
               rollback(rollbacks)
               raise RuntimeError, e
             end
@@ -379,18 +411,51 @@ module Solis
             # Of course better than method 1 because supposedly atomic (no rollout strategies needed).
 
             str_query = SPARQL::Client::Update::DeleteInsert.new(delete['graph'], insert['graph'], nil, graph: @name_graph).to_s
-            puts "\n\nDELETE/INSERT QUERY:\n\n"
-            puts str_query
-            puts "\n\n"
+            @logger.debug("\n\nDELETE/INSERT QUERY:\n\n")
+            @logger.debug(str_query)
+            @logger.debug("\n\n")
 
-            @client_sparql.delete_insert(delete['graph'], insert['graph'], nil)
+            method_di = 1
+
+            case method_di
+            when 1
+              # this works
+
+              @client_sparql.delete_insert(delete['graph'], insert['graph'], nil)
+            when 2
+              # this does not, which is strange because the DELETE/WHERE query works
+              # when using @client_sparql.query(str_query, update: true).
+              # It would be nice to have it running so we can use the raw SPARQL query string
+              # and be sure it is not internally split into DELETE + INSERT.
+
+              # str_query = "WITH <#{@name_graph}>"
+              # unless delete['graph'].empty?
+              #   str_query += "\nDELETE {\n#{delete['graph'].dump(:ntriples)}}"
+              # end
+              # unless insert['graph'].empty?
+              #   str_query += "\nINSERT {\n#{insert['graph'].dump(:ntriples)}}"
+              # end
+              # # str_query += "\nWHERE { }\n"
+              # # str_query += "\nWHERE { ?s ?p ?o }\n"
+              # puts str_query
+
+              @client_sparql.query(str_query, update: true)
+              # @client_sparql.instance_variable_set("@op", :update)
+              # puts @client_sparql.instance_variable_get("@op")
+              # SPARQL.execute(str_query, @client_sparql.url, update: true)
+            end
 
           end
 
         end
 
         # end critical section
-        puts "\n\n-- END CRITICAL SECTION: \n\n"
+        @logger.debug("\n\n-- END CRITICAL SECTION: \n\n")
+
+        res = ops_generic.map do |op|
+          [op['id'], 'ok']
+        end.to_h
+        res
 
       end
 
@@ -418,25 +483,25 @@ module Solis
         result.each_solution do |solution|
           objects << solution.o
         end
-        puts "GET_OBJECTS_FOR_SUBJECT_AND_PREDICATE: #{s}, #{p}:\n#{objects}"
+        @logger.debug("GET_OBJECTS_FOR_SUBJECT_AND_PREDICATE: #{s}, #{p}:\n#{objects}")
         objects
       end
 
       def rollback(rollbacks)
         rollbacks.each_with_index do |op, i|
-          puts "\n\nROLLBACK QUERY: #{i+1}"
+          @logger.debug("\n\nROLLBACK QUERY: #{i+1}")
           case op[:type]
           when 'query_insert'
             str_query = SPARQL::Client::Update::InsertData.new(op[:graph], graph: @name_graph).to_s
-            puts "\n\nINSERT QUERY (AS ROLLBACK QUERY):\n\n"
-            puts str_query
-            puts "\n\n"
+            @logger.debug("\n\nINSERT QUERY (AS ROLLBACK QUERY):\n\n")
+            @logger.debug(str_query)
+            @logger.debug("\n\n")
             @client_sparql.insert_data(op[:graph])
           when 'query_delete'
             str_query = SPARQL::Client::Update::DeleteData.new(op[:graph], graph: @name_graph).to_s
-            puts "\n\nDELETE QUERY (AS ROLLBACK QUERY):\n\n"
-            puts str_query
-            puts "\n\n"
+            @logger.debug("\n\nDELETE QUERY (AS ROLLBACK QUERY):\n\n")
+            @logger.debug(str_query)
+            @logger.debug("\n\n")
             @client_sparql.delete_data(op[:graph])
           end
         end
