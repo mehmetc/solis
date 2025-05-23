@@ -30,7 +30,7 @@ module Solis
           list += _get_parent_entities_for_entity(list[idx])
           idx += 1
         end
-        list[1..]
+        list[1..].compact
       end
 
       def get_info_for_entity(name_entity)

@@ -27,9 +27,9 @@ class TestIntegration < Minitest::Test
     # create a ttl string object
     sioc_shacl = @solis.model.writer
 
-    File.open('./test/resources/sioc_shapes.ttl', 'wb') do |f|
-      f.puts sioc_shacl
-    end
+    # File.open('./test/resources/sioc_shapes.ttl', 'wb') do |f|
+    #   f.puts sioc_shacl
+    # end
 
     # check if the generated SHACL is valid
     shacl_shacl = Solis::Model::Reader.from_uri(uri: 'file://test/resources/shacl-shacl.ttl', content_type: 'text/turtle')
@@ -41,9 +41,11 @@ class TestIntegration < Minitest::Test
     # TODO: How to add multiple namespaces to the graph.
     # for example: SIOC references DC and FOAF the SHACL is generated correctly but the prefix does not contain a reference to these
 
+    post = @solis.model.entity.new('Post')
+    properties = post.get_properties_info.keys
 
     assert_includes(@solis.model.entity.list, "Post")
-    assert_includes(@solis.model.entity.properties('Post'), 'title')
+    assert_includes(properties, 'title')
 
     data = {
       "title" => "Hello World",
