@@ -8,7 +8,7 @@ require_relative "model/literals/iso8601"
 
 module Solis
   class Model
-    include Solis::Model::Extension
+
     attr_accessor :title, :version, :description
     attr_reader :graph, :namespace, :prefix, :uri, :content_type, :logger
     attr_reader :shapes, :validator, :hash_validator_literals, :namespace, :hierarchy
