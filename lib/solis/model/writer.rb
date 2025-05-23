@@ -16,15 +16,12 @@ module Solis
         shacl_graph = params[:model]
         uri = params[:uri]
 
+        all_prefixes = extract_prefixes(shacl_graph, prefix, namespace)
+
         if uri.is_a?(StringIO)
           Solis.logger.info("Writing #{params[:uri]}")
           uri.write(shacl_graph.dump(content_type,
-                                     prefixes: {prefix.to_sym => namespace,
-                                                sh: RDF::Vocab::SHACL,
-                                                rdfs: RDF::RDFS,
-                                                rdf: RDF::RDFV,
-                                                xsd: RDF::XSD
-                                     }))
+                                     prefixes: all_prefixes))
           uri.rewind
         else
           source = CGI.unescapeHTML(params[:uri])
@@ -41,24 +38,14 @@ module Solis
             else
               File.open(absolute_path, 'wb') do |f|
                 f.puts shacl_graph.dump(content_type,
-                                        prefixes: {prefix.to_sym => namespace,
-                                                   sh: RDF::Vocab::SHACL,
-                                                   rdfs: RDF::RDFS,
-                                                   rdf: RDF::RDFV,
-                                                   xsd: RDF::XSD
-                                        })
+                                        prefixes: all_prefixes)
               end
             end
           when 'http', 'https'
             HTTP.post(uri.to_s, )
             URI.open(uri, "wb") do |f|
               f.puts shacl_graph.dump(content_type,
-                                      prefixes: {prefix.to_sym => namespace,
-                                                 sh: RDF::Vocab::SHACL,
-                                                 rdfs: RDF::RDFS,
-                                                 rdf: RDF::RDFV,
-                                                 xsd: RDF::XSD
-                                      })
+                                      prefixes: all_prefixes)
             end
           when 'mermaid'
             MermaidWriter.write(shacl_graph, params)
@@ -75,6 +62,38 @@ module Solis
           end
         end
       end
+      private
+      def self.extract_prefixes(repository, prefix, namespace)
+        prefixes = {}
+        uris = []
+        repository.each_statement do |statement|
+          [statement.subject, statement.predicate, statement.object].each do |term|
+            if term.is_a?(RDF::URI)
+              # Extract potential prefix (everything before the last # or /)
+              uri_str = term.to_s
+              if uri_str =~ /(.*[#\/])([^#\/]+)$/
+                base_uri = $1
+                next if base_uri.eql?(namespace)
+
+                uris << base_uri unless uris.include?(base_uri)
+              end
+            end
+          end
+        end
+
+        anonymous_prefix_index = 0
+        uris.each do |prefix|
+          if RDF::URI(prefix).qname.nil?
+            prefixes["ns#{anonymous_prefix_index}".to_sym] = prefix
+            anonymous_prefix_index += 1
+          else
+            prefixes[RDF::URI(prefix).qname&.first] = prefix
+          end
+        end
+        prefixes[prefix.to_sym] = namespace
+        prefixes
+      end
+
     end
   end
 end

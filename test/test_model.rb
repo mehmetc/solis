@@ -29,7 +29,7 @@ class TestModel < Minitest::Test
 
     assert_equal('Car', car_entity.instance_variable_get('@type'))
     #TODO: the id cannot start with an @ in Ruby
-    assert_match(@solis.model.namespace, car_entity["@id"])
+    assert_match(@solis.model.namespace, car_entity["_id"])
   end
 
   def test_model_instance_namepace

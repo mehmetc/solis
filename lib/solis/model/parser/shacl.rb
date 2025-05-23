@@ -67,8 +67,6 @@ class SHACLParser
   end
 end
 
-
-
 module SHACLSHapes
 
   def self.get_property_datatype_for_shape(shapes, name_shape, name_property)
