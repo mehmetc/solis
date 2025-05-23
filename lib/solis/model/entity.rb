@@ -12,6 +12,10 @@ module Solis
   class Model
 
     class Entity < OpenStruct
+      def method_missing(method, *args, &block)
+        raise Solis::Error::PropertyNotFound unless get_properties_info.keys.include?(method.to_s)
+        super
+      end
 
       class MissingTypeError < StandardError
         def initialize

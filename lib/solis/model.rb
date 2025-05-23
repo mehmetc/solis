@@ -8,7 +8,7 @@ require_relative "model/literals/iso8601"
 
 module Solis
   class Model
-
+    include Solis::Model::Extension
     attr_accessor :title, :version, :description
     attr_reader :graph, :namespace, :prefix, :uri, :content_type, :logger
     attr_reader :shapes, :validator, :hash_validator_literals, :namespace, :hierarchy
@@ -25,13 +25,17 @@ module Solis
       @content_type = model[:content_type]
       @store = params[:store] || nil
 
+      @title= model[:title] || "No Title"
+      @version = model[:version] || "0.1"
+      @description = model[:description]
+
       @graph = Solis::Model::Reader.from_uri(model)
 
       @parser = SHACLParser.new(@graph)
       @shapes = @parser.parse_shapes
       @validator = Solis::SHACLValidatorV2.new(@graph, :graph, {
         path_dir: params[:tmp_dir]
-      })
+      }) rescue Solis::SHACLValidatorV1.new(@graph, :graph, {})
       hash_validator_literals_custom = model[:hash_validator_literals_custom] || {}
       @hash_validator_literals = Solis::Model::Literals.get_default_hash_validator
       @hash_validator_literals.merge!(hash_validator_literals_custom)
@@ -47,23 +51,6 @@ module Solis
           data = @graph.query([nil, RDF::Vocab::SHACL.targetClass, nil]).map do |klass|
             options.key?(:namespace) && options[:namespace].eql?(true) ? klass.object.to_s : klass.object.to_s.gsub(@namespace,'')
           end
-          # @shapes.keys
-        end
-
-        def properties(name)
-          result = []
-          @graph.query([nil, RDF::Vocab::SHACL.targetClass, RDF::URI("#{@namespace}#{name}")]) do |klass|
-            shape = klass.subject
-            @graph.query([shape, RDF::Vocab::SHACL.property, nil]) do |property|
-              property_shape =  property.object
-              path = @graph.query([property_shape, RDF::Vocab::SHACL.path, nil]).first&.object
-              next unless path
-              name = @graph.query([property_shape, RDF::Vocab::SHACL.name, nil]).first&.object
-              result << name.to_s if name
-            end
-          end
-          result
-          # get_properties_info_for_entity(name).keys
         end
       end
 
@@ -75,6 +62,9 @@ module Solis
       options[:namespace] ||= @namespace
       options[:prefix] ||= @prefix
       options[:model] ||= @graph
+      options[:title] ||= @title
+      options[:version] ||= @version
+      options[:description] ||= @description
 
       case content_type
       when 'text/vnd.mermaid'

@@ -60,14 +60,12 @@ class SHACLParser
     end
 
     shapes_graph.query([property_uri, RDF::Vocab::SHACL.class, nil]) do |klass|
-      property_info[:constraints][:class] = klass.object.path[1..]
+      property_info[:constraints][:class] = klass.object.path[1..] rescue nil
     end
 
     property_info
   end
 end
-
-
 
 module SHACLSHapes
 

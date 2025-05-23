@@ -17,17 +17,21 @@ module Solis
 
         def self.read(ontology)
           if ontology.is_a?(String)
-            #graph = RDF::Graph.load(ontology)
             graph = RDF::Repository.load(ontology)
           else
             graph = ontology
           end
 
-          #shacl_graph = RDF::Graph.new
+          # shacl_graph = RDF::Graph.new
           shacl_graph = RDF::Repository.new
           shacl_graph.graph_name = graph.graph_name if graph.named?
           graph.query([nil, RDF.type, RDF::OWL.Class]).each do |stmt|
             class_uri = stmt.subject
+
+            # Skip blank node classes - they're usually complex constructs like unionOf
+            # that shouldn't become direct SHACL node shapes
+            next if class_uri.is_a?(RDF::Node)
+
             class_name = safe_class_name(class_uri.to_s)
             shape = RDF::URI.new("#{class_uri}Shape")
 
@@ -37,83 +41,18 @@ module Solis
             shape_subclass_of = shape_subclass_of.nil? ? class_uri : RDF::URI.new("#{shape_subclass_of}Shape")
 
             shacl_graph << [shape, RDF.type, RDF::Vocab::SHACL.NodeShape]
-            shacl_graph << [shape, RDF::Vocab::SHACL.name, class_name] #class_uri.path.split('/').last]
+            shacl_graph << [shape, RDF::Vocab::SHACL.name, class_name] # class_uri.path.split('/').last]
             shacl_graph << [shape, RDF::Vocab::SHACL.targetClass, class_uri]
             shacl_graph << [shape, RDF::Vocab::SHACL.node, shape_subclass_of] if shape_subclass_of
             shacl_graph << [shape, RDF::Vocab::SHACL.description, shape_definition] if shape_definition
 
             # Extract properties associated with this class
             graph.query([nil, RDF::RDFS.domain, class_uri]).each do |property_stmt|
-              property = property_stmt.subject
-              range = graph.first_object([property, RDF::RDFS.range])
-              domain = graph.first_object([property, RDF::RDFS.domain])
-              property_definition = graph.first_object([property, RDF::Vocab::SKOS.definition, nil])
-              property_type = graph.first_object([property, RDF.type])
-              property_name = safe_class_name(property.to_s)
-              sub_property_of = graph.first_object([property, RDF::RDFS.subPropertyOf])
-
-              property_shape = RDF::Node.new
-              shacl_graph << [shape, RDF::Vocab::SHACL.property, property_shape]
-              shacl_graph << [property_shape, RDF::Vocab::SHACL.name, property_name]# property.path.split('/').last]
-              shacl_graph << [property_shape, RDF::Vocab::SHACL.path, property]
-              shacl_graph << [property_shape, RDF::Vocab::SHACL.description, property_definition] if property_definition
-
-              # Add range constraints if available
-              # if range
-              #   if range.to_s.start_with?("http://www.w3.org/2001/XMLSchema#")
-              #     shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, range]
-              #     # Add sh:pattern for string literals as an example
-              #     if range == RDF::XSD.string
-              #       shacl_graph << [property_shape, RDF::Vocab::SHACL.pattern, "^.+$"]
-              #     end
-              #   else
-              #     if range == RDF::RDFS.Literal
-              #       shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, RDF::XSD.string]
-              #     else
-              #       shacl_graph << [property_shape, RDF::Vocab::SHACL.class, range]
-              #       shacl_graph << [property_shape, RDF::Vocab::SHACL.nodeKind, RDF::Vocab::SHACL.IRI]
-              #     end
-              #   end
-              # end
-
-              # Determine property type
-              if property_type == RDF::OWL.ObjectProperty
-                shacl_graph << [property_shape, RDF::Vocab::SHACL.nodeKind, RDF::Vocab::SHACL.IRI]
-                shacl_graph << [property_shape, RDF::Vocab::SHACL.class, range] if range
-              elsif property_type == RDF::OWL.DatatypeProperty
-                if sub_property_of
-                  #shacl_graph << [property_shape, RDF::Vocab::SHACL.nodeKind, RDF::Vocab::SHACL.IRI]
-                  shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, sub_property_of]
-                else
-                  if range
-                    if range == RDF::RDFS.Literal
-                      #shacl_graph << [property_shape, RDF::Vocab::SHACL.nodeKind, RDF::Vocab::SHACL.Literal]
-                      shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, RDF::XSD.string]
-                    elsif range.to_s.start_with?("http://www.w3.org/2001/XMLSchema#")
-                      shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, range]
-                      shacl_graph << [property_shape, RDF::Vocab::SHACL.pattern, "^.+$"] if range == RDF::XSD.string
-                    else
-                      # TODO, when ontologies are found, add:
-                      # - https://www.w3.org/TR/owl-ref/#EnumeratedDatatype
-                      # - https://stackoverflow.com/questions/14172610/how-to-define-my-own-ranges-for-owl-dataproperties/14173705#14173705
-                    end
-                  else
-                    #shacl_graph << [property_shape, RDF::Vocab::SHACL.nodeKind, RDF::Vocab::SHACL.Literal]
-                    shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, RDF::XSD.string]
-                  end
-                end
-              end
-
-              if domain && range.nil?
-                shacl_graph << [property_shape, RDF::Vocab::SHACL.class, domain]
-                shacl_graph << [property_shape, RDF::Vocab::SHACL.nodeKind, RDF::Vocab::SHACL.IRI]
-              end
-
-              # Default constraints (adjust as needed)
-              # shacl_graph << [property_shape, RDF::Vocab::SHACL.minCount, 0]
-              # shacl_graph << [property_shape, RDF::Vocab::SHACL.maxCount, 1]
+              add_property_to_shape(graph, property_stmt.subject, class_uri, shape, shacl_graph)
             end
 
+            # Handle properties with unionOf domains that include this class
+            handle_union_domain_properties(graph, class_uri, shape, shacl_graph)
             # add:
             # - Cardinality Constraint Components
             # - sh:hasValue
@@ -141,11 +80,11 @@ module Solis
               if property_shape.nil?
                 property_shape = RDF::Node.new
                 shacl_graph << [shape, RDF::Vocab::SHACL.property, property_shape]
-                shacl_graph << [property_shape, RDF::Vocab::SHACL.name, property_name]# property.path.split('/').last]
+                shacl_graph << [property_shape, RDF::Vocab::SHACL.name, property_name] # property.path.split('/').last]
                 shacl_graph << [property_shape, RDF::Vocab::SHACL.path, property]
               end
               # add cardinality
-              unless property_shape.nil?  # this can be removed
+              unless property_shape.nil? # this can be removed
                 graph.query([restriction, nil, nil]).each do |restriction_info_stmt|
                   predicate = restriction_info_stmt.predicate
                   object = restriction_info_stmt.object
@@ -167,13 +106,29 @@ module Solis
                     # add to property shape
                     shacl_graph << [property_shape, RDF::Vocab::SHACL.hasValue, has_value]
                   when RDF::OWL.someValuesFrom
-                    owl_datatype = object   # TODO: must check if it is a Datatype ...
-                    add_owl_datatype_with_restrictions_to_property_shape(graph, owl_datatype, shacl_graph, property_shape)
+                    # Check if someValuesFrom refers to a unionOf
+                    if graph.first_object([object, RDF::OWL.unionOf])
+                      add_union_constraint_to_property_shape(graph, object, shacl_graph, property_shape)
+                    else
+                      owl_datatype = object # TODO: must check if it is a Datatype ...
+                      add_owl_datatype_with_restrictions_to_property_shape(graph, owl_datatype, shacl_graph, property_shape)
+                    end
+                  when RDF::OWL.allValuesFrom
+                    # Check if allValuesFrom refers to a unionOf
+                    if graph.first_object([object, RDF::OWL.unionOf])
+                      add_union_constraint_to_property_shape(graph, object, shacl_graph, property_shape)
+                    else
+                      # Handle regular allValuesFrom constraint
+                      if object.to_s.start_with?("http://www.w3.org/2001/XMLSchema#")
+                        shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, object]
+                      else
+                        shacl_graph << [property_shape, RDF::Vocab::SHACL.class, object]
+                      end
+                    end
                   end
                 end
               end
             end
-
           end
 
           shacl_graph
@@ -184,11 +139,74 @@ module Solis
         def self.is_rdf?(graph)
           graph.query([nil, RDF.type, RDF::OWL.Class]).size > 0
         end
+
         private
 
         def self.safe_class_name(name)
-          name = name.split("#").last || name.split("/").last
+          name = name.split("#").last =~ /^http/ ? name.split("/").last : name.split("#").last
           RESERVED_WORDS.include?(name) ? "#{name}Class" : name
+        end
+
+        # New method to handle owl:unionOf constructs
+        def self.add_union_constraint_to_property_shape(graph, union_class, shacl_graph, property_shape)
+          union_list = graph.first_object([union_class, RDF::OWL.unionOf])
+          return unless union_list
+
+          # Parse the union list to get all possible types/classes
+          union_members = []
+          parse_owl_list(union_members, graph, union_list)
+
+          return if union_members.empty?
+
+          # Create sh:or constraint with multiple alternatives
+          or_constraint_list = create_shacl_or_constraint(union_members, shacl_graph)
+          shacl_graph << [property_shape, RDF::Vocab::SHACL.or, or_constraint_list]
+        end
+
+        # Helper method to create SHACL sh:or constraint from union members
+        def self.create_shacl_or_constraint(union_members, shacl_graph)
+          # Create a list of shape constraints for each union member
+          constraint_nodes = union_members.map do |member|
+            constraint_node = RDF::Node.new
+
+            if member.to_s.start_with?("http://www.w3.org/2001/XMLSchema#")
+              # It's a datatype
+              shacl_graph << [constraint_node, RDF::Vocab::SHACL.datatype, member]
+            else
+              # It's a class
+              shacl_graph << [constraint_node, RDF::Vocab::SHACL.class, member]
+              shacl_graph << [constraint_node, RDF::Vocab::SHACL.nodeKind, RDF::Vocab::SHACL.IRI]
+            end
+
+            constraint_node
+          end
+
+          # Create RDF list from constraint nodes
+          create_rdf_list(constraint_nodes, shacl_graph)
+        end
+
+        # Helper method to create RDF list structure
+        def self.create_rdf_list(items, shacl_graph)
+          return RDF.nil if items.empty?
+
+          list_head = RDF::Node.new
+          current_node = list_head
+
+          items.each_with_index do |item, index|
+            shacl_graph << [current_node, RDF.first, item]
+
+            if index == items.length - 1
+              # Last item points to rdf:nil
+              shacl_graph << [current_node, RDF.rest, RDF.nil]
+            else
+              # Create next node in the list
+              next_node = RDF::Node.new
+              shacl_graph << [current_node, RDF.rest, next_node]
+              current_node = next_node
+            end
+          end
+
+          list_head
         end
 
         def self.add_owl_datatype_with_restrictions_to_property_shape(graph, owl_datatype, shacl_graph, property_shape)
@@ -225,17 +243,88 @@ module Solis
           end
         end
 
+        # Extract method for adding a property to a shape
+        def self.add_property_to_shape(graph, property, domain_class, shape, shacl_graph)
+          range = graph.first_object([property, RDF::RDFS.range])
+          domain = graph.first_object([property, RDF::RDFS.domain])
+          property_definition = graph.first_object([property, RDF::Vocab::SKOS.definition, nil])
+          property_type = graph.first_object([property, RDF.type])
+          property_name = safe_class_name(property.to_s)
+          sub_property_of = graph.first_object([property, RDF::RDFS.subPropertyOf])
+
+          property_shape = RDF::Node.new
+          shacl_graph << [shape, RDF::Vocab::SHACL.property, property_shape]
+          shacl_graph << [property_shape, RDF::Vocab::SHACL.name, property_name]
+          shacl_graph << [property_shape, RDF::Vocab::SHACL.path, property]
+          shacl_graph << [property_shape, RDF::Vocab::SHACL.description, property_definition] if property_definition
+
+          # Check if range is a unionOf construct
+          if range && graph.first_object([range, RDF::OWL.unionOf])
+            add_union_constraint_to_property_shape(graph, range, shacl_graph, property_shape)
+          elsif property_type == RDF::OWL.ObjectProperty
+            shacl_graph << [property_shape, RDF::Vocab::SHACL.nodeKind, RDF::Vocab::SHACL.IRI]
+            shacl_graph << [property_shape, RDF::Vocab::SHACL.class, range] if range
+          elsif property_type == RDF::OWL.DatatypeProperty
+            if sub_property_of
+              shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, sub_property_of]
+            else
+              if range
+                if range == RDF::RDFS.Literal
+                  shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, RDF::XSD.string]
+                elsif range.to_s.start_with?("http://www.w3.org/2001/XMLSchema#")
+                  shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, range]
+                  shacl_graph << [property_shape, RDF::Vocab::SHACL.pattern, "^.+$"] if range == RDF::XSD.string
+                else
+                  # TODO, when ontologies are found, add:
+                  # - https://www.w3.org/TR/owl-ref/#EnumeratedDatatype
+                  # - https://stackoverflow.com/questions/14172610/how-to-define-my-own-ranges-for-owl-dataproperties/14173705#14173705
+                end
+              else
+                shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, RDF::XSD.string]
+              end
+            end
+          end
+
+          if domain && range.nil?
+            shacl_graph << [property_shape, RDF::Vocab::SHACL.class, domain]
+            shacl_graph << [property_shape, RDF::Vocab::SHACL.nodeKind, RDF::Vocab::SHACL.IRI]
+          end
+        end
+
+        # Handle properties that have unionOf domains
+        def self.handle_union_domain_properties(graph, class_uri, shape, shacl_graph)
+          # Find all properties that have a domain with unionOf
+          graph.query([nil, RDF::RDFS.domain, nil]) do |stmt|
+            property = stmt.subject
+            domain = stmt.object
+
+            # Check if domain is a blank node with owl:unionOf
+            union_list = graph.first_object([domain, RDF::OWL.unionOf])
+            next unless union_list
+
+            # Parse the union list to see if our class is included
+            union_members = []
+            parse_owl_list(union_members, graph, union_list)
+
+            # If this class is in the union, add the property to this shape
+            if union_members.include?(class_uri)
+              add_property_to_shape(graph, property, class_uri, shape, shacl_graph)
+            end
+          end
+        end
+
         def self.parse_owl_list(list, graph, owl_list)
           # parses this: https://www.w3.org/TR/owl-ref/#EnumeratedDatatype
           # maybe there is a utility in RDF to do so ...
+          return if owl_list == RDF.nil
+
           first = graph.first_object([owl_list, RDF.first])
           list << first if first
           rest = graph.first_object([owl_list, RDF.rest])
-          parse_owl_list(list, graph, rest) if rest
+          parse_owl_list(list, graph, rest) if rest && rest != RDF.nil
         end
 
       end
     end
   end
 end
-
