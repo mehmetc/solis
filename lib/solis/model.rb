@@ -12,6 +12,7 @@ module Solis
     attr_accessor :title, :version, :description
     attr_reader :graph, :namespace, :prefix, :uri, :content_type, :logger
     attr_reader :shapes, :validator, :hash_validator_literals, :namespace, :hierarchy
+    attr_reader :plurals
 
     def initialize(params = {})
       raise Solis::Error::BadParameter, "Please provide a {model: {prefix: 'ex', namespace: 'http://example.com/', uri: 'file://cars.ttl', content_type: 'text/turtle'}}" unless params[:model]
@@ -29,7 +30,10 @@ module Solis
       @version = model[:version] || "0.1"
       @description = model[:description]
 
+      @plurals = model[:plurals] || {}
+
       @graph = Solis::Model::Reader.from_uri(model)
+      inject_plurals_to_shapes_graph
 
       @parser = SHACLParser.new(@graph)
       @shapes = @parser.parse_shapes
@@ -176,6 +180,18 @@ module Solis
       end.compact
       names_entities_parents += @hierarchy[name_entity] || []
       names_entities_parents
+    end
+
+    def inject_plurals_to_shapes_graph
+      @graph.query([nil, RDF.type, RDF::Vocab::SHACL.NodeShape]) do |shape|
+        shape_name = @graph.query([shape.subject, RDF::Vocab::SHACL.name, nil]).first_object.to_s
+        plural_name = @plurals[shape_name]
+        unless plural_name.nil?
+          # this one seems more specific: https://oscaf.sourceforge.net/nao.html#nao:pluralPrefLabel.
+          # for now uses skos:altLabel: https://www.w3.org/2012/09/odrl/semantic/draft/doco/skos_altLabel.html
+          @graph << [shape.subject, RDF::Vocab::SKOS.altLabel, plural_name]
+        end
+      end
     end
 
   end
