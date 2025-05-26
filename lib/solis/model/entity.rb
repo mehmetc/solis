@@ -169,8 +169,13 @@ module Solis
 
       end
 
+      def get_internal_data()
+        obj = deep_copy(self.to_h).stringify_keys
+        obj
+      end
+
       def replace(obj)
-        set_internal_data(obj)
+        set_internal_data_from_jsonld(obj)
         add_ids_if_not_exists!
       end
 
@@ -181,7 +186,7 @@ module Solis
         _opts[:autoload_missing_refs] = opts[:autoload_missing_refs] || false
         _opts[:append_attributes] = opts[:append_attributes] || false
         # get internal data
-        obj = get_internal_data
+        obj = get_internal_data_as_jsonld
         # infer type if reference autoload is requested
         if _opts[:autoload_missing_refs]
           Solis::Utils::JSONLD.infer_jsonld_types_from_model!(obj, @model, @type)
@@ -189,14 +194,14 @@ module Solis
         # "plays" the patch on instance
         _obj_patch = Solis::Utils::JSONUtils.deep_replace_prefix_in_name_attr(obj_patch, '_', '@')
         patch_internal(obj, _obj_patch, _opts)
-        set_internal_data(obj)
+        set_internal_data_from_jsonld(obj)
         # in case new references are added, get them an "id" where missing
         add_ids_if_not_exists!
       end
 
       def load(deep=false)
         check_store_exists
-        obj = get_internal_data
+        obj = get_internal_data_as_jsonld
         check_obj_has_id(obj)
         id = obj['@id']
         id_op = @store.get_data_for_id(id, @model.namespace, deep=deep)
@@ -210,7 +215,7 @@ module Solis
 
       def referenced?
         check_store_exists
-        obj = get_internal_data
+        obj = get_internal_data_as_jsonld
         check_obj_has_id(obj)
         id = obj['@id']
         id_op = @store.ask_if_id_is_referenced(id)
@@ -220,7 +225,7 @@ module Solis
 
       def exists?
         check_store_exists
-        obj = get_internal_data
+        obj = get_internal_data_as_jsonld
         check_obj_has_id(obj)
         id = obj['@id']
         id_op = @store.ask_if_id_exists(id)
@@ -230,7 +235,7 @@ module Solis
 
       def destroy(delayed=false)
         check_store_exists
-        obj = get_internal_data
+        obj = get_internal_data_as_jsonld
         check_obj_has_id(obj)
         id = obj['@id']
         id_op = @store.delete_attributes_for_id(id)
@@ -253,7 +258,7 @@ module Solis
       end
 
       def to_pretty_jsonld
-        hash_data_jsonld = to_jsonld(get_internal_data)
+        hash_data_jsonld = to_jsonld(get_internal_data_as_jsonld)
         JSON.pretty_generate(hash_data_jsonld)
       end
 
@@ -286,7 +291,7 @@ module Solis
         Marshal.load(Marshal.dump(obj))
       end
 
-      def get_internal_data()
+      def get_internal_data_as_jsonld()
         # in case, in the future, diff algorithms are used,
         # deep_copy() would recreate all internal objects ref,
         # not fooling them.
@@ -295,8 +300,8 @@ module Solis
         obj
       end
 
-      def set_internal_data(obj)
-        # deep_copy(): see get_internal_data
+      def set_internal_data_from_jsonld(obj)
+        # deep_copy(): see get_internal_data_as_jsonld
         obj2 = deep_copy(obj)
         obj2 = Solis::Utils::JSONUtils.deep_replace_prefix_in_name_attr(obj2, '@', '_')
         self.marshal_load(obj2.symbolize_keys)
@@ -315,9 +320,9 @@ module Solis
       end
 
       def add_ids_if_not_exists!
-        obj = get_internal_data
+        obj = get_internal_data_as_jsonld
         Solis::Utils::JSONLD.add_ids_if_not_exists!(obj, @model.namespace)
-        set_internal_data(obj)
+        set_internal_data_from_jsonld(obj)
       end
 
       def expand_obj(obj)
@@ -353,9 +358,9 @@ module Solis
       def to_jsonld_flattened_ordered_expanded
 
         @model.logger.debug("=== internal JSON full:")
-        @model.logger.debug(JSON.pretty_generate(get_internal_data))
+        @model.logger.debug(JSON.pretty_generate(get_internal_data_as_jsonld))
 
-        hash_data_jsonld = to_jsonld(get_internal_data)
+        hash_data_jsonld = to_jsonld(get_internal_data_as_jsonld)
         @model.logger.debug("=== internal JSON-LD:")
         @model.logger.debug(JSON.pretty_generate(hash_data_jsonld))
 
