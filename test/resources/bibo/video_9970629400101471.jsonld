@@ -1,0 +1,33 @@
+{
+  "date": "2008",
+  "identifier": {
+    "label": "(BeLVLBS)007062940LBS01-Aleph"
+  },
+  "@type": "Visual material",
+  "subject": [
+    {
+      "label": "R.050"
+    },
+    {
+      "label": "Pizza"
+    },
+    {
+      "label": "Gastronomie"
+    }
+  ],
+  "description": "Heston Blumenthal herinterpreteert traditionele gerechten",
+  "language": {
+    "@id": "http://id.loc.gov/vocabulary/iso639-2/eng",
+    "label": "eng"
+  },
+  "title": "Pizza",
+  "@context": "https://open-na.hosted.exlibrisgroup.com/alma/contexts/bib",
+  "volume": "4",
+  "series": "In search of perfection",
+  "publisher": "Canvas",
+  "place_of_publication": "Brussel",
+  "@id": "https://open-na.hosted.exlibrisgroup.com/alma/32KUL_LIBIS_NETWORK/bibs/9970629400101471",
+  "contributors": {
+    "label": "VRT. Canvas"
+  }
+}

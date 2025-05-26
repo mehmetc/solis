@@ -1493,20 +1493,38 @@ class TestSHACLValidator < Minitest::Test
     assert_equal(conform, true)
 
     person_string = {
-      name: "John Doe"
+      name: { firstName: "John", lastName: "Doe"}
     }
 
     person_integer = {
       name: 1
     }
 
-    person_entity = solis.model.entity.new('Person', person_integer)
-    #person_entity = solis.model.entity.new('Agent', person_string)
-    puts person_entity.to_pretty_jsonld
+    good_person_entity = solis.model.entity.new('Person', person_string)
+    bad_person_entity = solis.model.entity.new('Person', person_integer)
+
     validator = Solis::SHACLValidatorV2.new(person_shacl, :ttl, @opts)
-    conform, messages = validator.execute(JSON.parse(person_entity.to_pretty_jsonld), :jsonld)
-    pp messages
+    conform, messages = validator.execute(JSON.parse(good_person_entity.to_pretty_jsonld), :jsonld)
+    puts JSON.pretty_generate(messages)
+    assert_equal(0, messages.size)
     assert_equal(conform, true)
+
+    conform, messages = validator.execute(JSON.parse(bad_person_entity.to_pretty_jsonld), :jsonld)
+    assert_equal(conform, false)
+    assert_equal(messages.size, 1)
+    assert_match("Value must be an instance of <https://example.com/PersonName>", messages[0])
+
+
+    organization = {
+      name: "LIBIS"
+    }
+
+    organization_entity = solis.model.entity.new('Organization', organization)
+    conform = organization_entity.valid?
+    assert_equal(conform, true)
+
+
+
   end
 
   def test_inherited_change_property_2

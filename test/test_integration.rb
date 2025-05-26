@@ -88,5 +88,18 @@ class TestIntegration < Minitest::Test
     conform, messages = validator.execute(RDF::Graph.new.from_ttl(bibo_shacl), :graph)
     assert_equal(0, messages.size)
     assert_equal(true, conform)
+
+    #data = JSON.parse(URI.open('https://open-na.hosted.exlibrisgxroup.com/alma/32KUL_LIBIS_NETWORK/bibs/99122040101471').read)
+    data = JSON.parse(File.read('test/resources/bibo/book_99122040101471.jsonld'))
+
+    puts JSON.pretty_generate(data)
+
+    bibo_record = @solis.model.entity.new('Boek', data)
+
+    assert_equal(true, bibo_record.valid?)
+    result = bibo_record.save
+
+    pp result
+
   end
 end

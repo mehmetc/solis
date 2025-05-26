@@ -1,16 +1,39 @@
-@prefix example: <https://example.com/> .
+@prefix ex: <https://example.com/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
-example:AgentShape
+# PersonName shape
+ex:PersonNameShape
+    a sh:NodeShape ;
+    sh:description "Properties specific for a person's name" ;
+    sh:targetClass ex:PersonName ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [
+                    sh:path ex:firstName ;
+                    sh:datatype xsd:string ;
+                    sh:minCount 1 ;
+                    sh:maxCount 1 ;
+                ] ;
+    sh:property [
+                    sh:path ex:lastName ;
+                    sh:datatype xsd:string ;
+                    sh:minCount 1 ;
+                    sh:maxCount 1 ;
+                ] .
+
+ex:AgentShape
     a sh:NodeShape ;
     sh:description "Abstract shape that describes an agent entity" ;
-    sh:targetClass example:Agent ;
+    sh:targetClass ex:Agent ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
     sh:name "Agent" ;
     sh:property
         [
-            sh:path example:name ;
+            sh:path ex:name ;
             sh:name "name" ;
             sh:description "name of the agent" ;
             sh:datatype xsd:string ;
@@ -18,18 +41,33 @@ example:AgentShape
             sh:maxCount 1 ;
         ] .
 
-example:PersonShape
+ex:PersonShape
     a sh:NodeShape ;
-    sh:node example:Agent ;
+    sh:node ex:Agent ;
     sh:description "Person entity" ;
-    sh:targetClass example:Person ;
+    sh:targetClass ex:Person ;
     sh:name "Person" ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
     sh:property
         [
-            sh:path example:name ;
+            sh:path ex:name ;
             sh:name "name" ;
             sh:description "name of the person" ;
-            sh:datatype xsd:integer ;
+            sh:class ex:PersonName ; # Override: complex object instead of string
             sh:minCount 1 ;
             sh:maxCount 1 ;
         ] .
+
+
+ex:OrganizationShape
+    a sh:NodeShape ;
+    sh:targetClass ex:Organization ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [
+                    sh:path ex:name ;
+                    sh:datatype xsd:string ;  # Must explicitly redefine
+                    sh:minCount 1 ;
+                    sh:maxCount 1 ;
+                ] .
