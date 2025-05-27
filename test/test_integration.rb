@@ -60,6 +60,7 @@ class TestIntegration < Minitest::Test
   end
 
   def test_integration_bibo_rdf
+
     config = {
       store: Solis::Store::Memory.new(),
       model: {
@@ -70,10 +71,11 @@ class TestIntegration < Minitest::Test
       }
     }
 
-    # instantiate a logger
-    logger = Solis.logger([STDOUT])
     # instantiate Solis with the configuration
     @solis = Solis.new(config)
+
+    # @solis.model.logger.level = Logger::DEBUG
+    @solis.model.logger.level = Logger::INFO
 
     # create a ttl string object
     bibo_shacl = @solis.model.writer
@@ -92,10 +94,15 @@ class TestIntegration < Minitest::Test
     #data = JSON.parse(URI.open('https://open-na.hosted.exlibrisgxroup.com/alma/32KUL_LIBIS_NETWORK/bibs/99122040101471').read)
     data = JSON.parse(File.read('test/resources/bibo/book_99122040101471.jsonld'))
 
-    puts JSON.pretty_generate(data)
+    # puts JSON.pretty_generate(data)
 
-    bibo_record = @solis.model.entity.new('Boek', data)
+    bibo_record = @solis.model.entity.new('Book', data)
 
+    # puts bibo_record.to_pretty_pre_validate_jsonld
+
+    pp bibo_record.validate
+
+    # TOFIX: SHACL generation from ontology
     assert_equal(true, bibo_record.valid?)
     result = bibo_record.save
 
