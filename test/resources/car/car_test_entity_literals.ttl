@@ -33,4 +33,17 @@ example:CarShape
                       sh:datatype    iso8601:Duration ;
                       sh:minCount    1 ;
                       sh:maxCount    1 ; ];
+    sh:property     [ sh:path        example:tag;
+                      sh:name        "tag" ;
+                      sh:description "Tag ID of the car" ;
+                      sh:or (
+                                [
+                                    sh:datatype xsd:integer ;
+                                ]
+                                [
+                                    sh:datatype example:id ;
+                                ]
+                            ) ;
+                      sh:minCount    0 ;
+                      sh:maxCount    1 ; ];
 .
