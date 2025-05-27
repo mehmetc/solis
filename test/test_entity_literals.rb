@@ -54,4 +54,92 @@ class TestEntityLiterals < Minitest::Test
 
   end
 
+  def test_entity_express_literal_by_obj_1
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "demolishing_year_forecast": {
+          "_value": "2030-06~"
+        },
+        "check_interval": "P1Y"
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', nil)
+
+    assert_equal(car.valid?, true)
+
+  end
+
+  def test_entity_express_literal_by_obj_2
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "demolishing_year_forecast": {
+          "_value": "2030-06~",
+          "_type": "http://www.w3.org/2001/XMLSchema#integer"
+        },
+        "check_interval": "P1Y"
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', nil)
+
+    assert_equal(car.valid?, false)
+
+  end
+
+  def test_entity_literal_with_alternatives_1
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "demolishing_year_forecast": "2030-06~",
+        "check_interval": "P1Y",
+        "tag": {
+          "_value": 123456
+        }
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', nil)
+
+    puts car.to_pretty_pre_validate_jsonld
+
+    assert_equal(car.valid?, true)
+
+  end
+
+  def test_entity_literal_with_alternatives_2
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "demolishing_year_forecast": "2030-06~",
+        "check_interval": "P1Y",
+        "tag": {
+          "_value": "123456",
+          "_type": "https://example.com/id"
+        }
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', nil)
+
+    puts car.to_pretty_pre_validate_jsonld
+
+    assert_equal(car.valid?, true)
+
+  end
+
 end
