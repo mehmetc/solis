@@ -133,8 +133,8 @@ module Solis
     def _get_embedded_entity_type_for_entity(name_entity, name_attr)
       res = nil
       # first check directly in shape
-      if SHACLSHapes.shape_exists?(@shapes, name_entity)
-        res = SHACLSHapes.get_property_class_for_shape(@shapes, name_entity, name_attr)
+      if Shapes.shape_exists?(@shapes, name_entity)
+        res = Shapes.get_property_class_for_shape(@shapes, name_entity, name_attr)
       end
       if res.nil?
         # otherwise navigate classes hierarchy up and try again
@@ -150,8 +150,8 @@ module Solis
     def _get_datatype_for_entity(name_entity, name_attr)
       res = nil
       # first check directly in shape
-      if SHACLSHapes.shape_exists?(@shapes, name_entity)
-        res = SHACLSHapes.get_property_datatype_for_shape(@shapes, name_entity, name_attr)
+      if Shapes.shape_exists?(@shapes, name_entity)
+        res = Shapes.get_property_datatype_for_shape(@shapes, name_entity, name_attr)
       end
       if res.nil?
         # otherwise navigate classes hierarchy up and try again
@@ -166,7 +166,7 @@ module Solis
 
     def _get_parent_entities_for_entity(name_entity)
       names_entities_parents = []
-      names_nodes_parents = SHACLSHapes.get_parent_shapes_for_shape(@shapes, name_entity)
+      names_nodes_parents = Shapes.get_parent_shapes_for_shape(@shapes, name_entity)
       names_entities_parents += names_nodes_parents.map do |uri|
         res = nil
         @shapes.each do |k, v|
