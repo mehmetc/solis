@@ -69,7 +69,7 @@ class SHACLParser
   end
 end
 
-module SHACLSHapes
+module Shapes
 
   def self.get_property_datatype_for_shape(shapes, name_shape, name_property)
     shapes.dig(name_shape, :properties, name_property, :constraints, :datatype)

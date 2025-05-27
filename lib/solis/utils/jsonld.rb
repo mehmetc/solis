@@ -116,7 +116,7 @@ module Solis
           val_attr = [val_attr] unless val_attr.is_a?(Array)
           val_attr.each do |e|
             if is_object_an_embedded_entity_or_ref(e)
-              type_embedded = SHACLSHapes::get_property_class_for_shape(shapes, type_root, name_attr)
+              type_embedded = Shapes::get_property_class_for_shape(shapes, type_root, name_attr)
               infer_jsonld_types_from_shapes!(e, shapes, type_embedded)
             end
           end
