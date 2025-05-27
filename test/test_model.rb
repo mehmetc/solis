@@ -19,7 +19,7 @@ class TestModel < Minitest::Test
   end
 
   def test_model_should_contain_car_entity
-    all_entities = @solis.model.entity.list
+    all_entities = @solis.model.entity.all
 
     assert_includes(all_entities, 'Car')
   end

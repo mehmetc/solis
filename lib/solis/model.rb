@@ -51,7 +51,7 @@ module Solis
         def new(name, data = {})
           Solis::Model::Entity.new(data, self, name, @store)
         end
-        def list(options={namespace: false})
+        def all(options={namespace: false})
           data = @graph.query([nil, RDF::Vocab::SHACL.targetClass, nil]).map do |klass|
             options.key?(:namespace) && options[:namespace].eql?(true) ? klass.object.to_s : klass.object.to_s.gsub(@namespace,'')
           end

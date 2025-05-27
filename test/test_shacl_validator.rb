@@ -1492,12 +1492,18 @@ class TestSHACLValidator < Minitest::Test
 
     assert_equal(conform, true)
 
+    #www = RDF::Literal.new("http://example.org", datatype: RDF::XSD.anyURI)
+    www = RDF::Literal::AnyURI.new("http://example.org")
+
+    assert_kind_of(RDF::Literal::AnyURI, www)
     person_string = {
-      name: { firstName: "John", lastName: "Doe"}
+      name: { firstName: "John", lastName: "Doe"},
+      website: www
     }
 
     person_integer = {
-      name: 1
+      name: 1,
+      website: www
     }
 
     good_person_entity = solis.model.entity.new('Person', person_string)
@@ -1505,6 +1511,7 @@ class TestSHACLValidator < Minitest::Test
 
     validator = Solis::SHACLValidatorV2.new(person_shacl, :ttl, @opts)
     conform, messages = validator.execute(JSON.parse(good_person_entity.to_pretty_jsonld), :jsonld)
+    puts good_person_entity.to_pretty_jsonld
     puts JSON.pretty_generate(messages)
     assert_equal(0, messages.size)
     assert_equal(conform, true)
@@ -1516,12 +1523,15 @@ class TestSHACLValidator < Minitest::Test
 
 
     organization = {
-      name: "LIBIS"
+      name: "LIBIS",
+      website: "http://example.org"
     }
 
     organization_entity = solis.model.entity.new('Organization', organization)
-    conform = organization_entity.valid?
-    assert_equal(conform, true)
+
+    conform_literals, messages_literals, conform_shacl, messages_shacl = organization_entity.validate
+    pp messages_shacl
+    assert_equal(conform_literals & conform_shacl, true)
 
 
 

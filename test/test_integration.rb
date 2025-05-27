@@ -44,7 +44,7 @@ class TestIntegration < Minitest::Test
     post = @solis.model.entity.new('Post')
     properties = post.get_properties_info.keys
 
-    assert_includes(@solis.model.entity.list, "Post")
+    assert_includes(@solis.model.entity.all, "Post")
     assert_includes(properties, 'title')
 
     data = {
@@ -94,7 +94,7 @@ class TestIntegration < Minitest::Test
 
     puts JSON.pretty_generate(data)
 
-    bibo_record = @solis.model.entity.new('Boek', data)
+    bibo_record = @solis.model.entity.new('Book', data)
 
     assert_equal(true, bibo_record.valid?)
     result = bibo_record.save
