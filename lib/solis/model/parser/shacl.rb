@@ -2,6 +2,21 @@ require 'linkeddata'
 require 'active_support/all'
 
 class SHACLParser
+
+  class MissingShapeNameError < StandardError
+    def initialize(uri_shape)
+      msg = "shape #{uri_shape.to_s} has no 'sh:name'"
+      super(msg)
+    end
+  end
+
+  class MissingPropertyNameError < StandardError
+    def initialize(uri_shape, uri_property)
+      msg = "shape #{uri_shape.to_s} has a property with no 'sh:name'"
+      super(msg)
+    end
+  end
+
   attr_reader :shapes_graph
 
   def initialize(shapes_graph)
@@ -14,6 +29,9 @@ class SHACLParser
     @shapes_graph.query([nil, RDF.type, RDF::Vocab::SHACL.NodeShape]) do |shape|
       shape_uri = shape.subject.to_s
       shape_name = shapes_graph.query([shape.subject, RDF::Vocab::SHACL.name, nil]).first_object.to_s
+      if shape_name.empty?
+        raise MissingShapeNameError.new(shape.subject)
+      end
       shapes[shape_name] = {properties: {}, uri: shape_uri, nodes: [], closed: false, plural: nil}
 
       @shapes_graph.query([shape.subject, RDF::Vocab::SHACL.node, nil]) do |stmt|
@@ -31,6 +49,10 @@ class SHACLParser
       @shapes_graph.query([shape.subject, RDF::Vocab::SHACL.property, nil]) do |property_shape|
         property_uri = property_shape.object
         property_info = extract_property_info(property_uri)
+
+        if property_info[:name].empty?
+          raise MissingPropertyNameError.new(shape.subject, property_uri)
+        end
 
         shapes[shape_name][:properties][property_info[:name]] = property_info
       end
