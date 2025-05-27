@@ -9,16 +9,19 @@ ex:PersonNameShape
     a sh:NodeShape ;
     sh:description "Properties specific for a person's name" ;
     sh:targetClass ex:PersonName ;
+    sh:name "PersonName" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
     sh:property [
                     sh:path ex:firstName ;
+                    sh:name "firstName" ;
                     sh:datatype xsd:string ;
                     sh:minCount 1 ;
                     sh:maxCount 1 ;
                 ] ;
     sh:property [
                     sh:path ex:lastName ;
+                    sh:name "lastName" ;
                     sh:datatype xsd:string ;
                     sh:minCount 1 ;
                     sh:maxCount 1 ;
@@ -63,10 +66,12 @@ ex:PersonShape
 ex:OrganizationShape
     a sh:NodeShape ;
     sh:targetClass ex:Organization ;
+    sh:name "Organization" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
     sh:property [
                     sh:path ex:name ;
+                    sh:name "name" ;
                     sh:datatype xsd:string ;  # Must explicitly redefine
                     sh:minCount 1 ;
                     sh:maxCount 1 ;

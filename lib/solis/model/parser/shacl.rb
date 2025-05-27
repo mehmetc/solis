@@ -14,7 +14,7 @@ class SHACLParser
     @shapes_graph.query([nil, RDF.type, RDF::Vocab::SHACL.NodeShape]) do |shape|
       shape_uri = shape.subject.to_s
       shape_name = shapes_graph.query([shape.subject, RDF::Vocab::SHACL.name, nil]).first_object.to_s
-      shapes[shape_name] = {properties: {}, uri: shape_uri, nodes: [], closed: false}
+      shapes[shape_name] = {properties: {}, uri: shape_uri, nodes: [], closed: false, plural: nil}
 
       @shapes_graph.query([shape.subject, RDF::Vocab::SHACL.node, nil]) do |stmt|
         node_name = stmt.object.to_s

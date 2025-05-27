@@ -24,6 +24,20 @@ module Solis
         end
       end
 
+      class TypeNotFoundError < StandardError
+        def initialize
+          msg = "entity has type not found"
+          super(msg)
+        end
+      end
+
+      class TypeMismatchError < StandardError
+        def initialize
+          msg = "'type' provided to entity constructor and @type (or _type) in 'data' provided to constructor mismatch"
+          super(msg)
+        end
+      end
+
       class MissingStoreError < StandardError
         def initialize
           msg = "entity was provided no store"
@@ -73,14 +87,30 @@ module Solis
         end
       end
 
+      class InternalObjectMissingTypeError < StandardError
+        def initialize(obj)
+          msg = "following internal object has no type:\n"
+          msg += JSON.pretty_generate(obj)
+          super(msg)
+        end
+      end
+
       def initialize(obj, model, type, store)
+        super(hash={})
         @model = model
         if type.nil?
           raise MissingTypeError
         end
+        if model.shapes[type].nil?
+          raise TypeNotFoundError
+        end
         @type = type
         @store = store
-        super(hash=obj)
+        set_internal_data_from_jsonld(obj)
+        _obj = get_internal_data_as_jsonld
+        if !_obj['@type'].nil? && !_obj['@type'].eql?(type)
+          raise TypeMismatchError
+        end
         add_ids_if_not_exists!
       end
 
@@ -111,12 +141,6 @@ module Solis
         flattened_ordered_expanded = to_pre_validate_jsonld
 
         # validate literals
-        # conform_literals, messages_literals = Solis::Utils::JSONLD.validate_literals(
-        #   flattened_ordered_expanded['@graph'],
-        #   @model.hash_validator_literals
-        # )
-        # puts conform_literals
-        # puts messages_literals
         # NOTE: the following can be even moved inside any SHACL validator
         graph_data = RDF::Graph.new << JSON::LD::API.toRdf(flattened_ordered_expanded)
         conform_literals = graph_data.valid?
@@ -393,6 +417,9 @@ module Solis
 
         id = data['@id']
 
+        unless hash_jsonld_expanded.key?('@type')
+          raise InternalObjectMissingTypeError.new(hash_jsonld_expanded)
+        end
         @store.save_id_with_type(id, hash_jsonld_expanded['@type'][0])
 
         data.each do |name_attr, content_attr|
