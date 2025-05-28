@@ -111,6 +111,10 @@ module Solis
         if !_obj['@type'].nil? && !_obj['@type'].eql?(type)
           raise TypeMismatchError
         end
+        unless _obj['@context'].nil?
+          _obj.delete('@context')
+          set_internal_data_from_jsonld(_obj)
+        end
         add_ids_if_not_exists!
       end
 
