@@ -228,5 +228,220 @@ class TestUtilsJSONLD < Minitest::Test
 
   end
 
+  def test_remember_to_remove_other_than_top_context
+
+    # Original data (with native context)
+    hash_jsonld_1 = JSON.parse %(
+      {
+        "identifier": [
+          {
+            "label": "085-139-212-1"
+          },
+          {
+            "label": "LOC-77364452"
+          },
+          {
+            "label": "(BeLVLBS)000012204LBS01-Aleph"
+          },
+          {
+            "label": "26931"
+          }
+        ],
+        "contributor": [
+          {
+            "viafLink": "http://viaf.org/viaf/305003200",
+            "@id": "http://id.loc.gov/authorities/names/n88622561",
+            "label": "Brown, Peter."
+          },
+          {
+            "viafLink": "http://viaf.org/viaf/93286981",
+            "@id": "http://id.loc.gov/authorities/names/n77001068",
+            "label": "Whittaker, Chris"
+          },
+          {
+            "viafLink": "http://viaf.org/viaf/62792360",
+            "@id": "http://id.loc.gov/authorities/names/n77001069",
+            "label": "Monahan, Jane"
+          }
+        ],
+        "@type": "Book",
+        "subject": [
+          {
+            "label": "614.7 Pollutie van lucht, water, grond--(openbare gezondheidszorg)"
+          },
+          {
+            "label": "#TCON:CCHTB"
+          },
+          {
+            "@id": "http://id.loc.gov/authorities/subjects/sh2008103248",
+            "label": "Environmental law Great Britain"
+          }
+        ],
+        "publisher": "Architectural press",
+        "place_of_publication": "London",
+        "language": {
+          "@id": "http://id.loc.gov/vocabulary/iso639-2/eng",
+          "label": "eng"
+        },
+        "@id": "https://open-na.hosted.exlibrisgroup.com/alma/32KUL_LIBIS_NETWORK/bibs/99122040101471",
+        "title": "The handbook of environmental powers",
+        "@context": "https://open-na.hosted.exlibrisgroup.com/alma/contexts/bib"
+      }
+    )
+
+    # Original data (with native context) + top custom context.
+    # This is a malformed JSON-LD.
+    # The flattening function will mess up data content.
+    hash_jsonld_2 = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "http://purl.org/ontology/bibo/"
+        },
+        "@graph": [
+          {
+            "identifier": [
+              {
+                "label": "085-139-212-1",
+                "@id": "http://purl.org/ontology/bibo/e6f544d5-b88b-4f16-996b-28460cd03a2b"
+              },
+              {
+                "label": "LOC-77364452",
+                "@id": "http://purl.org/ontology/bibo/89d3a46b-9117-46e2-a78a-0263242fc3e3"
+              },
+              {
+                "label": "(BeLVLBS)000012204LBS01-Aleph",
+                "@id": "http://purl.org/ontology/bibo/d0c3fe26-01e5-49f5-99fb-254763a834aa"
+              },
+              {
+                "label": "26931",
+                "@id": "http://purl.org/ontology/bibo/d0bf61ab-de3d-451f-861b-7224a99c11a3"
+              }
+            ],
+            "contributor": [
+              {
+                "viafLink": "http://viaf.org/viaf/305003200",
+                "@id": "http://id.loc.gov/authorities/names/n88622561",
+                "label": "Brown, Peter."
+              },
+              {
+                "viafLink": "http://viaf.org/viaf/93286981",
+                "@id": "http://id.loc.gov/authorities/names/n77001068",
+                "label": "Whittaker, Chris"
+              },
+              {
+                "viafLink": "http://viaf.org/viaf/62792360",
+                "@id": "http://id.loc.gov/authorities/names/n77001069",
+                "label": "Monahan, Jane"
+              }
+            ],
+            "@type": "Book",
+            "subject": [
+              {
+                "label": "614.7 Pollutie van lucht, water, grond--(openbare gezondheidszorg)",
+                "@id": "http://purl.org/ontology/bibo/24ab5f5b-17c1-4427-b0eb-a5215493a689"
+              },
+              {
+                "label": "#TCON:CCHTB",
+                "@id": "http://purl.org/ontology/bibo/4a05f967-a43d-492c-9c6e-84d3a89fc97d"
+              },
+              {
+                "@id": "http://id.loc.gov/authorities/subjects/sh2008103248",
+                "label": "Environmental law Great Britain"
+              }
+            ],
+            "publisher": "Architectural press",
+            "place_of_publication": "London",
+            "language": {
+              "@id": "http://id.loc.gov/vocabulary/iso639-2/eng",
+              "label": "eng"
+            },
+            "@id": "https://open-na.hosted.exlibrisgroup.com/alma/32KUL_LIBIS_NETWORK/bibs/99122040101471",
+            "title": "The handbook of environmental powers",
+            "@context": "https://open-na.hosted.exlibrisgroup.com/alma/contexts/bib"
+          }
+        ]
+      }
+    )
+
+    # Original data (without native context) + top custom context.
+    # This is a well-formed JSON-LD.
+    hash_jsonld_3 = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "http://purl.org/ontology/bibo/"
+        },
+        "@graph": [
+          {
+            "identifier": [
+              {
+                "label": "085-139-212-1",
+                "@id": "http://purl.org/ontology/bibo/e6f544d5-b88b-4f16-996b-28460cd03a2b"
+              },
+              {
+                "label": "LOC-77364452",
+                "@id": "http://purl.org/ontology/bibo/89d3a46b-9117-46e2-a78a-0263242fc3e3"
+              },
+              {
+                "label": "(BeLVLBS)000012204LBS01-Aleph",
+                "@id": "http://purl.org/ontology/bibo/d0c3fe26-01e5-49f5-99fb-254763a834aa"
+              },
+              {
+                "label": "26931",
+                "@id": "http://purl.org/ontology/bibo/d0bf61ab-de3d-451f-861b-7224a99c11a3"
+              }
+            ],
+            "contributor": [
+              {
+                "viafLink": "http://viaf.org/viaf/305003200",
+                "@id": "http://id.loc.gov/authorities/names/n88622561",
+                "label": "Brown, Peter."
+              },
+              {
+                "viafLink": "http://viaf.org/viaf/93286981",
+                "@id": "http://id.loc.gov/authorities/names/n77001068",
+                "label": "Whittaker, Chris"
+              },
+              {
+                "viafLink": "http://viaf.org/viaf/62792360",
+                "@id": "http://id.loc.gov/authorities/names/n77001069",
+                "label": "Monahan, Jane"
+              }
+            ],
+            "@type": "Book",
+            "subject": [
+              {
+                "label": "614.7 Pollutie van lucht, water, grond--(openbare gezondheidszorg)",
+                "@id": "http://purl.org/ontology/bibo/24ab5f5b-17c1-4427-b0eb-a5215493a689"
+              },
+              {
+                "label": "#TCON:CCHTB",
+                "@id": "http://purl.org/ontology/bibo/4a05f967-a43d-492c-9c6e-84d3a89fc97d"
+              },
+              {
+                "@id": "http://id.loc.gov/authorities/subjects/sh2008103248",
+                "label": "Environmental law Great Britain"
+              }
+            ],
+            "publisher": "Architectural press",
+            "place_of_publication": "London",
+            "language": {
+              "@id": "http://id.loc.gov/vocabulary/iso639-2/eng",
+              "label": "eng"
+            },
+            "@id": "https://open-na.hosted.exlibrisgroup.com/alma/32KUL_LIBIS_NETWORK/bibs/99122040101471",
+            "title": "The handbook of environmental powers"
+          }
+        ]
+      }
+    )
+
+    flattened = JSON::LD::API.flatten(hash_jsonld_2, hash_jsonld_2['@context'])
+    assert_equal(flattened['@graph'][0]['http://purl.org/dc/elements/1.1/identifier'].nil?, false)
+
+    flattened = JSON::LD::API.flatten(hash_jsonld_3, hash_jsonld_3['@context'])
+    assert_equal(flattened['@graph'][0]['identifier'].nil?, false)
+
+  end
+
 
 end
