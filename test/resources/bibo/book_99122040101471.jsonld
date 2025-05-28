@@ -10,19 +10,19 @@
       "viafLink": "http://viaf.org/viaf/305003200",
       "@type": "foaf:Person",
       "@id": "http://id.loc.gov/authorities/names/n88622561",
-      "label": "Brown, Peter."
+      "name": "Brown, Peter."
     },
     {
       "viafLink": "http://viaf.org/viaf/93286981",
       "@id": "http://id.loc.gov/authorities/names/n77001068",
       "@type": "foaf:Person",
-      "label": "Whittaker, Chris"
+      "name": "Whittaker, Chris"
     },
     {
       "viafLink": "http://viaf.org/viaf/62792360",
       "@id": "http://id.loc.gov/authorities/names/n77001069",
       "@type": "foaf:Person",
-      "label": "Monahan, Jane"
+      "name": "Monahan, Jane"
     }
   ],
   "@type": "Book",
@@ -31,14 +31,16 @@
     "#TCON:CCHTB",
     {
       "@id": "http://id.loc.gov/authorities/subjects/sh2008103248",
-      "label": "Environmental law Great Britain"
+      "@type": "dct:subject",
+      "title": "Environmental law Great Britain"
     }
   ],
   "publisher": "Architectural press",
   "place_of_publication": "London",
   "language": {
     "@id": "http://id.loc.gov/vocabulary/iso639-2/eng",
-    "label": "eng"
+    "@type": "dcterms:LinguisticSystem",
+    "dc:identifier": "eng"
   },
   "@id": "https://open-na.hosted.exlibrisgroup.com/alma/32KUL_LIBIS_NETWORK/bibs/99122040101471",
   "title": "The handbook of environmental powers",

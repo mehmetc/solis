@@ -25,6 +25,13 @@ module Solis
           # shacl_graph = RDF::Graph.new
           shacl_graph = RDF::Repository.new
           shacl_graph.graph_name = graph.graph_name if graph.named?
+
+          # First pass: collect all properties that should be added to all classes
+          universal_properties = collect_universal_properties(graph)
+
+          # Create a base shape with all universal properties
+          base_shape = create_universal_base_shape(graph, universal_properties, shacl_graph)
+
           graph.query([nil, RDF.type, RDF::OWL.Class]).each do |stmt|
             class_uri = stmt.subject
 
@@ -46,13 +53,17 @@ module Solis
             shacl_graph << [shape, RDF::Vocab::SHACL.node, shape_subclass_of] if shape_subclass_of
             shacl_graph << [shape, RDF::Vocab::SHACL.description, shape_definition] if shape_definition
 
-            # Extract properties associated with this class
+            # Reference the universal base shape for common properties
+            shacl_graph << [shape, RDF::Vocab::SHACL.node, base_shape] if base_shape
+
+            # Extract properties with explicit domain for this class
             graph.query([nil, RDF::RDFS.domain, class_uri]).each do |property_stmt|
               add_property_to_shape(graph, property_stmt.subject, class_uri, shape, shacl_graph)
             end
 
             # Handle properties with unionOf domains that include this class
             handle_union_domain_properties(graph, class_uri, shape, shacl_graph)
+
             # add:
             # - Cardinality Constraint Components
             # - sh:hasValue
@@ -148,6 +159,61 @@ module Solis
         def self.safe_class_name(name)
           name = name.split("#").last =~ /^http/ ? name.split("/").last : name.split("#").last
           RESERVED_WORDS.include?(name) ? "#{name}Class" : name
+        end
+
+        # Create a base shape containing all universal properties
+        def self.create_universal_base_shape(graph, universal_properties, shacl_graph)
+          return nil if universal_properties.empty?
+
+          # Create base shape URI - use graph namespace if available, otherwise generic
+          base_namespace = graph.graph_name || "http://solis.libis.be/shapes/"
+          base_shape = RDF::URI.new("#{base_namespace}UniversalPropertiesShape")
+
+          # Define the base shape
+          shacl_graph << [base_shape, RDF.type, RDF::Vocab::SHACL.NodeShape]
+          shacl_graph << [base_shape, RDF::Vocab::SHACL.name, "UniversalProperties"]
+          shacl_graph << [base_shape, RDF::Vocab::SHACL.description, "Base shape containing properties that can be applied to any resource"]
+
+          # Add all universal properties to the base shape
+          universal_properties.each do |property|
+            add_property_to_shape(graph, property, RDF::RDFS.Resource, base_shape, shacl_graph)
+          end
+
+          base_shape
+        end
+
+        # Collect properties that should be available to all classes
+        def self.collect_universal_properties(graph)
+          universal_properties = []
+
+          # Find all ObjectProperties and DatatypeProperties
+          all_properties = []
+          graph.query([nil, RDF.type, RDF::OWL.ObjectProperty]).each { |stmt| all_properties << stmt.subject }
+          graph.query([nil, RDF.type, RDF::OWL.DatatypeProperty]).each { |stmt| all_properties << stmt.subject }
+
+          all_properties.each do |property|
+            domain = graph.first_object([property, RDF::RDFS.domain])
+
+            # Include properties with no domain or domain rdfs:Resource
+            if domain.nil? || domain == RDF::RDFS.Resource
+              universal_properties << property
+            elsif domain.is_a?(RDF::Node)
+              # Check if it's a unionOf that contains very general classes
+              union_list = graph.first_object([domain, RDF::OWL.unionOf])
+              if union_list
+                union_members = []
+                parse_owl_list(union_members, graph, union_list)
+
+                # If the union contains very broad classes like rdfs:Resource, consider it universal
+                if union_members.include?(RDF::RDFS.Resource) ||
+                  union_members.length > 3 # Heuristic: if many classes, likely meant to be broad
+                  universal_properties << property
+                end
+              end
+            end
+          end
+
+          universal_properties
         end
 
         # New method to handle owl:unionOf constructs

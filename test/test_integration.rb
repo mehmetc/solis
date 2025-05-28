@@ -61,8 +61,9 @@ class TestIntegration < Minitest::Test
 
   def test_integration_bibo_rdf
 
+    graph_name = "http://purl.org/ontology/bibo/"
     config = {
-      store: Solis::Store::Memory.new(),
+      store: Solis::Store::Memory.new(graph: graph_name),
       model: {
         prefix: 'bibo',
         namespace: 'http://purl.org/ontology/bibo/',
@@ -93,6 +94,7 @@ class TestIntegration < Minitest::Test
 
     #data = JSON.parse(URI.open('https://open-na.hosted.exlibrisgxroup.com/alma/32KUL_LIBIS_NETWORK/bibs/99122040101471').read)
     data = JSON.parse(File.read('test/resources/bibo/book_99122040101471.jsonld'))
+    #data = JSON.parse(File.read('test/resources/bibo/alice_in_wonderland.jsonld'))
     bibo_record = @solis.model.entity.new('Book', data)
 
     # puts bibo_record.to_pretty_pre_validate_jsonld
