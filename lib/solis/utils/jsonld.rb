@@ -47,6 +47,22 @@ module Solis
         flattened = JSON::LD::API.flatten(hash_jsonld, hash_jsonld['@context'], options: {
           # add flattening algo options here if necessary
         })
+        # NOTE: following patch is necessary because JSON::LD::API.flatten()
+        # does an expansion on top of the wanted flattening.
+        # If attribute names belong to known ontologies, then it expands to those, wrongly;
+        # there seems to be no way to avoid this, so the only choice seems overwriting attribute names,
+        # from full uri back to the base attribute name
+        flattened['@graph'].map! do |obj|
+          obj2 = Marshal.load(Marshal.dump(obj))
+          obj.each_key do |name_attr|
+            next if ['@id', '@type'].include?(name_attr)
+            uri = URI(name_attr)
+            # take part either after # or last /
+            name_attr_new = uri.fragment || uri.path.split('/').last
+            obj2.transform_keys!({"#{name_attr}" => name_attr_new})
+          end
+          obj2
+        end
         flattened
       end
 
@@ -100,7 +116,7 @@ module Solis
           val_attr = [val_attr] unless val_attr.is_a?(Array)
           val_attr.each do |e|
             if is_object_an_embedded_entity_or_ref(e)
-              type_embedded = SHACLSHapes::get_property_class_for_shape(shapes, type_root, name_attr)
+              type_embedded = Shapes::get_property_class_for_shape(shapes, type_root, name_attr)
               infer_jsonld_types_from_shapes!(e, shapes, type_embedded)
             end
           end

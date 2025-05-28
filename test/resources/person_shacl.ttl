@@ -2,29 +2,30 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
 # PersonName shape
 ex:PersonNameShape
     a sh:NodeShape ;
     sh:description "Properties specific for a person's name" ;
     sh:targetClass ex:PersonName ;
+    sh:name "PersonName" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
-    sh:property
-        [
-            sh:path ex:firstName ;
-            sh:datatype xsd:string ;
-            sh:minCount 1 ;
-            sh:maxCount 1 ;
-        ] ;
-    sh:property
-        [
-            sh:path ex:lastName ;
-            sh:datatype xsd:string ;
-            sh:minCount 1 ;
-            sh:maxCount 1 ;
-        ] .
+    sh:property [
+                    sh:path ex:firstName ;
+                    sh:name "firstName" ;
+                    sh:datatype xsd:string ;
+                    sh:minCount 1 ;
+                    sh:maxCount 1 ;
+                ] ;
+    sh:property [
+                    sh:path ex:lastName ;
+                    sh:name "lastName" ;
+                    sh:datatype xsd:string ;
+                    sh:minCount 1 ;
+                    sh:maxCount 1 ;
+                ] .
 
 ex:AgentShape
     a sh:NodeShape ;
@@ -45,6 +46,7 @@ ex:AgentShape
     sh:property
         [
             sh:path ex:website ;
+            sh:name "website" ;
             sh:datatype xsd:anyURI ;
             sh:minCount 1 ;
             sh:maxCount 1 ;
@@ -70,6 +72,7 @@ ex:PersonShape
     sh:property
         [
             sh:path ex:website ;
+            sh:name "website" ;
             sh:datatype xsd:anyURI ;
             sh:minCount 1 ;
             sh:maxCount 1 ;
@@ -79,11 +82,13 @@ ex:PersonShape
 ex:OrganizationShape
     a sh:NodeShape ;
     sh:targetClass ex:Organization ;
+    sh:name "Organization" ;
     sh:node ex:AgentShape ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
     sh:property [
                     sh:path ex:name ;
+                    sh:name "name" ;
                     sh:datatype xsd:string ;  # Must explicitly redefine
                     sh:minCount 1 ;
                     sh:maxCount 1 ;
@@ -91,6 +96,7 @@ ex:OrganizationShape
     sh:property
         [
             sh:path ex:website ;
+            sh:name "website" ;
             sh:datatype xsd:anyURI ;
             sh:minCount 1 ;
             sh:maxCount 1 ;

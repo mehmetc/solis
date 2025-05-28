@@ -1,19 +1,11 @@
 {
   "date": "2008",
-  "identifier": {
-    "label": "(BeLVLBS)007062940LBS01-Aleph"
-  },
+  "identifier": "(BeLVLBS)007062940LBS01-Aleph",
   "@type": "Visual material",
   "subject": [
-    {
-      "label": "R.050"
-    },
-    {
-      "label": "Pizza"
-    },
-    {
-      "label": "Gastronomie"
-    }
+    "R.050",
+    "Pizza",
+    "Gastronomie"
   ],
   "description": "Heston Blumenthal herinterpreteert traditionele gerechten",
   "language": {

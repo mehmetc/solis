@@ -179,6 +179,64 @@ class TestSHACLValidator < Minitest::Test
 
   end
 
+
+  def test_invalid_property_xsd_datatype
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh: <http://www.w3.org/ns/shacl#> .
+      @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+      example:AgentShape
+          a sh:NodeShape ;
+          sh:description "Abstract shape that describes an agent entity" ;
+          sh:targetClass example:Agent ;
+          sh:name "Agent" ;
+      .
+
+      example:PersonShape
+          a sh:NodeShape ;
+          sh:node example:AgentShape ;
+          sh:description "Person entity" ;
+          sh:targetClass example:Person ;
+          sh:name "Person" ;
+          sh:property
+              [
+                  sh:path example:name ;
+                  sh:name "name" ;
+                  sh:description "name of the person" ;
+                  sh:datatype xsd:string ;
+                  sh:minCount 1 ;
+                  sh:maxCount 1 ;
+              ] .
+
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/"
+        },
+        "@graph": [
+          {
+            "@type": "Person",
+            "name": {
+              "@id": "http://schema.org/my_wrong_obj",
+              "label": "ciao"
+            }
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    # pp messages
+    assert_equal(conform, false)
+
+  end
+
   def test_valid_property_class_datatype
 
     str_shacl_ttl = %(

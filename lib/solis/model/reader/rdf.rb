@@ -71,8 +71,11 @@ module Solis
               property_shape = nil
               shacl_graph.query([shape, RDF::Vocab::SHACL.property, nil]) do |property_shape_stmt|
                 next unless property_shape.nil?
-                property_shape = property_shape_stmt.object
-                property_shape = shacl_graph.first_subject([property_shape, RDF::Vocab::SHACL.name, property_name])
+                candidate_shape = property_shape_stmt.object
+                shape_name = shacl_graph.first_object([candidate_shape, RDF::Vocab::SHACL.name])
+                if shape_name && shape_name.value == property_name
+                  property_shape = candidate_shape
+                end
               end
               # if empty, make it;
               # reason for not existing is not being created earlier
@@ -266,7 +269,21 @@ module Solis
             shacl_graph << [property_shape, RDF::Vocab::SHACL.class, range] if range
           elsif property_type == RDF::OWL.DatatypeProperty
             if sub_property_of
-              shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, sub_property_of]
+              # Look up the range of the parent property instead of using the property URI as datatype
+              parent_range = graph.first_object([sub_property_of, RDF::RDFS.range])
+              if parent_range
+                if parent_range == RDF::RDFS.Literal
+                  shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, RDF::XSD.string]
+                elsif parent_range.to_s.start_with?("http://www.w3.org/2001/XMLSchema#")
+                  shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, parent_range]
+                else
+                  # Custom datatype or class - use as is
+                  shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, parent_range]
+                end
+              else
+                # Fallback to string if no range found on parent
+                shacl_graph << [property_shape, RDF::Vocab::SHACL.datatype, RDF::XSD.string]
+              end
             else
               if range
                 if range == RDF::RDFS.Literal
@@ -293,21 +310,43 @@ module Solis
 
         # Handle properties that have unionOf domains
         def self.handle_union_domain_properties(graph, class_uri, shape, shacl_graph)
-          # Find all properties that have a domain with unionOf
-          graph.query([nil, RDF::RDFS.domain, nil]) do |stmt|
-            property = stmt.subject
-            domain = stmt.object
+          # Find all properties and check their domains
+          graph.query([nil, RDF.type, RDF::OWL.ObjectProperty]).each do |property_stmt|
+            check_and_add_union_property(graph, property_stmt.subject, class_uri, shape, shacl_graph)
+          end
 
-            # Check if domain is a blank node with owl:unionOf
-            union_list = graph.first_object([domain, RDF::OWL.unionOf])
-            next unless union_list
+          graph.query([nil, RDF.type, RDF::OWL.DatatypeProperty]).each do |property_stmt|
+            check_and_add_union_property(graph, property_stmt.subject, class_uri, shape, shacl_graph)
+          end
+        end
 
-            # Parse the union list to see if our class is included
-            union_members = []
-            parse_owl_list(union_members, graph, union_list)
+        # Helper method to check if a property has a unionOf domain that includes our class
+        def self.check_and_add_union_property(graph, property, class_uri, shape, shacl_graph)
+          domain = graph.first_object([property, RDF::RDFS.domain])
+          return unless domain
 
-            # If this class is in the union, add the property to this shape
-            if union_members.include?(class_uri)
+          # Skip if domain is directly our class (already handled by main loop)
+          return if domain == class_uri
+
+          # Check if domain is a blank node with owl:unionOf
+          union_list = graph.first_object([domain, RDF::OWL.unionOf])
+          return unless union_list
+
+          # Parse the union list to see if our class is included
+          union_members = []
+          parse_owl_list(union_members, graph, union_list)
+
+          # If this class is in the union, add the property to this shape
+          if union_members.include?(class_uri)
+            # Check if we've already added this property to avoid duplicates
+            existing_property = shacl_graph.query([shape, RDF::Vocab::SHACL.property, nil]).find do |stmt|
+              prop_shape = stmt.object
+              path = shacl_graph.first_object([prop_shape, RDF::Vocab::SHACL.path])
+              path == property
+            end
+
+            # Only add if not already present
+            unless existing_property
               add_property_to_shape(graph, property, class_uri, shape, shacl_graph)
             end
           end

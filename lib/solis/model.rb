@@ -2,7 +2,6 @@ require_relative 'model/reader'
 require_relative 'model/writer'
 require_relative "validator/validatorV1"
 require_relative "validator/validatorV2"
-require_relative "model/validator_literals"
 require_relative "model/literals/edtf"
 require_relative "model/literals/iso8601"
 
@@ -40,10 +39,8 @@ module Solis
       @validator = Solis::SHACLValidatorV2.new(@graph, :graph, {
         path_dir: params[:tmp_dir]
       }) rescue Solis::SHACLValidatorV1.new(@graph, :graph, {})
-      hash_validator_literals_custom = model[:hash_validator_literals_custom] || {}
-      @hash_validator_literals = Solis::Model::Literals.get_default_hash_validator
-      @hash_validator_literals.merge!(hash_validator_literals_custom)
       @hierarchy = model[:hierarchy] || {}
+      add_hierarchy_to_shapes
     end
 
     def entity
@@ -135,13 +132,13 @@ module Solis
 
     def _get_embedded_entity_type_for_entity(name_entity, name_attr)
       res = nil
-      # first check in the SHACL shapes
-      if SHACLSHapes.shape_exists?(@shapes, name_entity)
-        res = SHACLSHapes.get_property_class_for_shape(@shapes, name_entity, name_attr)
+      # first check directly in shape
+      if Shapes.shape_exists?(@shapes, name_entity)
+        res = Shapes.get_property_class_for_shape(@shapes, name_entity, name_attr)
       end
       if res.nil?
         # otherwise navigate classes hierarchy up and try again
-        names_entities_parents = @hierarchy[name_entity]
+        names_entities_parents = get_parent_entities_for_entity(name_entity)
         names_entities_parents.each do |name_entity_parent|
           next unless res.nil?
           res = _get_embedded_entity_type_for_entity(name_entity_parent, name_attr)
@@ -152,13 +149,13 @@ module Solis
 
     def _get_datatype_for_entity(name_entity, name_attr)
       res = nil
-      # first check in the SHACL shapes
-      if SHACLSHapes.shape_exists?(@shapes, name_entity)
-        res = SHACLSHapes.get_property_datatype_for_shape(@shapes, name_entity, name_attr)
+      # first check directly in shape
+      if Shapes.shape_exists?(@shapes, name_entity)
+        res = Shapes.get_property_datatype_for_shape(@shapes, name_entity, name_attr)
       end
       if res.nil?
         # otherwise navigate classes hierarchy up and try again
-        names_entities_parents = @hierarchy[name_entity]
+        names_entities_parents = get_parent_entities_for_entity(name_entity)
         names_entities_parents.each do |name_entity_parent|
           next unless res.nil?
           res = _get_datatype_for_entity(name_entity_parent, name_attr)
@@ -169,7 +166,7 @@ module Solis
 
     def _get_parent_entities_for_entity(name_entity)
       names_entities_parents = []
-      names_nodes_parents = SHACLSHapes.get_parent_shapes_for_shape(@shapes, name_entity)
+      names_nodes_parents = Shapes.get_parent_shapes_for_shape(@shapes, name_entity)
       names_entities_parents += names_nodes_parents.map do |uri|
         res = nil
         @shapes.each do |k, v|
@@ -178,7 +175,6 @@ module Solis
         end
         res
       end.compact
-      names_entities_parents += @hierarchy[name_entity] || []
       names_entities_parents
     end
 
@@ -190,6 +186,17 @@ module Solis
           # this one seems more specific: https://oscaf.sourceforge.net/nao.html#nao:pluralPrefLabel.
           # for now uses skos:altLabel: https://www.w3.org/2012/09/odrl/semantic/draft/doco/skos_altLabel.html
           @graph << [shape.subject, RDF::Vocab::SKOS.altLabel, plural_name]
+        end
+      end
+    end
+
+    def add_hierarchy_to_shapes
+      @hierarchy.each do |name_entity, names_entities_parents|
+        unless @shapes.key?(name_entity)
+          @shapes[name_entity] = {properties: {}, uri: "#{name_entity}Shape", nodes: [], closed: false, plural: nil}
+        end
+        names_entities_parents.each do |name_entity_parent|
+          @shapes[name_entity][:nodes] << @shapes[name_entity_parent][:uri]
         end
       end
     end

@@ -37,6 +37,7 @@ lbs:ThingShape a sh:NodeShape ;
         ] .
 
 lbs:FoafPersonShape a sh:NodeShape ;
+    sh:name "FoafPerson" ;
     sh:targetClass foaf:Person ;
     sh:description "Inherited person entity" ;
     sh:property
@@ -55,6 +56,7 @@ lbs:FoafPersonShape a sh:NodeShape ;
         ] .
 
 lbs:PersonShape a sh:NodeShape ;
+    sh:name "LbsPerson" ;
     sh:description "A person entity with inherited properties" ;
     sh:targetClass lbs:Person ;
     sh:node lbs:ThingShape ; #inherit properties
