@@ -44,7 +44,7 @@ class TestIntegration < Minitest::Test
     post = @solis.model.entity.new('Post')
     properties = post.get_properties_info.keys
 
-    assert_includes(@solis.model.entity.list, "Post")
+    assert_includes(@solis.model.entity.all, "Post")
     assert_includes(properties, 'title')
 
     data = {
@@ -93,9 +93,6 @@ class TestIntegration < Minitest::Test
 
     #data = JSON.parse(URI.open('https://open-na.hosted.exlibrisgxroup.com/alma/32KUL_LIBIS_NETWORK/bibs/99122040101471').read)
     data = JSON.parse(File.read('test/resources/bibo/book_99122040101471.jsonld'))
-
-    # puts JSON.pretty_generate(data)
-
     bibo_record = @solis.model.entity.new('Book', data)
 
     # puts bibo_record.to_pretty_pre_validate_jsonld

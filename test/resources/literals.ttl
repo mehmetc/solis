@@ -1,0 +1,108 @@
+@prefix ex: <https://example.com/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+ex:TestLiteralShape a sh:NodeShape ;
+    sh:name "test_literal" ;
+    sh:description "Testing all literals" ;
+    sh:targetClass ex:TestLiteral ;
+    sh:property [
+                    sh:path ex:integer ;
+                    sh:name "integer" ;
+                    sh:datatype xsd:integer ;
+                    sh:minCount 0 ;
+                    sh:maxCount 1 ;
+                ] ;
+    sh:property [
+                    sh:path ex:string ;
+                    sh:name "string" ;
+                    sh:datatype xsd:string ;
+                    sh:minCount 0 ;
+                    sh:maxCount 1 ;
+                ];
+    sh:property [
+                    sh:path ex:lang_string ;
+                    sh:name "lang_string" ;
+                    sh:datatype rdf:langString ;
+                    sh:minCount 0 ;
+                    sh:maxCount 1 ;
+                ];
+    sh:property [
+                    sh:path ex:json ;
+                    sh:name "json" ;
+                    sh:datatype rdf:JSON ;
+                    sh:minCount 0 ;
+                    sh:maxCount 1 ;
+                ];
+    sh:property [
+                    sh:path ex:label ;
+                    sh:name "label" ;
+                    sh:datatype rdf:label ;
+                    sh:minCount 0 ;
+                    sh:maxCount 1 ;
+                ];
+    sh:property [
+                    sh:path ex:boolean ;
+                    sh:name "boolean" ;
+                    sh:datatype xsd:boolean ;
+                    sh:minCount 0 ;
+                    sh:maxCount 1 ;
+                ] ;
+    sh:property [
+                    sh:path ex:date ;
+                    sh:name "date" ;
+                    sh:datatype xsd:date ;
+                    sh:minCount 0 ;
+                    sh:maxCount 1 ;
+                ] ;
+    sh:property [
+                    sh:path ex:date_time ;
+                    sh:name "date_time" ;
+                    sh:datatype xsd:dateTime ;
+                    sh:minCount 0 ;
+                    sh:maxCount 1 ;
+                ] ;
+    sh:property [
+                    sh:path ex:time ;
+                    sh:name "time" ;
+                    sh:datatype xsd:time ;
+                    sh:minCount 0 ;
+                    sh:maxCount 1 ;
+                ] ;
+    sh:property [
+                    sh:path ex:g_year ;
+                    sh:name "g_year" ;
+                    sh:datatype xsd:gYear ;
+                    sh:minCount 0 ;
+                    sh:maxCount 1 ;
+                ] ;
+    sh:property [
+                    sh:path ex:duration ;
+                    sh:name "duration" ;
+                    sh:datatype xsd:duration ;
+                    sh:minCount 0 ;
+                    sh:maxCount 1 ;
+                ] ;
+    sh:property [
+                    sh:path ex:double ;
+                    sh:name "double" ;
+                    sh:datatype xsd:double ;
+                    sh:minCount 0 ;
+                    sh:maxCount 1 ;
+                ] ;
+    sh:property [
+                    sh:path ex:float ;
+                    sh:name "float" ;
+                    sh:datatype xsd:float ;
+                    sh:minCount 0 ;
+                    sh:maxCount 1 ;
+                ] ;
+    sh:property [
+                    sh:path ex:uri ;
+                    sh:name "uri" ;
+                    sh:datatype xsd:anyURI ;
+                    sh:minCount 0 ;
+                    sh:maxCount 1 ;
+                ] .

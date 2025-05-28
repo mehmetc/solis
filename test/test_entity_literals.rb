@@ -14,6 +14,12 @@ class TestEntityLiterals < Minitest::Test
       tmp_dir: dir_tmp
     })
 
+    @model_literals = Solis::Model.new(model: {
+      uri: "file://test/resources/literals.ttl",
+      prefix: 'ex',
+      namespace: @name_graph,
+      tmp_dir: dir_tmp
+    })
   end
 
   def test_entity_valid_literals
@@ -133,7 +139,46 @@ class TestEntityLiterals < Minitest::Test
     car = Solis::Model::Entity.new(data, @model, 'Car', nil)
 
     assert_equal(car.valid?, true)
+  end
 
+  def test_integer
+    data = {
+      integer: 1
+    }
+    literal = Solis::Model::Entity.new(data, @model_literals, 'test_literal', nil)
+
+    puts literal.to_pretty_pre_validate_jsonld
+    assert_equal(literal.valid?, true)
+  end
+
+  def test_float
+    data = {
+      float: 1.0
+    }
+    literal = Solis::Model::Entity.new(data, @model_literals, 'test_literal', nil)
+
+    puts literal.to_pretty_pre_validate_jsonld
+    assert_equal(literal.valid?, true)
+  end
+
+  def test_double
+    data = {
+      double: 1.0
+    }
+    literal = Solis::Model::Entity.new(data, @model_literals, 'test_literal', nil)
+
+    puts literal.to_pretty_pre_validate_jsonld
+    assert_equal(literal.valid?, true)
+  end
+
+  def test_uri
+    data = {
+      uri: "https://example.com"
+    }
+    literal = Solis::Model::Entity.new(data, @model_literals, 'test_literal', nil)
+
+    puts literal.to_pretty_pre_validate_jsonld
+    assert_equal(literal.valid?, true)
   end
 
   def test_entity_literal_with_alternatives_3

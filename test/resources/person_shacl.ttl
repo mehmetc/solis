@@ -42,6 +42,14 @@ ex:AgentShape
             sh:datatype xsd:string ;
             sh:minCount 1 ;
             sh:maxCount 1 ;
+        ] ;
+    sh:property
+        [
+            sh:path ex:website ;
+            sh:name "website" ;
+            sh:datatype xsd:anyURI ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
         ] .
 
 ex:PersonShape
@@ -60,6 +68,14 @@ ex:PersonShape
             sh:class ex:PersonName ; # Override: complex object instead of string
             sh:minCount 1 ;
             sh:maxCount 1 ;
+        ] ;
+    sh:property
+        [
+            sh:path ex:website ;
+            sh:name "website" ;
+            sh:datatype xsd:anyURI ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
         ] .
 
 
@@ -67,6 +83,7 @@ ex:OrganizationShape
     a sh:NodeShape ;
     sh:targetClass ex:Organization ;
     sh:name "Organization" ;
+    sh:node ex:AgentShape ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
     sh:property [
@@ -75,4 +92,12 @@ ex:OrganizationShape
                     sh:datatype xsd:string ;  # Must explicitly redefine
                     sh:minCount 1 ;
                     sh:maxCount 1 ;
-                ] .
+                ] ;
+    sh:property
+        [
+            sh:path ex:website ;
+            sh:name "website" ;
+            sh:datatype xsd:anyURI ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] .

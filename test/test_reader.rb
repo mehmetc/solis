@@ -22,7 +22,7 @@ class TestReader < Minitest::Test
   end
 
   def test_read_from_stringio
-    assert_includes(@solis.model.entity.list(namespace: true), 'https://example.com/Car')
+    assert_includes(@solis.model.entity.all(namespace: true), 'https://example.com/Car')
   end
 
   def test_read_from_uri
@@ -35,7 +35,7 @@ class TestReader < Minitest::Test
         content_type: 'application/rdf+xml'}
     }
     solis = Solis.new(config)
-    assert_includes(solis.model.entity.list, 'Title')
+    assert_includes(solis.model.entity.all, 'Title')
     #TODO: test more
     File.open('./test/resources/bibframe_shapes.ttl', 'wb') do |f|
       f.puts solis.model.writer
@@ -103,7 +103,7 @@ class TestReader < Minitest::Test
     config[:store] = Solis::Store::Memory.new()
 
     solis = Solis.new(config)
-    all_entities = solis.model.entity.list
+    all_entities = solis.model.entity.all
     assert_includes(all_entities, 'Tenant')
 
     puts JSON.pretty_generate(all_entities)

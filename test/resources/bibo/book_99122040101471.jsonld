@@ -1,43 +1,34 @@
 {
   "identifier": [
-    {
-      "label": "085-139-212-1"
-    },
-    {
-      "label": "LOC-77364452"
-    },
-    {
-      "label": "(BeLVLBS)000012204LBS01-Aleph"
-    },
-    {
-      "label": "26931"
-    }
+    "085-139-212-1",
+    "LOC-77364452",
+    "(BeLVLBS)000012204LBS01-Aleph",
+    "26931"
   ],
   "contributor": [
     {
       "viafLink": "http://viaf.org/viaf/305003200",
+      "@type": "foaf:Person",
       "@id": "http://id.loc.gov/authorities/names/n88622561",
       "label": "Brown, Peter."
     },
     {
       "viafLink": "http://viaf.org/viaf/93286981",
       "@id": "http://id.loc.gov/authorities/names/n77001068",
+      "@type": "foaf:Person",
       "label": "Whittaker, Chris"
     },
     {
       "viafLink": "http://viaf.org/viaf/62792360",
       "@id": "http://id.loc.gov/authorities/names/n77001069",
+      "@type": "foaf:Person",
       "label": "Monahan, Jane"
     }
   ],
   "@type": "Book",
   "subject": [
-    {
-      "label": "614.7 Pollutie van lucht, water, grond--(openbare gezondheidszorg)"
-    },
-    {
-      "label": "#TCON:CCHTB"
-    },
+    "614.7 Pollutie van lucht, water, grond--(openbare gezondheidszorg)",
+    "#TCON:CCHTB",
     {
       "@id": "http://id.loc.gov/authorities/subjects/sh2008103248",
       "label": "Environmental law Great Britain"
