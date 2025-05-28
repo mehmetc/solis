@@ -8,17 +8,20 @@
   "contributor": [
     {
       "viafLink": "http://viaf.org/viaf/305003200",
+      "@type": "foaf:Person",
       "@id": "http://id.loc.gov/authorities/names/n88622561",
       "label": "Brown, Peter."
     },
     {
       "viafLink": "http://viaf.org/viaf/93286981",
       "@id": "http://id.loc.gov/authorities/names/n77001068",
+      "@type": "foaf:Person",
       "label": "Whittaker, Chris"
     },
     {
       "viafLink": "http://viaf.org/viaf/62792360",
       "@id": "http://id.loc.gov/authorities/names/n77001069",
+      "@type": "foaf:Person",
       "label": "Monahan, Jane"
     }
   ],
