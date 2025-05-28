@@ -4,6 +4,7 @@ require_relative "validator/validatorV1"
 require_relative "validator/validatorV2"
 require_relative "model/literals/edtf"
 require_relative "model/literals/iso8601"
+require_relative "utils/rdf"
 
 module Solis
   class Model
