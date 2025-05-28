@@ -7,10 +7,8 @@
     },
     "@type": "bibo:Book",
     "@id": "urn:isbn:9780486275437",
-
     "dcterms:title": "Alice's Adventures in Wonderland",
     "bibo:shortTitle": "Alice in Wonderland",
-
     "dcterms:creator": {
         "@type": "foaf:Person",
         "@id": "http://viaf.org/viaf/66462036",
@@ -18,11 +16,9 @@
         "foaf:givenName": "Charles",
         "foaf:familyName": "Dodgson"
     },
-
     "dcterms:publisher": "Dover Publications",
     "dcterms:date": "1993",
     "bibo:edition": "Dover Thrift Edition",
-
     "bibo:isbn13": "9780486275437",
     "bibo:isbn10": "0486275434",
     "bibo:identifier": [
@@ -30,14 +26,11 @@
         "0486275434",
         "OCLC: 27893874"
     ],
-
     "dcterms:language": {
         "@id": "http://id.loc.gov/vocabulary/iso639-2/eng",
         "dcterms:identifier": "eng"
     },
-
     "bibo:numPages": "96",
-
     "dcterms:subject": [
         {
             "@id": "http://id.loc.gov/authorities/subjects/sh85050104",
@@ -48,71 +41,56 @@
             "dcterms:title": "Children's literature"
         },
         "Adventure fiction",
-                   "Nonsense literature",
-                   "Victorian literature"
-        ],
-
-        "dcterms:description": "A young girl named Alice falls down a rabbit hole into a fantasy world populated by peculiar creatures. This classic tale of adventure and imagination has captivated readers of all ages since its first publication in 1865.",
-
-        "bibo:abstract": "Alice's Adventures in Wonderland tells the story of a girl named Alice who falls through a rabbit hole into a fantasy world of anthropomorphic creatures. The tale plays with logic, giving the story lasting popularity with adults as well as children.",
-
-        "dcterms:created": "1865",
-        "dcterms:issued": "1993",
-
-        "bibo:authorList": [
+        "Nonsense literature",
+        "Victorian literature"
+    ],
+    "dcterms:description": "A young girl named Alice falls down a rabbit hole into a fantasy world populated by peculiar creatures. This classic tale of adventure and imagination has captivated readers of all ages since its first publication in 1865.",
+    "bibo:abstract": "Alice's Adventures in Wonderland tells the story of a girl named Alice who falls through a rabbit hole into a fantasy world of anthropomorphic creatures. The tale plays with logic, giving the story lasting popularity with adults as well as children.",
+    "dcterms:created": "1865",
+    "dcterms:issued": "1993",
+    "bibo:authorList": [
         {
             "@type": "foaf:Person",
             "@id": "http://viaf.org/viaf/66462036",
             "foaf:name": "Lewis Carroll"
         }
-],
-
-"dcterms:isPartOf": {
-"@type": "bibo:Series",
-"dcterms:title": "Dover Thrift Editions"
-},
-
-"bibo:uri": "https://www.gutenberg.org/ebooks/11",
-
-"dcterms:rights": "Public Domain",
-
-"bibo:status": {
-"@id": "http://purl.org/ontology/bibo/status/published"
-},
-
-"dcterms:format": [
-                  "text/plain",
-                  "application/pdf"
-                  ],
-
-                  "bibo:content": "Chapter I. Down the Rabbit-Hole Alice was beginning to get very tired of sitting by her sister on the bank, and of having nothing to do...",
-
-"dcterms:tableOfContents": [
-"Chapter I. Down the Rabbit-Hole",
-"Chapter II. The Pool of Tears",
-"Chapter III. A Caucus-Race and a Long Tale",
-"Chapter IV. The Rabbit Sends in a Little Bill",
-                                               "Chapter V. Advice from a Caterpillar",
-                                               "Chapter VI. Pig and Pepper",
-                                               "Chapter VII. A Mad Tea-Party",
-                                               "Chapter VIII. The Queen's Croquet-Ground",
-                                               "Chapter IX. The Mock Turtle's Story",
-                                                                                    "Chapter X. The Lobster Quadrille",
-                                                                                    "Chapter XI. Who Stole the Tarts?",
-                                                                                    "Chapter XII. Alice's Evidence"
-                                                                                    ],
-
-                                                                                    "bibo:cites": [
-                                                                                                  {
-                                                                                                  "@type": "bibo:Book",
-                                                                                                  "dcterms:title": "Through the Looking-Glass",
-"dcterms:creator": "Lewis Carroll"
-}
-],
-
-"dcterms:audience": [
-"Children",
-"Young adults",
-"General readers"
-]
+    ],
+    "dcterms:isPartOf": {
+        "@type": "bibo:Series",
+        "dcterms:title": "Dover Thrift Editions"
+    },
+    "bibo:uri": "https://www.gutenberg.org/ebooks/11",
+    "dcterms:rights": "Public Domain",
+    "bibo:status": {"@id": "http://purl.org/ontology/bibo/status/published"},
+    "dcterms:format": [
+        "text/plain",
+        "application/pdf"
+    ],
+    "bibo:content": "Chapter I. Down the Rabbit-Hole Alice was beginning to get very tired of sitting by her sister on the bank, and of having nothing to do...",
+    "dcterms:tableOfContents": [
+        "Chapter I. Down the Rabbit-Hole",
+        "Chapter II. The Pool of Tears",
+        "Chapter III. A Caucus-Race and a Long Tale",
+        "Chapter IV. The Rabbit Sends in a Little Bill",
+        "Chapter V. Advice from a Caterpillar",
+        "Chapter VI. Pig and Pepper",
+        "Chapter VII. A Mad Tea-Party",
+        "Chapter VIII. The Queen's Croquet-Ground",
+        "Chapter IX. The Mock Turtle's Story",
+        "Chapter X. The Lobster Quadrille",
+        "Chapter XI. Who Stole the Tarts?",
+        "Chapter XII. Alice's Evidence"
+    ],
+    "bibo:cites": [
+        {
+            "@type": "bibo:Book",
+            "dcterms:title": "Through the Looking-Glass",
+            "dcterms:creator": "Lewis Carroll"
+        }
+    ],
+    "dcterms:audience": [
+        "Children",
+        "Young adults",
+        "General readers"
+    ]
 }

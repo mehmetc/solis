@@ -1551,9 +1551,9 @@ class TestSHACLValidator < Minitest::Test
     assert_equal(conform, true)
 
     #www = RDF::Literal.new("http://example.org", datatype: RDF::XSD.anyURI)
-    #www = RDF::Literal::AnyURI.new("http://example.org")
+    # www = RDF::Literal::AnyURI.new("http://example.org")
     #assert_kind_of(RDF::Literal::AnyURI, www)
-    www = "http://example.org"
+    www = "http://example.org/abc"
     person_string = {
       name: { firstName: "John", lastName: "Doe"},
       website: www
