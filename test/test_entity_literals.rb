@@ -29,7 +29,6 @@ class TestEntityLiterals < Minitest::Test
     )
 
     car = Solis::Model::Entity.new(data, @model, 'Car', nil)
-    pp car.validate
 
     assert_equal(car.valid?, true)
 
@@ -48,7 +47,6 @@ class TestEntityLiterals < Minitest::Test
     )
 
     car = Solis::Model::Entity.new(data, @model, 'Car', nil)
-    pp car.validate
 
     assert_equal(car.valid?, false)
 
@@ -112,8 +110,6 @@ class TestEntityLiterals < Minitest::Test
 
     car = Solis::Model::Entity.new(data, @model, 'Car', nil)
 
-    puts car.to_pretty_pre_validate_jsonld
-
     assert_equal(car.valid?, true)
 
   end
@@ -136,9 +132,32 @@ class TestEntityLiterals < Minitest::Test
 
     car = Solis::Model::Entity.new(data, @model, 'Car', nil)
 
-    puts car.to_pretty_pre_validate_jsonld
-
     assert_equal(car.valid?, true)
+
+  end
+
+  def test_entity_literal_with_alternatives_3
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "demolishing_year_forecast": "2030-06~",
+        "check_interval": "P1Y",
+        "tag": {
+          "_value": "123456"
+        }
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', nil)
+
+    # NOTE: it fails because the datatype, for a property that has alternative datatypes,
+    # cannot be inferred by the data model. Hence, the datatype must be provided explicitly.
+    # If not, then it is guessed internally. But in this case it is a string, that does not match
+    # with a <https://example.com/id>.
+    assert_equal(car.valid?, false)
 
   end
 
