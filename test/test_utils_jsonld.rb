@@ -443,7 +443,7 @@ class TestUtilsJSONLD < Minitest::Test
 
   end
 
-  def test_expand_term_1
+  def test_expand_term_from_vocab
 
     term = 'my_attr'
     context = {
@@ -454,7 +454,7 @@ class TestUtilsJSONLD < Minitest::Test
 
   end
 
-  def test_expand_term_2
+  def test_expand_valid_term_from_resolvable_url
 
     term = 'issn'
     context = "https://open-na.hosted.exlibrisgroup.com/alma/contexts/bib"
@@ -463,12 +463,23 @@ class TestUtilsJSONLD < Minitest::Test
 
   end
 
-  def test_expand_term_3
+  def test_expand_invalid_term_from_resolvable_url
 
     term = 'issnnnnnn'
     context = "https://open-na.hosted.exlibrisgroup.com/alma/contexts/bib"
     term_expanded = Solis::Utils::JSONLD.expand_term(term, context)
     assert_equal(term_expanded, nil)
+
+  end
+
+  def test_expand_already_expanded_term_from_vocab
+
+    term = 'https://example.org/my_attr'
+    context = {
+      "@vocab" => "https://example.org/"
+    }
+    term_expanded = Solis::Utils::JSONLD.expand_term(term, context)
+    assert_equal(term_expanded, "https://example.org/my_attr")
 
   end
 
