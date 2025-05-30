@@ -101,9 +101,9 @@ module Solis
         if type.nil?
           raise MissingTypeError
         end
-        if model.shapes[type].nil?
-          raise TypeNotFoundError
-        end
+        # if model.shapes[type].nil?
+        #   raise TypeNotFoundError
+        # end
         @type = type
         @store = store
         set_internal_data_from_jsonld(obj)
@@ -111,10 +111,14 @@ module Solis
         if !_obj['@type'].nil? && !_obj['@type'].eql?(type)
           raise TypeMismatchError
         end
+        @context = {
+          "@vocab" => @model.namespace
+        }
         unless _obj['@context'].nil?
+          @context = _obj['@context']
           _obj.delete('@context')
-          set_internal_data_from_jsonld(_obj)
         end
+        set_internal_data_from_jsonld(_obj)
         add_ids_if_not_exists!
       end
 
@@ -217,7 +221,7 @@ module Solis
         obj = get_internal_data_as_jsonld
         # infer type if reference autoload is requested
         if _opts[:autoload_missing_refs]
-          Solis::Utils::JSONLD.infer_jsonld_types_from_model!(obj, @model, @type)
+          Solis::Utils::JSONLD.infer_jsonld_types_from_model!(obj, @model, @context, @type)
         end
         # "plays" the patch on instance
         _obj_patch = Solis::Utils::JSONUtils.deep_replace_prefix_in_name_attr(obj_patch, '_', '@')
@@ -277,12 +281,12 @@ module Solis
         id_op
       end
 
-      def get_info
-        @model.get_info_for_entity(@type)
+      def get_shape
+        @model.get_shape_for_entity(Solis::Utils::JSONLD.expand_term(@type, @context))
       end
 
       def get_properties_info
-        @model.get_properties_info_for_entity(@type)
+        @model.get_properties_info_for_entity(Solis::Utils::JSONLD.expand_term(@type, @context))
       end
 
       def to_pretty_jsonld
@@ -338,12 +342,13 @@ module Solis
       def to_jsonld(hash_data_json)
 
         # infer "@type"(s) from model, when not available
-        Solis::Utils::JSONLD.infer_jsonld_types_from_model!(hash_data_json, @model, @type)
+        Solis::Utils::JSONLD.infer_jsonld_types_from_model!(hash_data_json, @model, @context, @type)
 
         # make json-ld out of json
-        hash_data_jsonld = Solis::Utils::JSONLD.json_object_to_jsonld(hash_data_json, {
-          "@vocab" => @model.namespace
-        })
+        # hash_data_jsonld = Solis::Utils::JSONLD.json_object_to_jsonld(hash_data_json, {
+        #   "@vocab" => @model.namespace
+        # })
+        hash_data_jsonld = Solis::Utils::JSONLD.json_object_to_jsonld(hash_data_json, @context)
         hash_data_jsonld
       end
 
@@ -357,12 +362,14 @@ module Solis
 
         @model.logger.debug("======= object:")
         @model.logger.debug(JSON.pretty_generate(obj))
-        context_datatypes = Solis::Utils::JSONLD.make_jsonld_datatypes_context_from_model(obj, @model)
+        context_datatypes = Solis::Utils::JSONLD.make_jsonld_datatypes_context_from_model(obj, @model, @context)
 
-        context = {
-          "@vocab" => @model.namespace
-        }
-        context.merge!(context_datatypes)
+        # context = {
+        #   "@vocab" => @model.namespace
+        # }
+        # context.merge!(context_datatypes)
+        context = deep_copy(@context)
+        context.merge!(context_datatypes) if context.is_a?(Hash)
 
         @model.logger.debug("======= compacted single object:")
         hash_jsonld_compacted = Solis::Utils::JSONLD.json_object_to_jsonld(obj, context)
@@ -401,7 +408,8 @@ module Solis
 
         # expand single items
         flattened_ordered_expanded = deep_copy(flattened_ordered)
-        flattened_ordered_expanded['@context'] = {}
+        # flattened_ordered_expanded['@context'] = {}
+        flattened_ordered_expanded['@context'] = deep_copy(@context)
         flattened_ordered_expanded['@graph'].map! do |obj|
           expand_obj(obj)
         end

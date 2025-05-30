@@ -17,6 +17,13 @@ class SHACLParser
     end
   end
 
+  class MissingPropertyPathError < StandardError
+    def initialize(uri_shape, uri_property)
+      msg = "shape #{uri_shape.to_s} has a property with no 'sh:path'"
+      super(msg)
+    end
+  end
+
   attr_reader :shapes_graph
 
   def initialize(shapes_graph)
@@ -32,29 +39,33 @@ class SHACLParser
       if shape_name.empty?
         raise MissingShapeNameError.new(shape.subject)
       end
-      shapes[shape_name] = {properties: {}, uri: shape_uri, nodes: [], closed: false, plural: nil}
+      shapes[shape_uri] = {properties: {}, uri: shape_uri, nodes: [], closed: false, plural: nil}
 
       @shapes_graph.query([shape.subject, RDF::Vocab::SHACL.node, nil]) do |stmt|
         node_name = stmt.object.to_s
-        shapes[shape_name][:nodes] << node_name
+        shapes[shape_uri][:nodes] << node_name
       end
 
-      shapes[shape_name][:target_class] = @shapes_graph.first_object([shape.subject, RDF::Vocab::SHACL.targetClass, nil])&.to_s
+      shapes[shape_uri][:target_class] = @shapes_graph.first_object([shape.subject, RDF::Vocab::SHACL.targetClass, nil])&.to_s
 
-      shapes[shape_name][:closed] = @shapes_graph.first_object([shape.subject, RDF::Vocab::SHACL.closed, nil])
-      shapes[shape_name][:closed] = false if shapes[shape_name][:closed].nil?
+      shapes[shape_uri][:closed] = @shapes_graph.first_object([shape.subject, RDF::Vocab::SHACL.closed, nil])
+      shapes[shape_uri][:closed] = false if shapes[shape_uri][:closed].nil?
 
-      shapes[shape_name][:plural] = @shapes_graph.first_object([shape.subject, RDF::Vocab::SKOS.altLabel, nil])&.to_s
+      shapes[shape_uri][:plural] = @shapes_graph.first_object([shape.subject, RDF::Vocab::SKOS.altLabel, nil])&.to_s
 
       @shapes_graph.query([shape.subject, RDF::Vocab::SHACL.property, nil]) do |property_shape|
         property_uri = property_shape.object
         property_info = extract_property_info(property_uri)
 
+        if property_info[:path].empty?
+          raise MissingPropertyPathError.new(shape.subject, property_uri)
+        end
+
         if property_info[:name].empty?
           raise MissingPropertyNameError.new(shape.subject, property_uri)
         end
 
-        shapes[shape_name][:properties][property_info[:name]] = property_info
+        shapes[shape_uri][:properties][property_info[:path]] = property_info
       end
     end
 
@@ -65,7 +76,8 @@ class SHACLParser
 
   def extract_property_info(property_uri)
     property_name = shapes_graph.query([property_uri, RDF::Vocab::SHACL.name, nil]).first_object.to_s
-    property_info = { name: property_name, constraints: {} }
+    property_path = shapes_graph.query([property_uri, RDF::Vocab::SHACL.path, nil]).first_object.to_s
+    property_info = { name: property_name, path: property_path, constraints: {} }
 
     shapes_graph.query([property_uri, RDF::Vocab::SHACL.description, nil]) do |max_count|
       property_info[:description] = max_count.object.to_s
@@ -84,7 +96,7 @@ class SHACLParser
     end
 
     shapes_graph.query([property_uri, RDF::Vocab::SHACL.class, nil]) do |klass|
-      property_info[:constraints][:class] = klass.object.path[1..] rescue nil
+      property_info[:constraints][:class] = klass.object.to_s
     end
 
     property_info
@@ -105,8 +117,16 @@ module Shapes
     shapes.dig(name_shape, :nodes) || []
   end
 
+  def self.get_target_class_for_shape(shapes, name_shape)
+    shapes.dig(name_shape, :target_class)
+  end
+
   def self.shape_exists?(shapes, name_shape)
     shapes.key?(name_shape)
+  end
+
+  def self.get_shape_for_class(shapes, name_class)
+    shapes.select { |k, v| v[:target_class] == name_class }.keys.first
   end
 
 end
