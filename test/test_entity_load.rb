@@ -45,7 +45,7 @@ class TestEntityLoad < Minitest::Test
     car = Solis::Model::Entity.new(data, @model, 'Car', store)
 
     car.save
-
+    
     data = JSON.parse %(
       {
         "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9"

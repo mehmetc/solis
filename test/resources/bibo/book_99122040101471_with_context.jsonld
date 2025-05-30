@@ -43,5 +43,6 @@
     "dc:identifier": "eng"
   },
   "@id": "https://open-na.hosted.exlibrisgroup.com/alma/32KUL_LIBIS_NETWORK/bibs/99122040101471",
-  "title": "The handbook of environmental powers"
+  "title": "The handbook of environmental powers",
+  "@context": "https://open-na.hosted.exlibrisgroup.com/alma/contexts/bib"
 }

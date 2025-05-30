@@ -5,6 +5,7 @@ require_relative "validator/validatorV2"
 require_relative "model/literals/edtf"
 require_relative "model/literals/iso8601"
 require_relative "utils/rdf"
+require_relative "utils/jsonld"
 
 module Solis
   class Model
@@ -22,6 +23,10 @@ module Solis
       @logger.level = Logger::INFO
       @namespace = model[:namespace]
       @prefix = model[:prefix]
+      @context = {
+        "@vocab" => @namespace,
+        prefix => @namespace
+      }
       @uri = model[:uri]
       @content_type = model[:content_type]
       @store = params[:store] || nil
@@ -33,7 +38,6 @@ module Solis
       @plurals = model[:plurals] || {}
 
       @graph = Solis::Model::Reader.from_uri(model)
-      inject_plurals_to_shapes_graph
 
       @parser = SHACLParser.new(@graph)
       @shapes = @parser.parse_shapes
@@ -42,6 +46,7 @@ module Solis
       }) rescue Solis::SHACLValidatorV1.new(@graph, :graph, {})
       @hierarchy = model[:hierarchy] || {}
       add_hierarchy_to_shapes
+      add_plurals_to_shapes
     end
 
     def entity
@@ -116,27 +121,32 @@ module Solis
       list[1..]
     end
 
-    def get_info_for_entity(name_entity)
-      @shapes[name_entity]
+    def get_shape_for_entity(name_entity)
+      name_shape = Shapes.get_shape_for_class(@shapes, name_entity)
+      deep_copy(@shapes[name_shape])
     end
 
     def get_properties_info_for_entity(name_entity)
-      properties = @shapes[name_entity][:properties]
+      name_shape = Shapes.get_shape_for_class(@shapes, name_entity)
+      properties = deep_copy(@shapes[name_shape][:properties])
       names_entities_parents = get_all_parent_entities_for_entity(name_entity)
       names_entities_parents.each do |name_entity_parent|
-        properties.merge!(@shapes[name_entity_parent][:properties])
+        name_shape_parent = Shapes.get_shape_for_class(@shapes, name_entity_parent)
+        properties.merge!(deep_copy(@shapes[name_shape_parent][:properties]))
       end
       properties
     end
 
     private
 
+    def deep_copy(obj)
+      Marshal.load(Marshal.dump(obj))
+    end
+
     def _get_embedded_entity_type_for_entity(name_entity, name_attr)
-      res = nil
       # first check directly in shape
-      if Shapes.shape_exists?(@shapes, name_entity)
-        res = Shapes.get_property_class_for_shape(@shapes, name_entity, name_attr)
-      end
+      name_shape = Shapes.get_shape_for_class(@shapes, name_entity)
+      res = Shapes.get_property_class_for_shape(@shapes, name_shape, name_attr)
       if res.nil?
         # otherwise navigate classes hierarchy up and try again
         names_entities_parents = get_parent_entities_for_entity(name_entity)
@@ -149,11 +159,9 @@ module Solis
     end
 
     def _get_datatype_for_entity(name_entity, name_attr)
-      res = nil
       # first check directly in shape
-      if Shapes.shape_exists?(@shapes, name_entity)
-        res = Shapes.get_property_datatype_for_shape(@shapes, name_entity, name_attr)
-      end
+      name_shape = Shapes.get_shape_for_class(@shapes, name_entity)
+      res = Shapes.get_property_datatype_for_shape(@shapes, name_shape, name_attr)
       if res.nil?
         # otherwise navigate classes hierarchy up and try again
         names_entities_parents = get_parent_entities_for_entity(name_entity)
@@ -167,37 +175,41 @@ module Solis
 
     def _get_parent_entities_for_entity(name_entity)
       names_entities_parents = []
-      names_nodes_parents = Shapes.get_parent_shapes_for_shape(@shapes, name_entity)
+      name_shape = Shapes.get_shape_for_class(@shapes, name_entity)
+      names_nodes_parents = Shapes.get_parent_shapes_for_shape(@shapes, name_shape)
       names_entities_parents += names_nodes_parents.map do |uri|
-        res = nil
-        @shapes.each do |k, v|
-          next unless v[:uri] == uri
-          res = k
-        end
-        res
+        res = @shapes.select { |k,v| v[:uri] == uri }
+        res[uri][:target_class] rescue nil
       end.compact
       names_entities_parents
     end
 
-    def inject_plurals_to_shapes_graph
-      @graph.query([nil, RDF.type, RDF::Vocab::SHACL.NodeShape]) do |shape|
-        shape_name = @graph.query([shape.subject, RDF::Vocab::SHACL.name, nil]).first_object.to_s
-        plural_name = @plurals[shape_name]
-        unless plural_name.nil?
-          # this one seems more specific: https://oscaf.sourceforge.net/nao.html#nao:pluralPrefLabel.
-          # for now uses skos:altLabel: https://www.w3.org/2012/09/odrl/semantic/draft/doco/skos_altLabel.html
-          @graph << [shape.subject, RDF::Vocab::SKOS.altLabel, plural_name]
-        end
+    def add_plurals_to_shapes
+      keys_transform = {}
+      @plurals.each_key do |name_base_entity|
+        name_entity = Solis::Utils::JSONLD.expand_term(name_base_entity, @context)
+        keys_transform[name_base_entity] = name_entity
+      end
+      plurals = @plurals.transform_keys(keys_transform)
+      @shapes.each_key do |name_shape|
+        name_entity = Shapes.get_target_class_for_shape(@shapes, name_shape)
+        name_plural = plurals[name_entity]
+        @shapes[name_shape][:plural] = name_plural
       end
     end
 
     def add_hierarchy_to_shapes
-      @hierarchy.each do |name_entity, names_entities_parents|
-        unless @shapes.key?(name_entity)
-          @shapes[name_entity] = {properties: {}, uri: "#{name_entity}Shape", nodes: [], closed: false, plural: nil}
+      @hierarchy.each do |name_base_entity, names_base_entities_parents|
+        name_entity = Solis::Utils::JSONLD.expand_term(name_base_entity, @context)
+        name_shape = Shapes.get_shape_for_class(@shapes, name_entity)
+        if name_shape.nil?
+          name_shape = "#{name_entity}Shape"
+          @shapes[name_shape] = {properties: {}, uri: name_shape, target_class: name_entity, nodes: [], closed: false, plural: nil}
         end
-        names_entities_parents.each do |name_entity_parent|
-          @shapes[name_entity][:nodes] << @shapes[name_entity_parent][:uri]
+        names_base_entities_parents.each do |name_base_entity_parent|
+          name_entity_parent = Solis::Utils::JSONLD.expand_term(name_base_entity_parent, @context)
+          name_shape_parent = Shapes.get_shape_for_class(@shapes, name_entity_parent)
+          @shapes[name_shape][:nodes] << @shapes[name_shape_parent][:uri]
         end
       end
     end
