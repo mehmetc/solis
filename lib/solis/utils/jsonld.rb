@@ -294,6 +294,16 @@ module Solis
         [conform, messages]
       end
 
+      def self.expand_term(term, context)
+        obj = {
+          "@context" => context,
+          term => "do_not_care"
+        }
+        obj2 = JSON::LD::API.expand(obj)[0]
+        term_expanded = obj2.keys.first rescue nil
+        term_expanded
+      end
+
     end
   end
 end

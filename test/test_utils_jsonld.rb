@@ -443,5 +443,33 @@ class TestUtilsJSONLD < Minitest::Test
 
   end
 
+  def test_expand_term_1
+
+    term = 'my_attr'
+    context = {
+      "@vocab" => "https://example.org/"
+    }
+    term_expanded = Solis::Utils::JSONLD.expand_term(term, context)
+    assert_equal(term_expanded, "https://example.org/my_attr")
+
+  end
+
+  def test_expand_term_2
+
+    term = 'issn'
+    context = "https://open-na.hosted.exlibrisgroup.com/alma/contexts/bib"
+    term_expanded = Solis::Utils::JSONLD.expand_term(term, context)
+    assert_equal(term_expanded, "http://purl.org/ontology/bibo/issn")
+
+  end
+
+  def test_expand_term_3
+
+    term = 'issnnnnnn'
+    context = "https://open-na.hosted.exlibrisgroup.com/alma/contexts/bib"
+    term_expanded = Solis::Utils::JSONLD.expand_term(term, context)
+    assert_equal(term_expanded, nil)
+
+  end
 
 end
