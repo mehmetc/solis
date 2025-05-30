@@ -169,11 +169,7 @@ module Solis
       names_entities_parents = []
       names_nodes_parents = Shapes.get_parent_shapes_for_shape(@shapes, name_entity)
       names_entities_parents += names_nodes_parents.map do |uri|
-        res = nil
-        @shapes.each do |k, v|
-          next unless v[:uri] == uri
-          res = k
-        end
+        res = @shapes.select { |k,v| v[:uri] == uri }.keys.first
         res
       end.compact
       names_entities_parents
