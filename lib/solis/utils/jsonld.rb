@@ -111,7 +111,23 @@ module Solis
         hash_jsonld
       end
 
-      def self.infer_jsonld_types_from_shapes!(data, shapes, type_root)
+      # def self.infer_jsonld_types_from_shapes!(data, shapes, type_root)
+      #   # NOTE: currently only meant for a _compacted_ JSON-LD object
+      #   data['@type'] = type_root if data['@type'].nil?
+      #   data.each do |name_attr, val_attr|
+      #     next if ['@id', '@type'].include?(name_attr)
+      #     val_attr = [val_attr] unless val_attr.is_a?(Array)
+      #     val_attr.each do |e|
+      #       if is_object_an_embedded_entity_or_ref(e)
+      #         type_embedded = Shapes::get_property_class_for_shape(shapes, type_root, name_attr)
+      #         infer_jsonld_types_from_shapes!(e, shapes, type_embedded)
+      #       end
+      #     end
+      #   end
+      #   data.compact!
+      # end
+
+      def self.infer_jsonld_types_from_model!(data, model, context, type_root)
         # NOTE: currently only meant for a _compacted_ JSON-LD object
         data['@type'] = type_root if data['@type'].nil?
         data.each do |name_attr, val_attr|
@@ -119,54 +135,44 @@ module Solis
           val_attr = [val_attr] unless val_attr.is_a?(Array)
           val_attr.each do |e|
             if is_object_an_embedded_entity_or_ref(e)
-              type_embedded = Shapes::get_property_class_for_shape(shapes, type_root, name_attr)
-              infer_jsonld_types_from_shapes!(e, shapes, type_embedded)
+              type_root_expanded = expand_term(type_root, context)
+              name_attr_expanded = expand_term(name_attr, context)
+              type_embedded = model.get_embedded_entity_type_for_entity(type_root_expanded, name_attr_expanded)
+              infer_jsonld_types_from_model!(e, model, context, type_embedded)
             end
           end
         end
         data.compact!
       end
 
-      def self.infer_jsonld_types_from_model!(data, model, type_root)
-        # NOTE: currently only meant for a _compacted_ JSON-LD object
-        data['@type'] = type_root if data['@type'].nil?
-        data.each do |name_attr, val_attr|
-          next if ['@id', '@type'].include?(name_attr)
-          val_attr = [val_attr] unless val_attr.is_a?(Array)
-          val_attr.each do |e|
-            if is_object_an_embedded_entity_or_ref(e)
-              type_embedded = model.get_embedded_entity_type_for_entity(type_root, name_attr)
-              infer_jsonld_types_from_model!(e, model, type_embedded)
-            end
-          end
-        end
-        data.compact!
-      end
+      # def self.make_jsonld_datatypes_context_from_shape(shape)
+      #   # NOTE: currently only meant for a _compacted_ JSON-LD object
+      #   context = {}
+      #   props = shape[:properties]
+      #   props.each do |name_prop, value_prop|
+      #     datatype = value_prop[:constraints][:datatype]
+      #     context[name_prop] = {
+      #       '@type' => datatype
+      #     } unless datatype.nil?
+      #   end
+      #   context
+      # end
 
-      def self.make_jsonld_datatypes_context_from_shape(shape)
+      def self.make_jsonld_datatypes_context_from_model(obj, model, context)
         # NOTE: currently only meant for a _compacted_ JSON-LD object
-        context = {}
-        props = shape[:properties]
-        props.each do |name_prop, value_prop|
-          datatype = value_prop[:constraints][:datatype]
-          context[name_prop] = {
+        context_datatypes = {}
+        type = obj['@type']
+        type_expanded = expand_term(type, context)
+        obj.each_key do |name_attr|
+          next if ['@id', '@type'].include?(name_attr)
+          name_attr_expanded = expand_term(name_attr, context)
+          datatype = model.get_datatype_for_entity(type_expanded, name_attr_expanded)
+          context_datatypes[name_attr] = {
             '@type' => datatype
           } unless datatype.nil?
-        end
-        context
-      end
 
-      def self.make_jsonld_datatypes_context_from_model(obj, model)
-        # NOTE: currently only meant for a _compacted_ JSON-LD object
-        context = {}
-        obj.each do |name_attr, value_attr|
-          next if ['@id', '@type'].include?(name_attr)
-          datatype = model.get_datatype_for_entity(obj['@type'], name_attr)
-          context[name_attr] = {
-            '@type' => datatype
-          } unless datatype.nil?
         end
-        context
+        context_datatypes
       end
 
       def self.clean_flattened_expanded_from_unset_data!(flattened_expanded)
@@ -295,6 +301,9 @@ module Solis
       end
 
       def self.expand_term(term, context)
+        if context.empty?
+          return term
+        end
         obj = {
           "@context" => context,
           term => "do_not_care"
