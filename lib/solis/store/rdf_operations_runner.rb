@@ -57,7 +57,7 @@ module Solis
         v
       end
 
-      def get_data_for_subject(s, namespace, deep)
+      def get_data_for_subject(s, context, deep)
         # create graph of query results
         graph = RDF::Graph.new
         fill_graph_from_subject_root = lambda do |g, s, deep|
@@ -108,9 +108,7 @@ module Solis
         # - avoid having other objects but the root one, thanks to "@type" filter
         frame = JSON.parse %(
           {
-            "@context": {
-              "@vocab": "#{namespace}"
-            },
+            "@context": #{context.to_json},
             "@type": "#{type}",
             "@embed": "@always"
           }
@@ -152,10 +150,10 @@ module Solis
           case op['name']
           when 'get_data_for_id'
             id = op['content'][0]
-            namespace = op['content'][1]
+            context = op['content'][1]
             deep = op['opts'] == Solis::Store::GetMode::DEEP
             s = RDF::URI(id)
-            r = get_data_for_subject(s, namespace, deep)
+            r = get_data_for_subject(s, context, deep)
           when 'ask_if_id_is_referenced'
             id = op['content'][0]
             o = RDF::URI(id)

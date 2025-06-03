@@ -236,7 +236,7 @@ module Solis
         obj = get_internal_data_as_jsonld
         check_obj_has_id(obj)
         id = obj['@id']
-        id_op = @store.get_data_for_id(id, @model.namespace, deep=deep)
+        id_op = @store.get_data_for_id(id, @context, deep=deep)
         obj_res, context_res = @store.run_operations(ids=[id_op])[id_op]
         if obj_res.empty?
           raise LoadError.new(id)
