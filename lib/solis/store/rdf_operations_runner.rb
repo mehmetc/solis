@@ -124,12 +124,12 @@ module Solis
         unless jsonld_compacted_framed.key?('@graph')
           res = jsonld_compacted_framed
         end
-        res.delete('@context')
+        context = res.delete('@context')
         # puts JSON.pretty_generate(res)
         # if res.empty?
         #   raise StandardError, "no entity with id '#{s.to_s}'"
         # end
-        res
+        [res, context]
       end
 
       def ask_if_object_is_referenced(o)
