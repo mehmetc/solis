@@ -242,6 +242,7 @@ module Solis
           raise LoadError.new(id)
         end
         replace(obj_res)
+        @type = obj_res['@type'] unless obj_res['@type'].nil?
         obj_res
       end
 
