@@ -66,7 +66,7 @@ module Solis
 
       end
 
-      def get_data_for_id(id, namespace, deep=false)
+      def get_data_for_id(id, context, deep=false)
 
         mode = deep ? Solis::Store::GetMode::DEEP : Solis::Store::GetMode::SHALLOW
 
@@ -75,7 +75,7 @@ module Solis
           "name" => "get_data_for_id",
           "type" => "read",
           "opts" => mode,
-          "content" => [id, namespace]
+          "content" => [id, context]
         }
 
         @logger.debug(op)
