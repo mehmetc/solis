@@ -6,6 +6,7 @@ require_relative "model/literals/edtf"
 require_relative "model/literals/iso8601"
 require_relative "utils/rdf"
 require_relative "utils/jsonld"
+require_relative "model/restful_api/controllers/main_controller"
 
 module Solis
   class Model
@@ -135,6 +136,17 @@ module Solis
         properties.merge!(deep_copy(@shapes[name_shape_parent][:properties]))
       end
       properties
+    end
+
+    def find_entity_by_plural(plural)
+      res = @shapes.select { |k,v| v[:plural] == plural }
+      res[res.keys.first][:target_class] if res.keys.first
+    end
+
+    def generate_restful_api
+      MainController.model = self
+      MainController.store = @store
+      MainController
     end
 
     private
