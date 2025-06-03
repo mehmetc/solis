@@ -75,7 +75,11 @@ class TestModel < Minitest::Test
         prefix: 'ex',
         namespace: @name_graph,
         tmp_dir: dir_tmp,
-        hierarchy: hierarchy
+        hierarchy: hierarchy,
+        plurals: {
+          'Car' => 'cars',
+          'ElectricCar' => 'electric_cars'
+        }
       })
 
       r = model.get_parent_entities_for_entity('https://example.com/ElectricCar')
@@ -109,6 +113,9 @@ class TestModel < Minitest::Test
       r = model.get_shape_for_entity('https://example.com/ElectricCar')
       assert_equal(r[:uri] == 'https://example.com/ElectricCarShape', true)
       assert_equal(r[:target_class] == 'https://example.com/ElectricCar', true)
+
+      assert_equal(model.find_entity_by_plural('electric_cars'), 'https://example.com/ElectricCar')
+      assert_equal(model.find_entity_by_plural('electric_carsss'), nil)
 
     end
 

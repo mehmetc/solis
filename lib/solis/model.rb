@@ -137,6 +137,11 @@ module Solis
       properties
     end
 
+    def find_entity_by_plural(plural)
+      res = @shapes.select { |k,v| v[:plural] == plural }
+      res[res.keys.first][:target_class] if res.keys.first
+    end
+
     private
 
     def deep_copy(obj)
