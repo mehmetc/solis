@@ -5,12 +5,13 @@ require_relative "validator/validatorV2"
 require_relative "model/literals/edtf"
 require_relative "model/literals/iso8601"
 require_relative "utils/rdf"
+require_relative "model/parser/shacl"
 
 module Solis
   class Model
 
     attr_accessor :title, :version, :description
-    attr_reader :graph, :namespace, :prefix, :uri, :content_type, :logger
+    attr_reader :store, :graph, :namespace, :prefix, :uri, :content_type, :logger
     attr_reader :shapes, :validator, :hash_validator_literals, :namespace, :hierarchy
     attr_reader :plurals
 
