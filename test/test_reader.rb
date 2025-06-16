@@ -22,7 +22,7 @@ class TestReader < Minitest::Test
   end
 
   def test_read_from_stringio
-    assert_includes(@solis.model.entity.all(namespace: true), 'https://example.com/Car')
+    assert_includes(@solis.model.entity.all, 'Car')
   end
 
   def test_read_from_uri

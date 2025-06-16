@@ -6,6 +6,8 @@ require_relative "model/literals/edtf"
 require_relative "model/literals/iso8601"
 require_relative "utils/rdf"
 require_relative "model/parser/shacl"
+require_relative "utils/namespace"
+require_relative "utils/prefix_resolver"
 
 module Solis
   class Model
@@ -21,8 +23,8 @@ module Solis
       raise Solis::Error::BadParameter, "One of :prefix, :namespace, :uri is missing" unless (model.keys & [:prefix, :namespace, :uri]).size == 3
       @logger = params[:logger] || Solis.logger([STDOUT])
       @logger.level = Logger::INFO
-      @namespace = model[:namespace]
-      @prefix = model[:prefix]
+      @namespace = model[:namespace] || Solis::Utils::Namespace.detect_primary_namespace(@graph)
+      @prefix = model[:prefix] || Solis::Utils::PrefixResolver.resolve_prefix(@namespace)
       @uri = model[:uri]
       @content_type = model[:content_type]
       @store = params[:store] || nil
@@ -50,10 +52,8 @@ module Solis
         def new(name, data = {})
           Solis::Model::Entity.new(data, self, name, @store)
         end
-        def all(options={namespace: false})
-          data = @graph.query([nil, RDF::Vocab::SHACL.targetClass, nil]).map do |klass|
-            options.key?(:namespace) && options[:namespace].eql?(true) ? klass.object.to_s : klass.object.to_s.gsub(@namespace,'')
-          end
+        def all
+          Solis::Utils::Namespace.extract_entities_for_namespace(@graph, @namespace)
         end
       end
 
@@ -200,6 +200,16 @@ module Solis
         names_entities_parents.each do |name_entity_parent|
           @shapes[name_entity][:nodes] << @shapes[name_entity_parent][:uri]
         end
+      end
+    end
+
+    def _detect_namespaces_with_prefixes
+      namespaces = _extract_unique_namespaces
+    end
+
+    def _extract_unique_namespaces
+      data = @graph.query([nil, RDF::Vocab::SHACL.targetClass, nil]).map do |klass|
+        options.key?(:namespace) && options[:namespace].eql?(true) ? klass.object.to_s : klass.object.to_s.gsub(@namespace,'')
       end
     end
 
