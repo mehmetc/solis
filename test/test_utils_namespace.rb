@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class TestNamespaces < Minitest::Test
+class TestUtilsNamespace < Minitest::Test
   def setup
     super
     Solis.config.path = 'test/resources/config'

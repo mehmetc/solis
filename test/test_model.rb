@@ -24,6 +24,13 @@ class TestModel < Minitest::Test
     assert_includes(all_entities, 'Car')
   end
 
+  def test_model_should_have_property
+    assert @solis.model.entity.exists?('Car')
+    assert @solis.model.entity.exists?('Cars')
+    assert @solis.model.entity.exists?('cars')
+    refute @solis.model.entity.exists?('Auto')
+  end
+
   def test_model_instantiate_car_entity
     car_entity = @solis.model.entity.new('Car')
 

@@ -55,6 +55,9 @@ module Solis
         def all
           Solis::Utils::Namespace.extract_entities_for_namespace(@graph, @namespace)
         end
+        def exists?(name)
+          all.include?(name.classify)
+        end
       end
 
       self
@@ -68,13 +71,15 @@ module Solis
       options[:title] ||= @title
       options[:version] ||= @version
       options[:description] ||= @description
+      options[:shapes] ||= @shapes
 
       case content_type
       when 'text/vnd.mermaid'
         options[:uri] = "mermaid://#{@prefix}"
         Solis::Model::Writer.to_uri(options)
       when 'text/vnd.plantuml'
-        Solis::Model::Writer.to_uri(uri: "plantuml://#{@prefix}", namespace: @namespace, prefix: @prefix, model: @graph)
+        options[:uri] = "plantuml://#{@prefix}"
+        Solis::Model::Writer.to_uri(options)
       when 'application/schema+json'
         options[:uri] = "jsonschema://#{@prefix}"
         Solis::Model::Writer.to_uri(options)
@@ -86,7 +91,9 @@ module Solis
         Solis::Model::Writer.to_uri(options)
       else
         shacl = StringIO.new
-        Solis::Model::Writer.to_uri(uri: shacl, namespace: @namespace, prefix: @prefix, model: @graph, content_type: content_type)
+        options[:uri] = shacl
+        options[:content_type] = content_type
+        Solis::Model::Writer.to_uri(options)
         shacl.rewind
         shacl.read
       end

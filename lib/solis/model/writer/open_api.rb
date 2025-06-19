@@ -18,20 +18,20 @@ class OpenApiWriter < Solis::Model::Writer::Generic
       }
     }
 
-    # Extract all shape definitions
-    shapes = extract_shapes(repository)
+     shapes = options[:shapes]
+     entities = Solis::Utils::Namespace.extract_entities_for_namespace(repository, options[:namespace])
+     entities.each do |entity|
+       shape_uri = Solis::Utils::Namespace.target_class_for_entity_name(repository, options[:namespace], entity)
+       schema_name = entity
+       properties = extract_properties(repository, shape_uri)
+       schema = convert_shape_to_schema(properties)
+       entity_plural = shapes[schema_name][:plural] || schema_name.pluralize
+       openapi["components"]["schemas"][schema_name] = schema
 
-    # Convert each shape to an OpenAPI schema
-    shapes.each do |shape_uri, properties|
-      schema_name = extract_name_from_uri(shape_uri)
-      schema = convert_shape_to_schema(properties)
-
-      openapi["components"]["schemas"][schema_name] = schema
-
-      # Create a basic path for this resource
-      path = "/#{schema_name.downcase}s"
-      openapi["paths"][path] = generate_basic_path_operations(schema_name)
-    end
+       # Create a basic path for this resource
+       path = "/#{entity_plural.underscore}"
+       openapi["paths"][path] = generate_basic_path_operations(schema_name)
+     end
 
     openapi.to_json
   end

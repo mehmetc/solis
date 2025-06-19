@@ -155,6 +155,21 @@ module Solis
         entities.to_a.sort
       end
 
+      def self.target_class_for_entity_name(graph, target_namespace, entity_name)
+        graph.query([nil, RDF::Vocab::SHACL.targetClass, RDF::URI("#{target_namespace}#{entity_name}")])&.first.subject || nil
+      end
+
+      def self.extract_properties_for_entity(graph, target_namespace, entity_name)
+        target_class = self.target_class_for_entity_name(graph, entity_name)
+
+        properties = []
+        if target_class
+          graph.query([target_class, RDF::Vocab::SHACL.property, nil]) do |statement|
+            statement
+          end
+        end
+      end
+
       private
 
       # Extract namespace from a URI (everything before the last # or /)
