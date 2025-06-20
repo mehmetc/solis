@@ -9,8 +9,7 @@ module Solis
         return CACHE[namespace] if CACHE[namespace]
 
         # Try multiple sources in order of preference
-        prefix = try_lov(namespace) || try_prefix_cc(namespace) ||
-          try_rdf_vocab(namespace) ||
+        prefix = try_rdf_vocab(namespace) || try_lov(namespace) || try_prefix_cc(namespace) ||
           generate_fallback_prefix(namespace)
 
         CACHE[namespace] = prefix

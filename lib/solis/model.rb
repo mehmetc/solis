@@ -12,7 +12,6 @@ require_relative "utils/prefix_resolver"
 module Solis
   class Model
 
-    attr_accessor :title, :version, :description
     attr_reader :store, :graph, :namespace, :prefix, :uri, :content_type, :logger
     attr_reader :shapes, :validator, :hash_validator_literals, :namespace, :hierarchy
     attr_reader :plurals
@@ -29,10 +28,6 @@ module Solis
       @content_type = model[:content_type]
       @store = params[:store] || nil
 
-      @title= model[:title] || "No Title"
-      @version = model[:version] || "0.1"
-      @description = model[:description]
-
       @plurals = model[:plurals] || {}
 
       @graph = Solis::Model::Reader.from_uri(model)
@@ -40,11 +35,18 @@ module Solis
 
       @parser = SHACLParser.new(@graph)
       @shapes = @parser.parse_shapes
+
       @validator = Solis::SHACLValidatorV2.new(@graph, :graph, {
         path_dir: params[:tmp_dir]
       }) rescue Solis::SHACLValidatorV1.new(@graph, :graph, {})
       @hierarchy = model[:hierarchy] || {}
       add_hierarchy_to_shapes
+
+      @title= model[:title]  || "No Title"
+      @version = model[:version]  || "0.1"
+      @description = model[:description] || "No Text Description"
+      @creator = model[:creator] || 'SOLIS'
+
     end
 
     def entity
@@ -68,9 +70,9 @@ module Solis
       options[:namespace] ||= @namespace
       options[:prefix] ||= @prefix
       options[:model] ||= @graph
-      options[:title] ||= @title
-      options[:version] ||= @version
-      options[:description] ||= @description
+      options[:title] ||= title
+      options[:version] ||= version
+      options[:description] ||= description
       options[:shapes] ||= @shapes
 
       case content_type
@@ -97,6 +99,39 @@ module Solis
         shacl.rewind
         shacl.read
       end
+    end
+
+    #attr_accessor :title, :version, :description, :creator
+    def title
+      _get_object_for_preficate(RDF::Vocab::DC.title)
+    end
+
+    def title=(title)
+      _set_object_for_preficate(RDF::Vocab::DC.title, title)
+    end
+
+    def description
+      _get_object_for_preficate(RDF::Vocab::DC.description)
+    end
+
+    def description=(description)
+      _set_object_for_preficate(RDF::Vocab::DC.description, description)
+    end
+
+    def version
+      _get_object_for_preficate(RDF::Vocab::OWL.versionInfo)
+    end
+
+    def version=(version)
+      _set_object_for_preficate(RDF::Vocab::OWL.versionInfo, version)
+    end
+
+    def creator
+      _get_object_for_preficate(RDF::Vocab::DC.creator, false)
+    end
+
+    def creator=(creator)
+      _set_object_for_preficate(RDF::Vocab::DC.creator, creator)
     end
 
     def get_embedded_entity_type_for_entity(name_entity, name_attr)
@@ -138,6 +173,43 @@ module Solis
     end
 
     private
+
+    def _ontology
+      @graph.query([nil, RDF.type, RDF::Vocab::OWL.Ontology])
+    end
+
+    def _get_object_for_preficate(predicate, singleton = true)
+      statements = @graph.query([RDF::URI(@namespace), predicate, nil])
+      if singleton
+        statements.each_statement do |statement|
+          return statement&.object
+        end
+      else
+        values = []
+        statements.each_statement do |statement|
+          values << statement&.object
+        end
+        return values
+      end
+    end
+
+    def _set_object_for_preficate(predicate, object)
+      #TODO: set a default working language
+      language = nil
+      ontology_uri = RDF::URI(@namespace)
+      @graph << [ontology_uri, RDF.type, RDF::Vocab::OWL.Ontology] if _ontology.size == 0
+      @graph.delete([ontology_uri, predicate, nil])
+      object = [object] unless object.is_a?(Array)
+
+      object.each do |o|
+        if o =~ /^http/
+          object = RDF::URI(o)
+        else
+          object = language ? RDF::Literal(o, language: language) : RDF::Literal(o)
+        end
+        @graph << [ontology_uri, predicate, object]
+      end
+    end
 
     def _get_embedded_entity_type_for_entity(name_entity, name_attr)
       res = nil
@@ -209,16 +281,5 @@ module Solis
         end
       end
     end
-
-    def _detect_namespaces_with_prefixes
-      namespaces = _extract_unique_namespaces
-    end
-
-    def _extract_unique_namespaces
-      data = @graph.query([nil, RDF::Vocab::SHACL.targetClass, nil]).map do |klass|
-        options.key?(:namespace) && options[:namespace].eql?(true) ? klass.object.to_s : klass.object.to_s.gsub(@namespace,'')
-      end
-    end
-
   end
 end

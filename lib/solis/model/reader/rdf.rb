@@ -145,6 +145,10 @@ module Solis
             end
           end
 
+          extract_metadata(graph).each_statement do |statement|
+            shacl_graph << statement
+          end
+
           shacl_graph
         rescue Solis::Error::General => e
           raise e
@@ -429,6 +433,28 @@ module Solis
           parse_owl_list(list, graph, rest) if rest && rest != RDF.nil
         end
 
+        def self.extract_metadata(graph)
+          metadata_graph = RDF::Graph.new
+          graph.query([nil, RDF.type, RDF::Vocab::OWL.Ontology]) do |statement|
+            metadata_graph << [statement.subject, RDF.type, RDF::Vocab::OWL.Ontology]
+            graph.query([statement.subject, nil, nil]) do |metadata_statement|
+              case metadata_statement.predicate
+              when RDF::Vocab::DC.title
+                metadata_graph << [statement.subject, metadata_statement.predicate, metadata_statement.object]
+
+              when RDF::Vocab::DC.description
+                metadata_graph << [statement.subject, metadata_statement.predicate, metadata_statement.object]
+              when RDF::Vocab::DC.creator
+                metadata_graph << [statement.subject, metadata_statement.predicate, metadata_statement.object]
+              when RDF::Vocab::OWL.versionInfo
+                metadata_graph << [statement.subject, metadata_statement.predicate, metadata_statement.object]
+              end
+            end
+
+            metadata_graph
+          end
+          metadata_graph
+        end
       end
     end
   end

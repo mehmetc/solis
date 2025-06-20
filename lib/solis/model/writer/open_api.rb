@@ -4,13 +4,14 @@ require 'rdf/turtle'
 
 class OpenApiWriter < Solis::Model::Writer::Generic
   def self.write(repository, options = {})
+    shapes = options[:shapes]
     # Initialize OpenAPI structure
     openapi = {
       "openapi" => "3.0.0",
       "info" => {
-        "title" => "API Generated from SHACL",
-        "version" => "1.0.0",
-        "description" => "API automatically generated from SHACL constraints"
+        "title" => options[:title].value,
+        "version" => options[:version].value,
+        "description" => options[:description].value
       },
       "paths" => {},
       "components" => {
@@ -18,7 +19,6 @@ class OpenApiWriter < Solis::Model::Writer::Generic
       }
     }
 
-     shapes = options[:shapes]
      entities = Solis::Utils::Namespace.extract_entities_for_namespace(repository, options[:namespace])
      entities.each do |entity|
        shape_uri = Solis::Utils::Namespace.target_class_for_entity_name(repository, options[:namespace], entity)
@@ -55,11 +55,11 @@ class OpenApiWriter < Solis::Model::Writer::Generic
     properties = {}
 
     # Find all property constraints for this shape
-    property_paths = repository.query([shape_uri, RDF::URI("http://www.w3.org/ns/shacl#property"), nil]).map(&:object)
+    property_paths = repository.query([shape_uri, RDF::Vocab::SHACL.property, nil]).map(&:object)
 
     property_paths.each do |prop_path|
       # Get the property path
-      path = repository.query([prop_path, RDF::URI("http://www.w3.org/ns/shacl#path"), nil]).first&.object
+      path = repository.query([prop_path, RDF::Vocab::SHACL.path, nil]).first&.object
 
       next unless path
 
@@ -79,7 +79,7 @@ class OpenApiWriter < Solis::Model::Writer::Generic
   end
 
   def self.extract_datatype(repository, prop_path)
-    datatype = repository.query([prop_path, RDF::URI("http://www.w3.org/ns/shacl#datatype"), nil]).first&.object
+    datatype = repository.query([prop_path, RDF::Vocab::SHACL.datatype, nil]).first&.object
     datatype ? datatype.to_s : nil
   end
 
@@ -89,27 +89,27 @@ class OpenApiWriter < Solis::Model::Writer::Generic
   end
 
   def self.extract_min_count(repository, prop_path)
-    min_count = repository.query([prop_path, RDF::URI("http://www.w3.org/ns/shacl#minCount"), nil]).first&.object
+    min_count = repository.query([prop_path, RDF::Vocab::SHACL.minCount, nil]).first&.object
     min_count ? min_count.to_i : nil
   end
 
   def self.extract_max_count(repository, prop_path)
-    max_count = repository.query([prop_path, RDF::URI("http://www.w3.org/ns/shacl#maxCount"), nil]).first&.object
+    max_count = repository.query([prop_path, RDF::Vocab::SHACL.maxCount, nil]).first&.object
     max_count ? max_count.to_i : nil
   end
 
   def self.extract_pattern(repository, prop_path)
-    pattern = repository.query([prop_path, RDF::URI("http://www.w3.org/ns/shacl#pattern"), nil]).first&.object
+    pattern = repository.query([prop_path, RDF::Vocab::SHACL.pattern, nil]).first&.object
     pattern ? pattern.to_s : nil
   end
 
   def self.extract_min_length(repository, prop_path)
-    min_length = repository.query([prop_path, RDF::URI("http://www.w3.org/ns/shacl#minLength"), nil]).first&.object
+    min_length = repository.query([prop_path, RDF::Vocab::SHACL.minLength, nil]).first&.object
     min_length ? min_length.to_i : nil
   end
 
   def self.extract_max_length(repository, prop_path)
-    max_length = repository.query([prop_path, RDF::URI("http://www.w3.org/ns/shacl#maxLength"), nil]).first&.object
+    max_length = repository.query([prop_path, RDF::Vocab::SHACL.maxLength, nil]).first&.object
     max_length ? max_length.to_i : nil
   end
 

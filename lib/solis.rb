@@ -19,6 +19,5 @@ module Solis
         @model = Solis::Model.new(params)
       end
     end.new(params_hash)
-    #Data.define(:store, :model).new(store: params_hash[:store], model: Solis::Model.new(params_hash))
   end
 end
