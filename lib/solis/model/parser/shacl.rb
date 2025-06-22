@@ -46,6 +46,7 @@ class SHACLParser
         shapes[shape_uri][:nodes] << node_name
       end
 
+      shapes[shape_uri][:name] = @shapes_graph.first_object([shape.subject, RDF::Vocab::SHACL.name, nil])&.to_s
       shapes[shape_uri][:target_class] = @shapes_graph.first_object([shape.subject, RDF::Vocab::SHACL.targetClass, nil])&.to_s
 
       shapes[shape_uri][:closed] = @shapes_graph.first_object([shape.subject, RDF::Vocab::SHACL.closed, nil])
@@ -127,6 +128,14 @@ module Shapes
 
   def self.get_shape_for_class(shapes, name_class)
     shapes.select { |k, v| v[:target_class] == name_class }.keys.first
+  end
+
+  def self.find_name_by_uri(shapes, shape_uri)
+    shapes[shape_uri][:name]
+  end
+
+  def self.find_uri_by_name(shapes, name)
+    shapes.select{|k,v| v[:name].downcase.eql?(name.downcase)}&.keys&.first
   end
 
 end

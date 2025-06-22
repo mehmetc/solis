@@ -1,7 +1,9 @@
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 @prefix example: <https://example.com/> .
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 @prefix sh:     <http://www.w3.org/ns/shacl#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 example:CarShape
     a sh:NodeShape;

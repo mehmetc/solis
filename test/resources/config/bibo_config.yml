@@ -1,0 +1,7 @@
+---
+:cache: "./test/cache"
+:model:
+  :namespace: http://purl.org/ontology/bibo/
+  :prefix: bibo
+  :uri: file://test/resources/bibo_owl.xml
+  :content_type: "application/rdf+xml"

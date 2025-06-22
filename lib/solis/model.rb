@@ -5,14 +5,16 @@ require_relative "validator/validatorV2"
 require_relative "model/literals/edtf"
 require_relative "model/literals/iso8601"
 require_relative "utils/rdf"
+require_relative "model/parser/shacl"
+require_relative "utils/namespace"
+require_relative "utils/prefix_resolver"
 require_relative "utils/jsonld"
 require_relative "model/restful_api/controllers/main_controller"
 
 module Solis
   class Model
 
-    attr_accessor :title, :version, :description
-    attr_reader :graph, :namespace, :prefix, :uri, :content_type, :logger
+    attr_reader :store, :graph, :namespace, :prefix, :uri, :content_type, :logger
     attr_reader :shapes, :validator, :hash_validator_literals, :namespace, :hierarchy
     attr_reader :plurals
 
@@ -22,8 +24,8 @@ module Solis
       raise Solis::Error::BadParameter, "One of :prefix, :namespace, :uri is missing" unless (model.keys & [:prefix, :namespace, :uri]).size == 3
       @logger = params[:logger] || Solis.logger([STDOUT])
       @logger.level = Logger::INFO
-      @namespace = model[:namespace]
-      @prefix = model[:prefix]
+      @namespace = model[:namespace] || Solis::Utils::Namespace.detect_primary_namespace(@graph)
+      @prefix = model[:prefix] || Solis::Utils::PrefixResolver.resolve_prefix(@namespace)
       @context = {
         "@vocab" => @namespace,
         prefix => @namespace
@@ -55,10 +57,11 @@ module Solis
         def new(name, data = {})
           Solis::Model::Entity.new(data, self, name, @store)
         end
-        def all(options={namespace: false})
-          data = @graph.query([nil, RDF::Vocab::SHACL.targetClass, nil]).map do |klass|
-            options.key?(:namespace) && options[:namespace].eql?(true) ? klass.object.to_s : klass.object.to_s.gsub(@namespace,'')
-          end
+        def all
+          Solis::Utils::Namespace.extract_entities_for_namespace(@graph, @namespace)
+        end
+        def exists?(name)
+          all.include?(name.classify)
         end
       end
 
@@ -70,16 +73,18 @@ module Solis
       options[:namespace] ||= @namespace
       options[:prefix] ||= @prefix
       options[:model] ||= @graph
-      options[:title] ||= @title
-      options[:version] ||= @version
-      options[:description] ||= @description
+      options[:title] ||= title
+      options[:version] ||= version
+      options[:description] ||= description
+      options[:shapes] ||= @shapes
 
       case content_type
       when 'text/vnd.mermaid'
         options[:uri] = "mermaid://#{@prefix}"
         Solis::Model::Writer.to_uri(options)
       when 'text/vnd.plantuml'
-        Solis::Model::Writer.to_uri(uri: "plantuml://#{@prefix}", namespace: @namespace, prefix: @prefix, model: @graph)
+        options[:uri] = "plantuml://#{@prefix}"
+        Solis::Model::Writer.to_uri(options)
       when 'application/schema+json'
         options[:uri] = "jsonschema://#{@prefix}"
         Solis::Model::Writer.to_uri(options)
@@ -91,10 +96,45 @@ module Solis
         Solis::Model::Writer.to_uri(options)
       else
         shacl = StringIO.new
-        Solis::Model::Writer.to_uri(uri: shacl, namespace: @namespace, prefix: @prefix, model: @graph, content_type: content_type)
+        options[:uri] = shacl
+        options[:content_type] = content_type
+        Solis::Model::Writer.to_uri(options)
         shacl.rewind
         shacl.read
       end
+    end
+
+    #attr_accessor :title, :version, :description, :creator
+    def title
+      _get_object_for_preficate(RDF::Vocab::DC.title) || Solis::Utils::Namespace.detect_primary_namespace(@graph, @namespace)
+    end
+
+    def title=(title)
+      _set_object_for_preficate(RDF::Vocab::DC.title, title)
+    end
+
+    def description
+      _get_object_for_preficate(RDF::Vocab::DC.description) || ''
+    end
+
+    def description=(description)
+      _set_object_for_preficate(RDF::Vocab::DC.description, description)
+    end
+
+    def version
+      _get_object_for_preficate(RDF::Vocab::OWL.versionInfo) || ''
+    end
+
+    def version=(version)
+      _set_object_for_preficate(RDF::Vocab::OWL.versionInfo, version)
+    end
+
+    def creator
+      _get_object_for_preficate(RDF::Vocab::DC.creator, false)
+    end
+
+    def creator=(creator)
+      _set_object_for_preficate(RDF::Vocab::DC.creator, creator)
     end
 
     def get_embedded_entity_type_for_entity(name_entity, name_attr)
@@ -151,11 +191,50 @@ module Solis
 
     private
 
+    def _ontology
+      @graph.query([nil, RDF.type, RDF::Vocab::OWL.Ontology])
+    end
+
+    def _get_object_for_preficate(predicate, singleton = true)
+      statements = @graph.query([RDF::URI(@namespace), predicate, nil])
+      return nil if statements.empty?
+      if singleton
+        statements.each_statement do |statement|
+          return statement&.object.value
+        end
+      else
+        values = []
+        statements.each_statement do |statement|
+          values << statement&.object.value
+        end
+        return values
+      end
+    end
+
+    def _set_object_for_preficate(predicate, object)
+      #TODO: set a default working language
+      language = nil
+      ontology_uri = RDF::URI(@namespace)
+      @graph << [ontology_uri, RDF.type, RDF::Vocab::OWL.Ontology] if _ontology.size == 0
+      @graph.delete([ontology_uri, predicate, nil])
+      object = [object] unless object.is_a?(Array)
+
+      object.each do |o|
+        if o =~ /^http/
+          object = RDF::URI(o)
+        else
+          object = language ? RDF::Literal(o, language: language) : RDF::Literal(o)
+        end
+        @graph << [ontology_uri, predicate, object]
+      end
+    end
+
     def deep_copy(obj)
       Marshal.load(Marshal.dump(obj))
     end
 
     def _get_embedded_entity_type_for_entity(name_entity, name_attr)
+      res = nil
       # first check directly in shape
       name_shape = Shapes.get_shape_for_class(@shapes, name_entity)
       res = Shapes.get_property_class_for_shape(@shapes, name_shape, name_attr)
@@ -171,6 +250,7 @@ module Solis
     end
 
     def _get_datatype_for_entity(name_entity, name_attr)
+      res = nil
       # first check directly in shape
       name_shape = Shapes.get_shape_for_class(@shapes, name_entity)
       res = Shapes.get_property_datatype_for_shape(@shapes, name_shape, name_attr)
@@ -225,6 +305,5 @@ module Solis
         end
       end
     end
-
   end
 end
