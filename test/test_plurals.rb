@@ -18,7 +18,7 @@ class TestPlurals < Minitest::Test
     }
     solis = Solis.new(config)
 
-    assert_equal(solis.model.shapes['Car'][:plural], nil)
+    assert_nil(solis.model.shapes['Car'][:plural])
 
   end
 

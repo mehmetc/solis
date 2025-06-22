@@ -9,9 +9,9 @@ class OpenApiWriter < Solis::Model::Writer::Generic
     openapi = {
       "openapi" => "3.0.0",
       "info" => {
-        "title" => options[:title].value,
-        "version" => options[:version].value,
-        "description" => options[:description].value
+        "title" => options[:title] || '',
+        "version" => options[:version] || '',
+        "description" => options[:description] || ''
       },
       "paths" => {},
       "components" => {

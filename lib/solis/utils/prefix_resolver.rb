@@ -47,7 +47,7 @@ module Solis
       def self.try_rdf_vocab(namespace)
         RDF::Vocabulary.each do |vocab|
           if vocab.to_s == namespace
-            return vocab.class.name.split('::').last.downcase
+            return vocab.to_s.split('/').last.downcase.gsub(/\W*/,'')
           end
         end
         nil

@@ -42,10 +42,10 @@ module Solis
       @hierarchy = model[:hierarchy] || {}
       add_hierarchy_to_shapes
 
-      @title= model[:title]  || "No Title"
-      @version = model[:version]  || "0.1"
-      @description = model[:description] || "No Text Description"
-      @creator = model[:creator] || 'SOLIS'
+      # self.title = model[:title]  || "No Title"
+      # self.version = model[:version]  || "0.1"
+      # self.description = model[:description] || "No Text Description"
+      # self.creator = model[:creator] || 'SOLIS'
 
     end
 
@@ -103,7 +103,7 @@ module Solis
 
     #attr_accessor :title, :version, :description, :creator
     def title
-      _get_object_for_preficate(RDF::Vocab::DC.title)
+      _get_object_for_preficate(RDF::Vocab::DC.title) || Solis::Utils::Namespace.detect_primary_namespace(@graph, @namespace)
     end
 
     def title=(title)
@@ -111,7 +111,7 @@ module Solis
     end
 
     def description
-      _get_object_for_preficate(RDF::Vocab::DC.description)
+      _get_object_for_preficate(RDF::Vocab::DC.description) || ''
     end
 
     def description=(description)
@@ -119,7 +119,7 @@ module Solis
     end
 
     def version
-      _get_object_for_preficate(RDF::Vocab::OWL.versionInfo)
+      _get_object_for_preficate(RDF::Vocab::OWL.versionInfo) || ''
     end
 
     def version=(version)
@@ -180,14 +180,15 @@ module Solis
 
     def _get_object_for_preficate(predicate, singleton = true)
       statements = @graph.query([RDF::URI(@namespace), predicate, nil])
+      return nil if statements.empty?
       if singleton
         statements.each_statement do |statement|
-          return statement&.object
+          return statement&.object.value
         end
       else
         values = []
         statements.each_statement do |statement|
-          values << statement&.object
+          values << statement&.object.value
         end
         return values
       end
