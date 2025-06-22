@@ -52,6 +52,10 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'securerandom', '~> 0.4.1'
   spec.add_dependency 'iso8601', '~> 0.13.0'
   spec.add_dependency 'edtf', '~> 3.2.0'
+  spec.add_dependency 'sinatra'
+  spec.add_dependency 'http-accept'
+  spec.add_dependency 'rackup'
+  spec.add_dependency 'puma'
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html

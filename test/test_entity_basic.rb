@@ -68,7 +68,7 @@ class TestEntityBasic < Minitest::Test
 
   end
 
-  def test_entity_get_info
+  def test_entity_get_shape
 
     data = JSON.parse %(
       {
@@ -87,10 +87,10 @@ class TestEntityBasic < Minitest::Test
 
     car = Solis::Model::Entity.new(data, @model, 'Car', nil)
 
-    info = car.get_info
+    shape = car.get_shape
 
-    assert_equal(info[:uri], 'https://example.com/CarShape')
-    assert_equal(info[:closed], false)
+    assert_equal(shape[:uri], 'https://example.com/CarShape')
+    assert_equal(shape[:closed], false)
 
   end
 
@@ -115,8 +115,8 @@ class TestEntityBasic < Minitest::Test
 
     info = car.get_properties_info
 
-    assert_equal(info['color'].nil?, false)
-    assert_equal(info['color'][:description], 'Color of the car')
+    assert_equal(info['https://example.com/color'].nil?, false)
+    assert_equal(info['https://example.com/color'][:description], 'Color of the car')
 
   end
 
@@ -597,6 +597,33 @@ class TestEntityBasic < Minitest::Test
     car.patch(obj_patch)
 
     assert_equal(car.owners[0]["address"], "@unset")
+
+  end
+
+  def test_entity_show_pre_validate_jssonld
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "jon doe",
+            "address": {
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "street": "fake street"
+            }
+          }
+        ]
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', nil)
+
+    # TODO: write asserts on .to_pretty_pre_validate_jsonld
+    # puts car.to_pretty_pre_validate_jsonld
 
   end
 

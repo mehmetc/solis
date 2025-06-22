@@ -5,7 +5,7 @@ class TestModel < Minitest::Test
     @namespace = 'http://purl.org/ontology/bibo/'
     @prefix = 'bibo'
 
-    config = {
+    config_bibo = {
       store: Solis::Store::Memory.new(),
       model: {
         prefix: @prefix,
@@ -15,7 +15,7 @@ class TestModel < Minitest::Test
       }
     }
 
-    @solis = Solis.new(config)
+    @solis = Solis.new(config_bibo)
   end
   def test_model_metadata
     assert_equal 'The Bibliographic Ontology', @solis.model.title

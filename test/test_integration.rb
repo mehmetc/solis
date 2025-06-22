@@ -45,11 +45,11 @@ class TestIntegration < Minitest::Test
     properties = post.get_properties_info.keys
 
     assert_includes(@solis.model.entity.all, "Post")
-    assert_includes(properties, 'title')
+    assert_includes(properties, 'http://rdfs.org/sioc/ns#title')
 
     data = {
       "title" => "Hello World",
-      "created_at" => Time.now,
+      "created_at" => Time.now.to_s,
       "description" => "This is a post",
       "subject" => "Testing subject"
     }

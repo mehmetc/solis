@@ -25,7 +25,7 @@ class OpenApiWriter < Solis::Model::Writer::Generic
        schema_name = entity
        properties = extract_properties(repository, shape_uri)
        schema = convert_shape_to_schema(properties)
-       entity_plural = shapes[schema_name][:plural] || schema_name.pluralize
+       entity_plural = shapes[shape_uri.value][:plural] || schema_name.pluralize
        openapi["components"]["schemas"][schema_name] = schema
 
        # Create a basic path for this resource

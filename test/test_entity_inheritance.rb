@@ -60,8 +60,8 @@ class TestEntityInheritance < Minitest::Test
 
     info = car.get_properties_info
 
-    assert_equal(info['color'].nil?, false)
-    assert_equal(info['color'][:description], 'Color of the car')
+    assert_equal(info['https://example.com/color'].nil?, false)
+    assert_equal(info['https://example.com/color'][:description], 'Color of the car')
 
   end
 
