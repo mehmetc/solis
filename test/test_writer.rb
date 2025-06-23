@@ -74,7 +74,7 @@ class TestWriter < Minitest::Test
   end
 
   def test_write_form
-    #TODO: finish test
+    expect=File.read('test/resources/car/car.html')
     options = {
       theme: 'bootstrap',
       layout: 'horizontal',
@@ -93,7 +93,7 @@ class TestWriter < Minitest::Test
 
     form = @solis.model.writer('application/form', options)
 
-    puts form
+    assert_equal(expect, form)
   end
 
   def test_write_open_api
