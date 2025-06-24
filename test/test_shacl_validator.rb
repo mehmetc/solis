@@ -1844,4 +1844,54 @@ class TestSHACLValidator < Minitest::Test
 
   end
 
+  def test_split_attribute_info_in_different_property_nodes
+
+    str_shacl_ttl = %(
+      @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+      @prefix time:   <http://www.w3.org/2006/time#> .
+
+      example:CarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a car entity" ;
+              sh:targetClass  example:Car;
+              sh:node         example:Car;
+              sh:name         "Car";
+              sh:closed       true ;
+              sh:ignoredProperties (rdf:type) ;
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color_datatype" ;
+                                sh:description "Color datatype" ;
+                                sh:datatype    xsd:string ; ];
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color_cardinality" ;
+                                sh:description "Color cardinality" ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+      .
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/"
+        },
+        "@graph": [
+          {
+            "@id": "http://schema.org/my_car_2",
+            "@type": "Car",
+            "color": "black"
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, true)
+
+  end
+
 end
