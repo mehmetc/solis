@@ -8,6 +8,9 @@ module Solis
   class Store
 
     module RDFOperationsRunner
+
+      URI_DB_OPTIMISTIC_LOCK_VERSION = 'https://libis.be/solis/metadata/db/locks/optimistic/_version'
+
       # Expects:
       # - @client_sparql
       # - @logger
@@ -64,7 +67,9 @@ module Solis
           query = @client_sparql.select.where([s, :p, :o])
           query.each_solution do |solution|
             @logger.debug([s, solution.p, solution.o])
-            g << [s, solution.p, solution.o]
+            unless URI_DB_OPTIMISTIC_LOCK_VERSION.eql?(solution.p.to_s)
+              g << [s, solution.p, solution.o]
+            end
             if deep
               # if solution.o.is_a?(RDF::URI) or solution.o.is_a?(RDF::Literal::AnyURI)
               if solution.o.is_a?(RDF::URI)
@@ -290,6 +295,8 @@ WITH <#{@client_sparql.options[:graph]}>
 
       def run_save_operations(ops_generic)
 
+        return {} if ops_generic.empty?
+
         # convert endpoint-agnostic operations into RDF operations
         ops = ops_generic.map do |op|
           op_rdf = Marshal.load(Marshal.dump(op))
@@ -320,6 +327,11 @@ WITH <#{@client_sparql.options[:graph]}>
           'graph' => RDF::Graph.new
         }
 
+        # create empty where graph
+        where = {
+          'graph' => RDF::Graph.new
+        }
+
         # create an operations cache:
         # group operations by subject and predicate.
         # it can be useful later.
@@ -333,6 +345,27 @@ WITH <#{@client_sparql.options[:graph]}>
 
         # begin critical section
         @logger.debug("\n\n-- BEGIN CRITICAL SECTION: \n\n")
+
+        # get involved ids
+        ids = Set.new
+        ops.each do |op|
+          st = op['content']
+          ids.add(st[0])
+        end
+
+        # update graphs for optimistic locks logic
+        p_version = RDF.URI(URI_DB_OPTIMISTIC_LOCK_VERSION)
+        ids.each do |id|
+          version_old = @client_sparql.select.where([id, p_version, :o]).each_solution&.first&.o
+          version_new = (version_old || 0) + 1
+          unless version_old.nil?
+            delete['graph'] << [id, p_version, version_old]
+          end
+          insert['graph'] << [id, p_version, version_new]
+          unless version_old.nil?
+            where['graph'] << [id, p_version, version_old]
+          end
+        end
 
         # write graphs
         ops.each do |op|
@@ -401,11 +434,12 @@ WITH <#{@client_sparql.options[:graph]}>
 
           end
 
-
         end
 
+        # nothing_to_save = delete['graph'].empty? && insert['graph'].empty?
+        nothing_to_save = false
 
-        unless delete['graph'].empty? and insert['graph'].empty?
+        unless nothing_to_save
 
           method = 2
 
@@ -455,7 +489,7 @@ WITH <#{@client_sparql.options[:graph]}>
             # Found out later that the following is possible by SPARQL language.
             # Of course better than method 1 because supposedly atomic (no rollout strategies needed).
 
-            str_query = SPARQL::Client::Update::DeleteInsert.new(delete['graph'], insert['graph'], nil, graph: @name_graph).to_s
+            str_query = SPARQL::Client::Update::DeleteInsert.new(delete['graph'], insert['graph'], where['graph'], graph: @name_graph).to_s
             @logger.debug("\n\nDELETE/INSERT QUERY:\n\n")
             @logger.debug(str_query)
             @logger.debug("\n\n")
@@ -466,28 +500,24 @@ WITH <#{@client_sparql.options[:graph]}>
             when 1
               # this works
 
-              @client_sparql.delete_insert(delete['graph'], insert['graph'], nil)
+              @client_sparql.delete_insert(delete['graph'], insert['graph'], where['graph'])
             when 2
-              # this does not, which is strange because the DELETE/WHERE query works
-              # when using @client_sparql.query(str_query, update: true).
-              # It would be nice to have it running so we can use the raw SPARQL query string
-              # and be sure it is not internally split into DELETE + INSERT.
+              # this works.
+              # I did hope that this solution would provide report info about the query, but it does not.
+              # Having that is necessary for the optimistic lock logic: if 0 statements were updated,
+              # then it means another concurrent update has succeeded earlier.
+              # Only analyzing the _version values does not indicate which of the concurrent requests updated it.
+              # However, I realized this is not a problem of the library, but of SPARQL specifications itself:
+              # update queries are not supposed to return statistics.
 
-              # str_query = "WITH <#{@name_graph}>"
-              # unless delete['graph'].empty?
-              #   str_query += "\nDELETE {\n#{delete['graph'].dump(:ntriples)}}"
-              # end
-              # unless insert['graph'].empty?
-              #   str_query += "\nINSERT {\n#{insert['graph'].dump(:ntriples)}}"
-              # end
-              # # str_query += "\nWHERE { }\n"
-              # # str_query += "\nWHERE { ?s ?p ?o }\n"
-              # puts str_query
+              repository = SPARQL.execute(
+                SPARQL::Client::Update::DeleteInsert.new(delete['graph'], insert['graph'], where['graph']).to_s,
+                @client_sparql.url,
+                optimize: true, update: true
+              ) do |solution|
+                pp solution
+              end
 
-              @client_sparql.query(str_query, update: true)
-              # @client_sparql.instance_variable_set("@op", :update)
-              # puts @client_sparql.instance_variable_get("@op")
-              # SPARQL.execute(str_query, @client_sparql.url, update: true)
             end
 
           end

@@ -82,6 +82,7 @@ class TestEntityDestroy < Minitest::Test
     graph_truth.from_ttl(str_ttl_truth)
 
     graph_to_check = RDF::Graph.new(data: repository)
+    delete_metadata_from_graph(graph_to_check)
 
     assert_equal(graph_truth == graph_to_check, true)
 
