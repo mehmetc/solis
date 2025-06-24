@@ -38,8 +38,12 @@ class OpenApiWriter < Solis::Model::Writer::Generic
         openapi["components"]["schemas"][schema_name] = schema
 
         # Create a basic path for this resource
-        path = "/#{entity_plural.underscore}"
-        openapi["paths"][path] = generate_basic_path_operations(schema_name)
+        entity_plural_path = entity_plural.underscore
+        collection_path = "/#{entity_plural_path}"
+        individual_path = "/#{entity_plural_path}/{id}"
+
+        openapi["paths"][collection_path] = generate_collection_operations(schema_name)
+        openapi["paths"][individual_path] = generate_individual_operations(schema_name)
       end
     else
       # Fallback to old namespace-based approach
@@ -244,20 +248,18 @@ class OpenApiWriter < Solis::Model::Writer::Generic
   end
 
   # Generate basic CRUD operations for a resource
-  def self.generate_basic_path_operations(schema_name)
+  def self.generate_collection_operations(schema_name)
     {
       "get" => {
-        "summary" => "List #{schema_name} entities",
+        "summary" => "List all #{schema_name}s",
         "responses" => {
           "200" => {
-            "description" => "Successful response",
+            "description" => "A list of #{schema_name}s",
             "content" => {
               "application/json" => {
                 "schema" => {
                   "type" => "array",
-                  "items" => {
-                    "$ref" => "#/components/schemas/#{schema_name}"
-                  }
+                  "items" => { "$ref" => "#/components/schemas/#{schema_name}" }
                 }
               }
             }
@@ -265,27 +267,100 @@ class OpenApiWriter < Solis::Model::Writer::Generic
         }
       },
       "post" => {
-        "summary" => "Create a new #{schema_name} entity",
+        "summary" => "Create a new #{schema_name}",
         "requestBody" => {
           "required" => true,
           "content" => {
             "application/json" => {
-              "schema" => {
-                "$ref" => "#/components/schemas/#{schema_name}"
-              }
+              "schema" => { "$ref" => "#/components/schemas/#{schema_name}" }
             }
           }
         },
         "responses" => {
           "201" => {
-            "description" => "Entity created successfully",
+            "description" => "#{schema_name} created successfully",
             "content" => {
               "application/json" => {
-                "schema" => {
-                  "$ref" => "#/components/schemas/#{schema_name}"
-                }
+                "schema" => { "$ref" => "#/components/schemas/#{schema_name}" }
               }
             }
+          }
+        }
+      }
+    }
+  end
+
+  def self.generate_individual_operations(schema_name)
+    {
+      "get" => {
+        "summary" => "Get a #{schema_name} by ID",
+        "parameters" => [
+          {
+            "name" => "id",
+            "in" => "path",
+            "required" => true,
+            "schema" => { "type" => "string" },
+            "description" => "ID of the #{schema_name}"
+          }
+        ],
+        "responses" => {
+          "200" => {
+            "description" => "#{schema_name} details",
+            "content" => {
+              "application/json" => {
+                "schema" => { "$ref" => "#/components/schemas/#{schema_name}" }
+              }
+            }
+          },
+          "404" => {
+            "description" => "#{schema_name} not found"
+          }
+        }
+      },
+      "put" => {
+        "summary" => "Update a #{schema_name}",
+        "parameters" => [
+          {
+            "name" => "id",
+            "in" => "path",
+            "required" => true,
+            "schema" => { "type" => "string" },
+            "description" => "ID of the #{schema_name}"
+          }
+        ],
+        "requestBody" => {
+          "required" => true,
+          "content" => {
+            "application/json" => {
+              "schema" => { "$ref" => "#/components/schemas/#{schema_name}" }
+            }
+          }
+        },
+        "responses" => {
+          "200" => {
+            "description" => "#{schema_name} updated successfully",
+            "content" => {
+              "application/json" => {
+                "schema" => { "$ref" => "#/components/schemas/#{schema_name}" }
+              }
+            }
+          }
+        }
+      },
+      "delete" => {
+        "summary" => "Delete a #{schema_name}",
+        "parameters" => [
+          {
+            "name" => "id",
+            "in" => "path",
+            "required" => true,
+            "schema" => { "type" => "string" },
+            "description" => "ID of the #{schema_name}"
+          }
+        ],
+        "responses" => {
+          "200" => {
+            "description" => "#{schema_name} deleted successfully"
           }
         }
       }

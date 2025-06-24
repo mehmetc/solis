@@ -9,7 +9,6 @@ require_relative "model/parser/shacl"
 require_relative "utils/namespace"
 require_relative "utils/prefix_resolver"
 require_relative "utils/jsonld"
-require_relative "model/restful_api/controllers/main_controller"
 
 module Solis
   class Model
@@ -184,6 +183,14 @@ module Solis
     end
 
     def generate_restful_api
+      unless defined?(MainController)
+        begin
+          require_relative "model/restful_api/controllers/main_controller"
+        rescue LoadError
+          raise LoadError, "MainController is unavailable to load"
+        end
+      end
+
       MainController.model = self
       MainController.store = @store
       MainController

@@ -15,22 +15,22 @@ class TestModel < Minitest::Test
       }
     }
 
-    @solis = Solis.new(config_bibo)
+    @bibo_solis = Solis.new(config_bibo)
   end
   def test_model_metadata
-    assert_equal 'The Bibliographic Ontology', @solis.model.title
-    assert_instance_of Array, @solis.model.creator
-    assert_includes @solis.model.creator, "http://purl.org/ontology/bibo/fgiasson"
+    assert_equal 'The Bibliographic Ontology', @bibo_solis.model.title
+    assert_instance_of Array, @bibo_solis.model.creator
+    assert_includes @bibo_solis.model.creator, "http://purl.org/ontology/bibo/fgiasson"
   end
 
   def test_model_set_metadata
-    assert_equal @solis.model.creator.size,2
-    @solis.model.creator = @solis.model.creator << "https://solis.example.com/"
-    assert_equal @solis.model.creator.size,3
+    assert_equal @bibo_solis.model.creator.size,2
+    @bibo_solis.model.creator = @bibo_solis.model.creator << "https://solis.example.com/"
+    assert_equal @bibo_solis.model.creator.size,3
   end
 
   def test_model_metadata_write
-    openapi = JSON.parse(@solis.model.writer('application/openapi.json'))
+    openapi = JSON.parse(@bibo_solis.model.writer('application/openapi.json'))
 
     assert_equal 'The Bibliographic Ontology', openapi['info']['title']
   end

@@ -6,13 +6,13 @@ require 'json'
 
 class JSONSchemaWriter < Solis::Model::Writer::Generic
   def self.write(repository, options = {})
-    return '{"error": "No repository provided"}' if repository.nil?
+    return "No repository provided" if repository.nil?
+    return "options[:shapes] missing" unless options.key?(:shapes)
 
-    # STEP 5: Use parse_shapes if available in options, otherwise fall back to extract_shapes
-    if options[:shapes]
-      shapes = adapt_parse_shapes_to_extract_shapes_format(options[:shapes])
-    else
-      shapes = extract_shapes(repository)
+    shapes = adapt_parse_shapes_to_extract_shapes_format(options[:shapes])
+
+    if shapes.empty?
+      return "No SHACL shapes found in repository"
     end
 
     return '{"error": "No SHACL shapes found in repository"}' if shapes.empty?
