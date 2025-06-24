@@ -223,6 +223,7 @@ module Solis
         _opts[:add_missing_refs] = opts[:add_missing_refs] || false
         _opts[:autoload_missing_refs] = opts[:autoload_missing_refs] || false
         _opts[:append_attributes] = opts[:append_attributes] || false
+        _opts[:overwrite_refs_lists] = opts[:overwrite_refs_lists] || false
         # get internal data
         obj = get_internal_data_as_jsonld
         # infer type if reference autoload is requested
@@ -480,6 +481,11 @@ module Solis
             is_attr_value_reset = false
           end
 
+          is_list_refs_reset = true
+          if opts[:overwrite_refs_lists]
+            is_list_refs_reset = false
+          end
+
           # iterate each patch attribute item
           type_attr = nil # will be defined just soon
           val_attr_patch.each do |item_val_patch|
@@ -488,6 +494,10 @@ module Solis
               # patch item is an embedded entity
               type_attr = 'entity'
               if obj[name_attr_patch].is_a?(Array)
+                unless is_list_refs_reset
+                  obj[name_attr_patch] = []
+                  is_list_refs_reset = true
+                end
                 idx = obj[name_attr_patch].index do |item_val|
                   item_val['@id'] == item_val_patch['@id']
                 end
