@@ -1,0 +1,263 @@
+    <style>
+      .shacl-form {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      
+      .form-group {
+        margin-bottom: 1rem;
+      }
+      
+      .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+      }
+      
+      .required {
+        color: red;
+      }
+      
+      .form-control {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #495057;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+      }
+      
+      textarea.form-control {
+        min-height: 100px;
+      }
+      
+      .btn {
+        display: inline-block;
+        font-weight: 400;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: middle;
+        user-select: none;
+        border: 1px solid transparent;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        border-radius: 0.25rem;
+        cursor: pointer;
+      }
+      
+      .btn-primary {
+        color: #fff;
+        background-color: #007bff;
+        border-color: #007bff;
+      }
+      
+      .btn-secondary {
+        color: #fff;
+        background-color: #6c757d;
+        border-color: #6c757d;
+      }
+      
+      .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        border-radius: 0.2rem;
+      }
+      
+      .btn-outline-secondary {
+        color: #6c757d;
+        border-color: #6c757d;
+        background-color: transparent;
+      }
+      
+      .btn-outline-danger {
+        color: #dc3545;
+        border-color: #dc3545;
+        background-color: transparent;
+      }
+      
+      .form-buttons {
+        margin-top: 1.5rem;
+      }
+      
+      .text-muted {
+        color: #6c757d;
+      }
+      
+      .form-text {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+      }
+      
+      .array-field {
+        border: 1px solid #e9ecef;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        margin-bottom: 1rem;
+      }
+      
+      .array-item {
+        display: flex;
+        margin-bottom: 0.5rem;
+      }
+      
+      .array-item input {
+        flex: 1;
+        margin-right: 0.5rem;
+      }
+      
+      .array-item .remove-array-item {
+        flex-shrink: 0;
+      }
+      
+      fieldset {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 0.25rem;
+      }
+      
+      legend {
+        width: auto;
+        padding: 0 0.5rem;
+        font-size: 1.25rem;
+        font-weight: 500;
+      }
+      
+      .form-check {
+        position: relative;
+        display: block;
+        padding-left: 1.25rem;
+      }
+      
+      .form-check-input {
+        position: absolute;
+        margin-top: 0.3rem;
+        margin-left: -1.25rem;
+      }
+      
+      .form-check-label {
+        margin-bottom: 0;
+      }
+      
+      .radio-group {
+        margin-bottom: 0.5rem;
+      }
+    </style>
+
+<form id="shacl-form" class="shacl-form" action="#" method="post" novalidate="true">
+<fieldset class="fieldset">
+<legend>Car</legend>
+<div class="description">Abstract shape that describes a car entity</div>
+<div class="form-group" data-field-name="color">
+<label class="form-label" for="color">color</label>
+<input type="text" id="color" name="color" class="form-control" value="" placeholder="Enter color">
+<small class="form-text text-muted">Color of the car</small>
+</div>
+<div class="form-group" data-field-name="brand">
+<label class="form-label" for="brand">brand</label>
+<input type="text" id="brand" name="brand" class="form-control" value="" placeholder="Enter brand">
+<small class="form-text text-muted">Brand of the car</small>
+</div>
+</fieldset>
+<div class="form-buttons">
+<button type="submit" class="btn btn-primary">Submit</button>
+</div>
+</form>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Handle form validation
+        const form = document.getElementById('shacl-form');
+        if (form) {
+          form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+              event.preventDefault();
+              event.stopPropagation();
+              // Mark all invalid fields
+              Array.from(form.elements).forEach(input => {
+                if (!input.validity.valid) {
+                  input.classList.add('is-invalid');
+                }
+              });
+            }
+            form.classList.add('was-validated');
+          });
+          
+          // Add array item handling
+          const addButtons = document.querySelectorAll('.add-array-item');
+          addButtons.forEach(button => {
+            button.addEventListener('click', function() {
+              const fieldName = this.getAttribute('data-array-field');
+              const container = document.querySelector(`.array-field[data-field-name="${fieldName}"] .array-items`);
+              
+              if (container) {
+                // Clone the last item
+                const lastItem = container.querySelector('.array-item:last-child');
+                if (lastItem) {
+                  const newItem = lastItem.cloneNode(true);
+                  const newIndex = parseInt(lastItem.getAttribute('data-item-index')) + 1;
+                  
+                  // Update the index
+                  newItem.setAttribute('data-item-index', newIndex);
+                  
+                  // Update input names
+                  newItem.querySelectorAll('input, select, textarea').forEach(input => {
+                    const name = input.getAttribute('name');
+                    if (name) {
+                      input.setAttribute('name', name.replace(/\[(\d+)\]/, `[${newIndex}]`));
+                      input.value = '';
+                    }
+                  });
+                  
+                  // Re-attach remove event
+                  const removeButton = newItem.querySelector('.remove-array-item');
+                  if (removeButton) {
+                    removeButton.addEventListener('click', handleRemoveClick);
+                  }
+                  
+                  // Add the new item to the container
+                  container.appendChild(newItem);
+                }
+              }
+            });
+          });
+          
+          // Remove array item handling
+          const handleRemoveClick = function() {
+            const item = this.closest('.array-item');
+            const container = item.parentNode;
+            
+            // Only remove if there's more than one item
+            if (container.querySelectorAll('.array-item').length > 1) {
+              container.removeChild(item);
+              
+              // Renumber remaining items
+              Array.from(container.querySelectorAll('.array-item')).forEach((item, index) => {
+                item.setAttribute('data-item-index', index);
+                
+                // Update input names
+                item.querySelectorAll('input, select, textarea').forEach(input => {
+                  const name = input.getAttribute('name');
+                  if (name) {
+                    input.setAttribute('name', name.replace(/\[(\d+)\]/, `[${index}]`));
+                  }
+                });
+              });
+            }
+          };
+          
+          // Attach remove handlers
+          document.querySelectorAll('.remove-array-item').forEach(button => {
+            button.addEventListener('click', handleRemoveClick);
+          });
+        }
+      });
+    </script>

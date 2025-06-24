@@ -9,11 +9,15 @@ class PlantUMLWriter < Solis::Model::Writer::Generic
   # Main method to convert a RDF::Repository with SHACL definitions to a PlantUML class diagram
   def self.write(repository, options = {})
     return "No repository provided" if repository.nil?
+    return "options[:shapes] missing" unless options.key?(:shapes)
 
-    # Extract all node shapes from the repository
-    shapes = extract_shapes(repository)
-    return "No SHACL shapes found in repository" if shapes.empty?
+    shapes = adapt_parse_shapes_to_extract_shapes_format(options[:shapes])
 
+    if shapes.empty?
+      return "No SHACL shapes found in repository"
+    end
+
+    # Rest of the method remains the same...
     # Start building the PlantUML diagram
     plantuml = ["@startuml", ""]
 
@@ -94,87 +98,36 @@ class PlantUMLWriter < Solis::Model::Writer::Generic
 
   private
 
-  # Extract all node shapes from the repository
-  def self.extract_shapes(repository)
-    shapes = {}
+  def self.adapt_parse_shapes_to_extract_shapes_format(parse_shapes_output)
+    adapted_shapes = {}
 
-    # Find all resources that are defined as NodeShapes
-    repository.query([nil, RDF.type, RDF::Vocab::SHACL.NodeShape]) do |statement|
-      shape_uri = statement.subject.to_s
-      shape_data = { uri: shape_uri, properties: [] }
+    parse_shapes_output.each do |shape_uri, shape_data|
+      adapted_shapes[shape_uri] = {
+        uri: shape_data[:uri],
+        name: shape_data[:name],
+        description: shape_data[:description],
+        target_class: shape_data[:target_class],
+        node: shape_data[:nodes].first, # Take first node for inheritance relationship
+        properties: []
+      }
 
-      # Get shape name
-      repository.query([statement.subject, RDF::Vocab::SHACL.name, nil]) do |name_stmt|
-        shape_data[:name] = name_stmt.object.to_s
+      # Convert properties from hash to array format
+      shape_data[:properties].each do |property_path, property_info|
+        adapted_property = {
+          name: property_info[:name],
+          path: property_info[:path],
+          description: property_info[:description],
+          datatype: property_info.dig(:constraints, :datatype),
+          min_count: property_info.dig(:constraints, :min_count),
+          max_count: property_info.dig(:constraints, :max_count),
+          class: property_info.dig(:constraints, :class)
+        }
+
+        adapted_shapes[shape_uri][:properties] << adapted_property
       end
-
-      # Get shape description
-      repository.query([statement.subject, RDF::Vocab::SHACL.description, nil]) do |desc_stmt|
-        shape_data[:description] = desc_stmt.object.to_s
-      end
-
-      # Get target class
-      repository.query([statement.subject, RDF::Vocab::SHACL.targetClass, nil]) do |target_stmt|
-        shape_data[:target_class] = target_stmt.object.to_s
-      end
-
-      # Get superclass
-      repository.query([statement.subject, RDF::Vocab::SHACL.node, nil]) do |node_stmt|
-        shape_data[:node] = node_stmt.object.to_s
-      end
-
-      # Get all property shapes
-      repository.query([statement.subject, RDF::Vocab::SHACL.property, nil]) do |prop_stmt|
-        property_shape = prop_stmt.object
-        property_data = {}
-
-        # Get property path (predicate)
-        repository.query([property_shape, RDF::Vocab::SHACL.path, nil]) do |path_stmt|
-          property_data[:path] = path_stmt.object.to_s
-        end
-
-        # Get property name
-        repository.query([property_shape, RDF::Vocab::SHACL.name, nil]) do |name_stmt|
-          property_data[:name] = name_stmt.object.to_s
-        end
-
-        # Get property description
-        repository.query([property_shape, RDF::Vocab::SHACL.description, nil]) do |desc_stmt|
-          property_data[:description] = desc_stmt.object.to_s
-        end
-
-        # Get datatype
-        repository.query([property_shape, RDF::Vocab::SHACL.datatype, nil]) do |type_stmt|
-          property_data[:datatype] = type_stmt.object.to_s
-        end
-
-        # Get class for object properties
-        repository.query([property_shape, RDF::Vocab::SHACL.class, nil]) do |class_stmt|
-          property_data[:class] = class_stmt.object.to_s
-        end
-
-        # Get nodeKind
-        repository.query([property_shape, RDF::Vocab::SHACL.nodeKind, nil]) do |kind_stmt|
-          property_data[:node_kind] = kind_stmt.object.to_s
-        end
-
-        # Get min cardinality
-        repository.query([property_shape, RDF::Vocab::SHACL.minCount, nil]) do |min_stmt|
-          property_data[:min_count] = min_stmt.object.to_i
-        end
-
-        # Get max cardinality
-        repository.query([property_shape, RDF::Vocab::SHACL.maxCount, nil]) do |max_stmt|
-          property_data[:max_count] = max_stmt.object.to_i
-        end
-
-        shape_data[:properties] << property_data
-      end
-
-      shapes[shape_uri] = shape_data
     end
 
-    shapes
+    adapted_shapes
   end
 
   # Add relationships between classes to the diagram
@@ -293,11 +246,11 @@ class PlantUMLWriter < Solis::Model::Writer::Generic
   # Determine relationship notation for PlantUML
   def self.determine_relationship_cardinality(min_count, max_count)
     if max_count.nil? || max_count > 1
-      "\"1\" --* \"*\""  # One-to-many
+      "\"1\" --* \"*\"" # One-to-many
     elsif min_count == 0
-      "\"1\" --o \"0..1\""  # One-to-zero-or-one
+      "\"1\" --o \"0..1\"" # One-to-zero-or-one
     else
-      "\"1\" --* \"1\""  # One-to-one
+      "\"1\" --* \"1\"" # One-to-one
     end
   end
 end

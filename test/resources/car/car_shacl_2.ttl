@@ -1,6 +1,14 @@
 @prefix example: <https://example.com/> .
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 @prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix dc:     <http://purl.org/dc/elements/1.1/> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+
+example: a owl:Ontology;
+    dc:title "Cars";
+    dc:creator "libis";
+    dc:description """This is an exmaple ontology for running SOLIS tests"""@en;
+    owl:versionInfo "1.0" .
 
 example:CarShape
     a sh:NodeShape;

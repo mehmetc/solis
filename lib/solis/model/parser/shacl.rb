@@ -54,6 +54,9 @@ class SHACLParser
 
       shapes[shape_uri][:plural] = @shapes_graph.first_object([shape.subject, RDF::Vocab::SKOS.altLabel, nil])&.to_s
 
+      # STEP 1: Add description extraction
+      shapes[shape_uri][:description] = @shapes_graph.first_object([shape.subject, RDF::Vocab::SHACL.description, nil])&.to_s
+
       @shapes_graph.query([shape.subject, RDF::Vocab::SHACL.property, nil]) do |property_shape|
         property_uri = property_shape.object
         property_info = extract_property_info(property_uri)

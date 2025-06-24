@@ -74,7 +74,7 @@ class TestWriter < Minitest::Test
   end
 
   def test_write_form
-    #TODO: finish test
+    expect=File.read('test/resources/car/car.html')
     options = {
       theme: 'bootstrap',
       layout: 'horizontal',
@@ -93,14 +93,13 @@ class TestWriter < Minitest::Test
 
     form = @solis.model.writer('application/form', options)
 
-    puts form
+    assert_equal(expect, form)
   end
 
   def test_write_open_api
-    #TODO:finish test
+    expect=File.read('test/resources/car/car_openapi.json')
     open_api = @solis.model.writer('application/openapi.json')
-
-    puts open_api
+    assert_equal(expect, open_api)
   end
 
   def test_write_shacl_for_sioc

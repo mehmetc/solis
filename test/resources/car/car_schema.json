@@ -1,24 +1,21 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Generated from SHACL definitions",
-  "description": "JSON Schema generated from SHACL shapes",
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "https://example.com/",
+  "description": "",
   "type": "object",
   "definitions": {
     "Car": {
       "type": "object",
-      "title": "Car",
-      "additionalProperties": false,
-      "description": "Abstract shape that describes a car entity",
       "properties": {
         "color": {
-          "title": "Kleur",
+          "title": "color",
           "description": "Color of the car",
           "type": "string",
           "default": ""
         },
         "brand": {
-          "title": "Brand",
-          "description": "The manufacturer brand",
+          "title": "brand",
+          "description": "Brand of the car",
           "type": "string",
           "default": ""
         }
@@ -26,7 +23,10 @@
       "required": [
         "color",
         "brand"
-      ]
+      ],
+      "description": "Abstract shape that describes a car entity",
+      "title": "Car",
+      "additionalProperties": false
     }
   },
   "properties": {
@@ -38,63 +38,25 @@
   },
   "additionalProperties": false,
   "uiSchema": {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Generated from SHACL definitions",
-    "description": "JSON Schema generated from SHACL shapes",
-    "type": "object",
-    "definitions": {
-      "Car": {
-        "type": "object",
-        "title": "Car",
-        "additionalProperties": false,
-        "description": "Abstract shape that describes a car entity",
-        "properties": {
-          "color": {
-            "title": "Kleur",
-            "description": "Color of the car",
-            "type": "string",
-            "default": ""
-          },
-          "brand": {
-            "title": "Brand",
-            "description": "The manufacturer brand",
-            "type": "string",
-            "default": ""
-          }
-        },
-        "required": [
-          "color",
-          "brand"
-        ]
-      }
-    },
-    "properties": {
-      "car": {
-        "$ref": "#/definitions/Car",
-        "title": "Car",
-        "description": "Abstract shape that describes a car entity"
-      }
-    },
-    "additionalProperties": false,
-    "uiSchema": {
-      "car": {
-        "ui:order": [
-          "color",
-          "brand"
-        ],
-        "color": {
-          "ui:widget": "text",
-          "ui:help": "Color of the car"
-        },
-        "brand": {
-          "ui:widget": "text",
-          "ui:help": "The manufacturer brand"
-        }
+    "car": {
+      "ui:order": [
+        "color",
+        "brand"
+      ],
+      "color": {
+        "ui:widget": "text",
+        "ui:help": "Color of the car",
+        "ui:placeholder": "Enter color"
       },
-      "ui:globalOptions": {
-        "theme": "default",
-        "layout": "vertical"
+      "brand": {
+        "ui:widget": "text",
+        "ui:help": "Brand of the car",
+        "ui:placeholder": "Enter brand"
       }
+    },
+    "ui:globalOptions": {
+      "theme": "default",
+      "layout": "vertical"
     }
   }
 }
