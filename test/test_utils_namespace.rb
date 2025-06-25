@@ -13,6 +13,9 @@ class TestUtilsNamespace < Minitest::Test
     @graph = @solis.model.graph
     @namespace = @solis.model.namespace
     @prefix = @solis.model.prefix
+    File.open('./test/resources/biboshapes_shapes.ttl', 'wb') do |f|
+      f.puts @solis.model.writer
+    end
   end
 
   def test_extract_unique_namespaces

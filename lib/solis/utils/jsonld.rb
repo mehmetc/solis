@@ -137,7 +137,7 @@ module Solis
             if is_object_an_embedded_entity_or_ref(e)
               type_root_expanded = expand_term(type_root, context)
               name_attr_expanded = expand_term(name_attr, context)
-              type_embedded = model.get_embedded_entity_type_for_entity(type_root_expanded, name_attr_expanded)
+              type_embedded = model.get_property_entity_for_entity(type_root_expanded, name_attr_expanded)
               infer_jsonld_types_from_model!(e, model, context, type_embedded)
             end
           end
@@ -166,7 +166,7 @@ module Solis
         obj.each_key do |name_attr|
           next if ['@id', '@type'].include?(name_attr)
           name_attr_expanded = expand_term(name_attr, context)
-          datatype = model.get_datatype_for_entity(type_expanded, name_attr_expanded)
+          datatype = model.get_property_datatype_for_entity(type_expanded, name_attr_expanded)
           context_datatypes[name_attr] = {
             '@type' => datatype
           } unless datatype.nil?
@@ -220,7 +220,7 @@ module Solis
 
       def self.make_jsonld_triples_from_hierarchy(model)
         triples = []
-        model.hierarchy.each do |name_class, names_classes_parents|
+        model.hierarchy_ext.each do |name_class, names_classes_parents|
           names_classes_parents.each do |name_class_parent|
             triples.append({
                              "@id" => URI.join(model.namespace, name_class).to_s,

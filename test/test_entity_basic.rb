@@ -116,7 +116,7 @@ class TestEntityBasic < Minitest::Test
     info = car.get_properties_info
 
     assert_equal(info['https://example.com/color'].nil?, false)
-    assert_equal(info['https://example.com/color'][:description], 'Color of the car')
+    assert_equal(info['https://example.com/color'][:constraints][0][:description], 'Color of the car')
 
   end
 
