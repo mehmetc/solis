@@ -152,6 +152,14 @@ module Shapes
     shapes.select{|k,v| v[:name].downcase.eql?(name.downcase)}&.keys&.first
   end
 
+  def self.get_all_classes(shapes)
+    classes = []
+    shapes.each_value do |v|
+      classes << v[:target_class]
+    end
+    classes
+  end
+
   private_class_method def self.get_property_shape_for_path(shapes, name_shape, path)
     shapes.dig(name_shape, :property_shapes)&.select { |k, v| v[:path] == path }&.keys&.first
   end

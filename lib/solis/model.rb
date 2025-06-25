@@ -185,6 +185,17 @@ module Solis
       properties
     end
 
+    def get_entities_info
+      names_entities = Shapes.get_all_classes(@shapes)
+      info = {}
+      names_entities.each do |name_entity|
+        info[name_entity] = {
+          properties: get_properties_info_for_entity(name_entity)
+        }
+      end
+      info
+    end
+
     def find_entity_by_plural(plural)
       res = @shapes.select { |k,v| v[:plural] == plural }
       res[res.keys.first][:target_class] if res.keys.first
