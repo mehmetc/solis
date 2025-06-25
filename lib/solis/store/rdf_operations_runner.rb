@@ -204,49 +204,87 @@ module Solis
 
       def delete_attributes_for_subjects(ss)
         unless ss.empty?
-          str_ids = ss.map { |s| "<#{s.to_s}>" } .join(' ')
-          # This query string takes care of:
-          # - deleting attributes of one of more subjects
-          # - checking that those subjects are not objects in other triples
-          # (i.e. they are not referenced)
-          # Both together in the same query.
+          str_ids = ss.map { |s| "<#{s.to_s}>" }.join(' ')
+
+          # Fixed single query: only delete if subjects are NOT referenced
           str_query = %(
-            DELETE {
-              ?s ?p ?o
-            }
-            WHERE {
-              FILTER NOT EXISTS { ?s_ref ?p_ref ?s } .
-              VALUES ?s { #{str_ids} } .
-              ?s ?p ?o .
-            }
-          )
+WITH <#{@client_sparql.options[:graph]}>
+  DELETE {
+    ?s ?p ?o
+  }
+  WHERE {
+    VALUES ?s { #{str_ids} }
+    ?s ?p ?o .
+    FILTER NOT EXISTS {
+      ?other_entity ?any_property ?s
+    }
+  }
+    )
+
           @logger.debug("\n\nDELETE QUERY:\n\n")
           @logger.debug(str_query)
           @logger.debug("\n\n")
-          # run query
-          # TODO: repository seems a snapshot of the triple store
-          # after the query.
-          # This seems inefficient, especially if the store contains
-          # a lot of triple. To check better ...
-          repository = @client_sparql.query(str_query, update: true)
-          # check if delete failed because subjects were referenced
-          client_sparql = SPARQL::Client.new(repository)
-          subjects_were_referenced = client_sparql.ask
-                                                  .where([:s_ref, :p_ref, :s])
-                                                  .values(:s, *ss)
-                                                  .true?
-          # if subjects_were_referenced
-          #   raise StandardError, "any of these '#{str_ids}' was referenced"
-          # end
-          success = !subjects_were_referenced
-          message = ''
-          if subjects_were_referenced
-            message = "any of these '#{str_ids}' was referenced"
+
+          # Count subjects before deletion to check if any were actually deleted
+          count_query = %(
+      SELECT (COUNT(DISTINCT ?s) AS ?count) WHERE {
+        VALUES ?s { #{str_ids} }
+        ?s ?p ?o .
+        FILTER NOT EXISTS {
+          ?other_entity ?any_property ?s
+        }
+      }
+    )
+
+          # Check how many subjects can be safely deleted
+          count_result = @client_sparql.query(count_query)
+          deletable_count = count_result.first[:count].to_i
+
+          if deletable_count == 0
+            # Check if subjects exist but are referenced
+            exist_query = %(
+        ASK WHERE {
+          VALUES ?s { #{str_ids} }
+          ?s ?p ?o
+        }
+      )
+
+            subjects_exist = @client_sparql.ask(exist_query)
+
+            if subjects_exist
+              return {
+                "success" => false,
+                "message" => "Cannot delete: subjects are referenced by other entities"
+              }
+            else
+              return {
+                "success" => true,
+                "message" => "No subjects found to delete"
+              }
+            end
           end
-          {
-            "success" => success,
-            "message" => message
-          }
+
+          # Execute the deletion
+          begin
+            repository = @client_sparql.query(str_query, update: true)
+
+            if deletable_count < ss.length
+              return {
+                "success" => false,
+                "message" => "Only #{deletable_count} of #{ss.length} subjects could be deleted (others are referenced)"
+              }
+            else
+              return {
+                "success" => true,
+                "message" => "Successfully deleted #{deletable_count} subject(s)"
+              }
+            end
+          rescue => e
+            return {
+              "success" => false,
+              "message" => "Delete failed: #{e.message}"
+            }
+          end
         end
       end
 

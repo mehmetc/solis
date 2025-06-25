@@ -12,6 +12,7 @@ module Solis
   class Model
 
     class Entity < OpenStruct
+      attr_reader :errors
       def method_missing(method, *args, &block)
         raise Solis::Error::PropertyNotFound unless get_properties_info.keys.include?(method.to_s)
         super
@@ -98,6 +99,7 @@ module Solis
       def initialize(obj, model, type, store)
         super(hash={})
         @model = model
+        @errors = []
         if type.nil?
           raise MissingTypeError
         end
@@ -153,6 +155,8 @@ module Solis
         graph_data = RDF::Graph.new << JSON::LD::API.toRdf(flattened_ordered_expanded)
         conform_literals = graph_data.valid?
         messages_literals = []
+        #puts flattened_ordered_expanded.to_json
+
         graph_data.each do |statement|
           begin
             statement.object.validate!
@@ -169,8 +173,10 @@ module Solis
       end
 
       def valid?
-
+        @errors = []
         conform_literals, messages_literals, conform_shacl, messages_shacl = validate
+        @errors += messages_literals
+        @errors += messages_shacl
         res = (conform_literals and conform_shacl)
         res
 

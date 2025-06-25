@@ -35,5 +35,11 @@ module Solis
         403
       end
     end
+
+    class ValidationFailed < General
+      def http_status
+        503
+      end
+    end
   end
 end
