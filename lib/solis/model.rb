@@ -16,6 +16,7 @@ module Solis
     attr_reader :store, :graph, :namespace, :prefix, :uri, :content_type, :logger
     attr_reader :shapes, :validator, :hash_validator_literals, :namespace
     attr_reader :hierarchy_ext, :hierarchy, :hierarchy_full
+    attr_reader :info_entities
     attr_reader :plurals
 
     def initialize(params = {})
@@ -53,6 +54,8 @@ module Solis
       @hierarchy = {}
       @hierarchy_full = {}
       make_hierarchy
+      @info_entities = {}
+      make_info_entities
     end
 
     def entity
@@ -187,20 +190,6 @@ module Solis
         end
       end
       properties
-    end
-
-    def get_entities_info
-      names_entities = Shapes.get_all_classes(@shapes)
-      info = {}
-      names_entities.each do |name_entity|
-        plurals = Shapes.get_shapes_for_class(@shapes, name_entity).collect { |s| @shapes[s][:plural] }
-        plural = plurals[0]
-        info[name_entity] = {
-          properties: get_properties_info_for_entity(name_entity),
-          plural: plural
-        }
-      end
-      info
     end
 
     def find_entity_by_plural(plural)
@@ -375,6 +364,18 @@ module Solis
       names_entities.each do |name_entity|
         @hierarchy[name_entity] = get_parent_entities_for_entity(name_entity)
         @hierarchy_full[name_entity] = get_all_parent_entities_for_entity(name_entity)
+      end
+    end
+
+    def make_info_entities
+      names_entities = Shapes.get_all_classes(@shapes)
+      names_entities.each do |name_entity|
+        plurals = Shapes.get_shapes_for_class(@shapes, name_entity).collect { |s| @shapes[s][:plural] }
+        plural = plurals[0]
+        @info_entities[name_entity] = {
+          properties: get_properties_info_for_entity(name_entity),
+          plural: plural
+        }
       end
     end
 
