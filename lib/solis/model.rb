@@ -189,8 +189,11 @@ module Solis
       names_entities = Shapes.get_all_classes(@shapes)
       info = {}
       names_entities.each do |name_entity|
+        plurals = Shapes.get_shapes_for_class(@shapes, name_entity).collect { |s| @shapes[s][:plural] }
+        plural = plurals[0]
         info[name_entity] = {
-          properties: get_properties_info_for_entity(name_entity)
+          properties: get_properties_info_for_entity(name_entity),
+          plural: plural
         }
       end
       info

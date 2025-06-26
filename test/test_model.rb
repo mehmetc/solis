@@ -85,7 +85,9 @@ class TestModel < Minitest::Test
         hierarchy: hierarchy,
         plurals: {
           'Car' => 'cars',
-          'ElectricCar' => 'electric_cars'
+          'ElectricCar' => 'electric_cars',
+          'Person' => 'persons',
+          'Address' => 'addresses'
         }
       })
 
