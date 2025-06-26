@@ -129,6 +129,9 @@ class TestModel < Minitest::Test
       assert_equal(model.find_entity_by_plural('electric_cars'), 'https://example.com/ElectricCar')
       assert_equal(model.find_entity_by_plural('electric_carsss'), nil)
 
+      assert_equal(model.hierarchy['https://example.com/Car'], [])
+      assert_equal(model.hierarchy['https://example.com/ElectricCar'], ['https://example.com/Car'])
+
     end
 
   end
