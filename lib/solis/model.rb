@@ -170,14 +170,14 @@ module Solis
       properties = {}
       names_shapes = Shapes.get_shapes_for_class(@shapes, name_entity)
       names_shapes.each do |name_shape|
-        property_shapes = deep_copy(@shapes[name_shape][:property_shapes])
+        property_shapes = deep_copy(@shapes[name_shape][:properties])
         merge_info_entity_properties!(properties, property_shapes_as_entity_properties(property_shapes))
       end
       names_entities_parents = get_all_parent_entities_for_entity(name_entity)
       names_entities_parents.each do |name_entity_parent|
         names_shapes_parent = Shapes.get_shapes_for_class(@shapes, name_entity_parent)
         names_shapes_parent.each do |name_shape_parent|
-          property_shapes_parent = deep_copy(@shapes[name_shape_parent][:property_shapes])
+          property_shapes_parent = deep_copy(@shapes[name_shape_parent][:properties])
           properties_parent = property_shapes_as_entity_properties(property_shapes_parent)
           merge_info_entity_properties!(properties, properties_parent)
         end
@@ -324,7 +324,7 @@ module Solis
         names_shapes = Shapes.get_shapes_for_class(@shapes, name_entity)
         if names_shapes.empty?
           name_shape = "#{name_entity}Shape"
-          @shapes[name_shape] = {property_shapes: {}, uri: name_shape, target_class: name_entity, nodes: [], closed: false, plural: nil}
+          @shapes[name_shape] = {properties: {}, uri: name_shape, target_class: name_entity, nodes: [], closed: false, plural: nil}
           names_shapes = [name_shape]
         end
         names_base_entities_parents.each do |name_base_entity_parent|

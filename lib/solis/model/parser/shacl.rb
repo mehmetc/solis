@@ -39,7 +39,7 @@ class SHACLParser
       if shape_name.empty?
         raise MissingShapeNameError.new(shape.subject, 'node')
       end
-      shapes[shape_uri] = {property_shapes: {}, uri: shape_uri, nodes: [], closed: false, plural: nil}
+      shapes[shape_uri] = {properties: {}, uri: shape_uri, nodes: [], closed: false, plural: nil}
 
       @shapes_graph.query([shape.subject, RDF::Vocab::SHACL.node, nil]) do |stmt|
         node_name = stmt.object.to_s
@@ -71,10 +71,10 @@ class SHACLParser
         
         # prop_key = property_uri.node? ? property_info[:name] : property_uri.to_s
         prop_key = property_uri.to_s
-        if shapes[shape_uri][:property_shapes].key?(prop_key)
+        if shapes[shape_uri][:properties].key?(prop_key)
           raise DuplicateShapeNameOrURIError.new(property_uri, 'property', prop_key)
         end
-        shapes[shape_uri][:property_shapes][prop_key] = property_info
+        shapes[shape_uri][:properties][prop_key] = property_info
       end
     end
 
@@ -116,12 +116,12 @@ module Shapes
 
   def self.get_property_datatype_for_shape(shapes, name_shape, name_property)
     name_shape_property = get_property_shape_for_path(shapes, name_shape, name_property)
-    shapes.dig(name_shape, :property_shapes, name_shape_property, :constraints, :datatype)
+    shapes.dig(name_shape, :properties, name_shape_property, :constraints, :datatype)
   end
 
   def self.get_property_class_for_shape(shapes, name_shape, name_property)
     name_shape_property = get_property_shape_for_path(shapes, name_shape, name_property)
-    shapes.dig(name_shape, :property_shapes, name_shape_property, :constraints, :class)
+    shapes.dig(name_shape, :properties, name_shape_property, :constraints, :class)
   end
 
   def self.get_parent_shapes_for_shape(shapes, name_shape)
@@ -161,7 +161,7 @@ module Shapes
   end
 
   private_class_method def self.get_property_shape_for_path(shapes, name_shape, path)
-    shapes.dig(name_shape, :property_shapes)&.select { |k, v| v[:path] == path }&.keys&.first
+    shapes.dig(name_shape, :properties)&.select { |k, v| v[:path] == path }&.keys&.first
   end
 
 end
