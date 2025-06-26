@@ -85,7 +85,9 @@ class TestModel < Minitest::Test
         hierarchy: hierarchy,
         plurals: {
           'Car' => 'cars',
-          'ElectricCar' => 'electric_cars'
+          'ElectricCar' => 'electric_cars',
+          'Person' => 'persons',
+          'Address' => 'addresses'
         }
       })
 
@@ -116,7 +118,7 @@ class TestModel < Minitest::Test
       r = model.get_properties_info_for_entity('https://example.com/ElectricCar')
       assert_equal(r.key?('https://example.com/color'), true)
 
-      r = model.get_entities_info
+      r = model.info_entities
       assert_equal(r.key?('https://example.com/ElectricCar'), true)
       assert_equal(r['https://example.com/ElectricCar'][:properties].key?('https://example.com/color'), true)
 
@@ -126,6 +128,9 @@ class TestModel < Minitest::Test
 
       assert_equal(model.find_entity_by_plural('electric_cars'), 'https://example.com/ElectricCar')
       assert_equal(model.find_entity_by_plural('electric_carsss'), nil)
+
+      assert_equal(model.hierarchy['https://example.com/Car'], [])
+      assert_equal(model.hierarchy['https://example.com/ElectricCar'], ['https://example.com/Car'])
 
     end
 
