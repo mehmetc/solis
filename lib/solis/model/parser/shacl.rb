@@ -96,6 +96,10 @@ class SHACLParser
       property_info[:constraints][:datatype] = datatype.object.to_s
     end
 
+    shapes_graph.query([property_uri, RDF::Vocab::SHACL.pattern, nil]) do |pattern|
+      property_info[:constraints][:pattern] = pattern.object.to_s
+    end
+
     shapes_graph.query([property_uri, RDF::Vocab::SHACL.minCount, nil]) do |min_count|
       property_info[:constraints][:min_count] = min_count.object.to_i
     end
