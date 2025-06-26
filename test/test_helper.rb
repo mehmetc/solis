@@ -16,6 +16,15 @@ require "http"
 require "minitest/autorun"
 
 
+def delete_metadata_from_graph(graph)
+  graph.each do |statement|
+    if statement.predicate.to_s.start_with?("https://libis.be/solis/metadata")
+      graph.delete(statement)
+    end
+  end
+end
+
+
 def make_api_controller_class_thread_friendly(class_controller)
   Class.new(class_controller) do
     set :url_base, 'http://127.0.0.1:4567'

@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class TestModel < Minitest::Test
+class TestMetadata < Minitest::Test
   def setup
     @namespace = 'http://purl.org/ontology/bibo/'
     @prefix = 'bibo'

@@ -4,22 +4,22 @@ require 'active_support/all'
 class SHACLParser
 
   class MissingShapeNameError < StandardError
+    def initialize(uri_shape, type_shape)
+      msg = "#{type_shape} shape '#{uri_shape.to_s}' has no 'sh:name'"
+      super(msg)
+    end
+  end
+
+  class MissingPropertyShapePathError < StandardError
     def initialize(uri_shape)
-      msg = "shape #{uri_shape.to_s} has no 'sh:name'"
+      msg = "property shape '#{uri_shape.to_s}' has no 'sh:path'"
       super(msg)
     end
   end
 
-  class MissingPropertyNameError < StandardError
-    def initialize(uri_shape, uri_property)
-      msg = "shape #{uri_shape.to_s} has a property with no 'sh:name'"
-      super(msg)
-    end
-  end
-
-  class MissingPropertyPathError < StandardError
-    def initialize(uri_shape, uri_property)
-      msg = "shape #{uri_shape.to_s} has a property with no 'sh:path'"
+  class DuplicateShapeNameOrURIError < StandardError
+    def initialize(uri_shape, type_shape, name_or_uri)
+      msg = "#{type_shape} shape with 'sh:name' or URI '#{name_or_uri}' already existing"
       super(msg)
     end
   end
@@ -37,7 +37,7 @@ class SHACLParser
       shape_uri = shape.subject.to_s
       shape_name = shapes_graph.query([shape.subject, RDF::Vocab::SHACL.name, nil]).first_object.to_s
       if shape_name.empty?
-        raise MissingShapeNameError.new(shape.subject)
+        raise MissingShapeNameError.new(shape.subject, 'node')
       end
       shapes[shape_uri] = {properties: {}, uri: shape_uri, nodes: [], closed: false, plural: nil}
 
@@ -62,14 +62,19 @@ class SHACLParser
         property_info = extract_property_info(property_uri)
 
         if property_info[:path].empty?
-          raise MissingPropertyPathError.new(shape.subject, property_uri)
+          raise MissingPropertyShapePathError.new(shape.subject)
         end
 
         if property_info[:name].empty?
-          raise MissingPropertyNameError.new(shape.subject, property_uri)
+          raise MissingShapeNameError.new(shape.subject, 'property')
         end
-
-        shapes[shape_uri][:properties][property_info[:path]] = property_info
+        
+        # prop_key = property_uri.node? ? property_info[:name] : property_uri.to_s
+        prop_key = property_uri.to_s
+        if shapes[shape_uri][:properties].key?(prop_key)
+          raise DuplicateShapeNameOrURIError.new(property_uri, 'property', prop_key)
+        end
+        shapes[shape_uri][:properties][prop_key] = property_info
       end
     end
 
@@ -110,11 +115,13 @@ end
 module Shapes
 
   def self.get_property_datatype_for_shape(shapes, name_shape, name_property)
-    shapes.dig(name_shape, :properties, name_property, :constraints, :datatype)
+    name_shape_property = get_property_shape_for_path(shapes, name_shape, name_property)
+    shapes.dig(name_shape, :properties, name_shape_property, :constraints, :datatype)
   end
 
   def self.get_property_class_for_shape(shapes, name_shape, name_property)
-    shapes.dig(name_shape, :properties, name_property, :constraints, :class)
+    name_shape_property = get_property_shape_for_path(shapes, name_shape, name_property)
+    shapes.dig(name_shape, :properties, name_shape_property, :constraints, :class)
   end
 
   def self.get_parent_shapes_for_shape(shapes, name_shape)
@@ -133,12 +140,28 @@ module Shapes
     shapes.select { |k, v| v[:target_class] == name_class }.keys.first
   end
 
+  def self.get_shapes_for_class(shapes, name_class)
+    shapes.select { |k, v| v[:target_class] == name_class }.keys
+  end
+
   def self.find_name_by_uri(shapes, shape_uri)
     shapes[shape_uri][:name]
   end
 
   def self.find_uri_by_name(shapes, name)
     shapes.select{|k,v| v[:name].downcase.eql?(name.downcase)}&.keys&.first
+  end
+
+  def self.get_all_classes(shapes)
+    classes = []
+    shapes.each_value do |v|
+      classes << v[:target_class]
+    end
+    classes
+  end
+
+  private_class_method def self.get_property_shape_for_path(shapes, name_shape, path)
+    shapes.dig(name_shape, :properties)&.select { |k, v| v[:path] == path }&.keys&.first
   end
 
 end

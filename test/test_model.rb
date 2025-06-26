@@ -98,24 +98,27 @@ class TestModel < Minitest::Test
       r = model.get_parent_entities_for_entity('https://example.com/Car')
       assert_equal(r.empty?, true)
 
-      r = model.get_embedded_entity_type_for_entity('https://example.com/Car', 'https://example.com/owners')
+      r = model.get_property_entity_for_entity('https://example.com/Car', 'https://example.com/owners')
       assert_equal(r == 'https://example.com/Person', true)
 
-      r = model.get_embedded_entity_type_for_entity('https://example.com/ElectricCar', 'https://example.com/owners')
+      r = model.get_property_entity_for_entity('https://example.com/ElectricCar', 'https://example.com/owners')
       assert_equal(r == 'https://example.com/Person', true)
 
-      # thi may vary in the future, might expand term internally ....
-      r = model.get_embedded_entity_type_for_entity('https://example.com/ElectricCar', 'owners')
+      r = model.get_property_entity_for_entity('https://example.com/ElectricCar', 'owners')
       assert_equal(r.nil?, true)
 
-      r = model.get_embedded_entity_type_for_entity('https://example.com/ElectricCar', nil)
+      r = model.get_property_entity_for_entity('https://example.com/ElectricCar', nil)
       assert_equal(r.nil?, true)
 
-      r = model.get_datatype_for_entity('https://example.com/ElectricCar', 'https://example.com/color')
+      r = model.get_property_datatype_for_entity('https://example.com/ElectricCar', 'https://example.com/color')
       assert_equal(r == 'http://www.w3.org/2001/XMLSchema#string', true)
 
       r = model.get_properties_info_for_entity('https://example.com/ElectricCar')
       assert_equal(r.key?('https://example.com/color'), true)
+
+      r = model.get_entities_info
+      assert_equal(r.key?('https://example.com/ElectricCar'), true)
+      assert_equal(r['https://example.com/ElectricCar'][:properties].key?('https://example.com/color'), true)
 
       r = model.get_shape_for_entity('https://example.com/ElectricCar')
       assert_equal(r[:uri] == 'https://example.com/ElectricCarShape', true)

@@ -81,6 +81,7 @@ class TestEntityLoad < Minitest::Test
     graph_truth.from_ttl(str_ttl_truth)
 
     graph_to_check = RDF::Graph.new(data: repository)
+    delete_metadata_from_graph(graph_to_check)
 
     assert_equal(graph_truth == graph_to_check, true)
 
@@ -141,6 +142,56 @@ class TestEntityLoad < Minitest::Test
     assert_raises(Solis::Model::Entity::LoadError) do
       person.load
     end
+
+  end
+
+  def test_entity_load_mismatch_type
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "jon doe",
+            "driving_license": {
+              "_id": "https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a",
+              "address": {
+                "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+                "street": "fake street",
+                "number": [1, 15]
+              }
+            }
+          }
+        ]
+      }
+    )
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', store)
+
+    car.save
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9"
+      }
+    )
+
+    driving_license = Solis::Model::Entity.new(data, @model, 'DrivingLicense', store)
+
+    assert_raises(Solis::Model::Entity::TypeMismatchError) do
+      driving_license.load(deep = true)
+    end
+
+    person = Solis::Model::Entity.new(data, @model, 'Person', store)
+
+    person.load(deep = true)
+
 
   end
 

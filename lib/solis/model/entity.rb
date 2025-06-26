@@ -33,8 +33,8 @@ module Solis
       end
 
       class TypeMismatchError < StandardError
-        def initialize
-          msg = "'type' provided to entity constructor and @type (or _type) in 'data' provided to constructor mismatch"
+        def initialize(t1, t2)
+          msg = "entity type (#{t1}) mismatches provided type (#{t2})"
           super(msg)
         end
       end
@@ -100,9 +100,9 @@ module Solis
         super(hash={})
         @model = model
         @errors = []
-        if type.nil?
-          raise MissingTypeError
-        end
+        # if type.nil?
+        #   raise MissingTypeError
+        # end
         # if model.shapes[type].nil?
         #   raise TypeNotFoundError
         # end
@@ -110,8 +110,8 @@ module Solis
         @store = store
         set_internal_data_from_jsonld(obj)
         _obj = get_internal_data_as_jsonld
-        if !_obj['@type'].nil? && !_obj['@type'].eql?(type)
-          raise TypeMismatchError
+        if !_obj['@type'].nil? && !@type.nil? && !_obj['@type'].eql?(@type)
+          raise TypeMismatchError.new(@type, _obj['@type'])
         end
         @context = {
           "@vocab" => @model.namespace
@@ -223,6 +223,7 @@ module Solis
         _opts[:add_missing_refs] = opts[:add_missing_refs] || false
         _opts[:autoload_missing_refs] = opts[:autoload_missing_refs] || false
         _opts[:append_attributes] = opts[:append_attributes] || false
+        _opts[:overwrite_refs_lists] = opts[:overwrite_refs_lists] || false
         # get internal data
         obj = get_internal_data_as_jsonld
         # infer type if reference autoload is requested
@@ -247,8 +248,15 @@ module Solis
         if obj_res.empty?
           raise LoadError.new(id)
         end
-        replace(obj_res)
+        if !obj_res['@type'].nil? && !@type.nil?
+          type_1 = Solis::Utils::JSONLD.expand_term(@type, @context)
+          type_2 = Solis::Utils::JSONLD.expand_term(obj_res['@type'], context_res)
+          if type_1 != type_2
+            raise TypeMismatchError.new(type_1, type_2)
+          end
+        end
         @type = obj_res['@type'] unless obj_res['@type'].nil?
+        replace(obj_res)
         @context = context_res
         obj_res
       end
@@ -480,6 +488,11 @@ module Solis
             is_attr_value_reset = false
           end
 
+          is_list_refs_reset = true
+          if opts[:overwrite_refs_lists]
+            is_list_refs_reset = false
+          end
+
           # iterate each patch attribute item
           type_attr = nil # will be defined just soon
           val_attr_patch.each do |item_val_patch|
@@ -488,13 +501,17 @@ module Solis
               # patch item is an embedded entity
               type_attr = 'entity'
               if obj[name_attr_patch].is_a?(Array)
+                unless is_list_refs_reset
+                  obj[name_attr_patch] = []
+                  is_list_refs_reset = true
+                end
                 idx = obj[name_attr_patch].index do |item_val|
                   item_val['@id'] == item_val_patch['@id']
                 end
                 if idx.nil?
                   if opts[:add_missing_refs]
                     if opts[:autoload_missing_refs]
-                      obj_loaded = Entity.new(item_val_patch, @model, obj['@type'], @store).load(deep=true)
+                      obj_loaded = Entity.new(item_val_patch, @model, nil, @store).load(deep=true)
                       obj[name_attr_patch].push(obj_loaded)
                     else
                       obj[name_attr_patch].push(item_val_patch)
@@ -513,7 +530,7 @@ module Solis
                 else
                   if opts[:add_missing_refs]
                     if opts[:autoload_missing_refs]
-                      obj_loaded = Entity.new(item_val_patch, @model, obj['@type'], @store).load(deep=true)
+                      obj_loaded = Entity.new(item_val_patch, @model, nil, @store).load(deep=true)
                       obj[name_attr_patch] = obj_loaded
                     else
                       obj[name_attr_patch] = item_val_patch
