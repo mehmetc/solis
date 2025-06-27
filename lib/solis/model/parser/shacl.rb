@@ -112,6 +112,11 @@ class SHACLParser
       property_info[:constraints][:class] = klass.object.to_s
     end
 
+    shapes_graph.query([property_uri, RDF::Vocab::SHACL.or, nil]) do |or_|
+      list_rdf = RDF::List.from_graph(shapes_graph, or_.object)
+      property_info[:constraints][:or] = list_rdf.to_a.collect { |e| extract_property_info(e) }
+    end
+
     property_info
   end
 end

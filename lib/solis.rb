@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative "solis/utils/rdf"
+require_relative "solis/utils/sparql"
+
 require_relative "solis/version"
 require_relative 'solis/config'
 require_relative 'solis/error'
