@@ -62,6 +62,99 @@ class TestEntityHooks < Minitest::Test
 
   end
 
+  def test_entity_update_hooks
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "jon doe",
+            "address": {
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "street": "fake street"
+            }
+          }
+        ]
+      }
+    )
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
+
+    count_update = 0
+
+    hooks = {
+      before_update: lambda do |obj, entity_dup|
+        obj
+      end,
+      after_update: lambda do |obj, success|
+        assert_equal(success, true)
+        count_update += 1
+      end,
+    }
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', store, hooks)
+
+    car.save
+
+    # this trigger update hooks
+    car.save
+
+    assert_equal(count_update, 1)
+
+  end
+
+  def test_entity_update_hooks_with_load_deep
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "jon doe",
+            "address": {
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "street": "fake street"
+            }
+          }
+        ]
+      }
+    )
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
+
+    count_update = 0
+
+    hooks = {
+      before_update: lambda do |obj, entity_dup|
+        obj2 = entity_dup.load(deep=true)
+        obj2
+      end,
+      after_update: lambda do |obj, success|
+        assert_equal(success, true)
+        count_update += 1
+      end,
+    }
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', store, hooks)
+
+    car.save
+
+    # this trigger update hooks
+    car.save
+
+    assert_equal(count_update, 1)
+
+  end
+
   def test_entity_save_hooks
 
     data = JSON.parse %(

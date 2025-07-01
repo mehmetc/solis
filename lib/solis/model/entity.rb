@@ -12,7 +12,7 @@ module Solis
   class Model
 
     class Entity < OpenStruct
-      attr_reader :errors
+      attr_reader :errors, :store
       def method_missing(method, *args, &block)
         raise NoMethodError.new(method) unless self.methods.include?(method)
         raise Solis::Error::PropertyNotFound unless get_properties_info.keys.include?(method.to_s)
@@ -203,7 +203,10 @@ module Solis
         check_store_exists
 
         obj_internal = get_internal_data_as_jsonld
-        unless @persisted
+        if @persisted
+          set_internal_data_from_jsonld(@hooks[:before_update]&.call(obj_internal, deep_dup(true))) if @hooks.key?(:before_update)
+          obj_internal = get_internal_data_as_jsonld
+        else
           set_internal_data_from_jsonld(@hooks[:before_create]&.call(obj_internal)) if @hooks.key?(:before_create)
           obj_internal = get_internal_data_as_jsonld
         end
@@ -231,7 +234,9 @@ module Solis
           success = res.values.collect { |e| e['success'] }.all?
           messages = res.values.collect { |e| e['message'] }
           message = messages.join(' ')
-          unless @persisted
+          if @persisted
+            @hooks[:after_update]&.call(obj_internal, success)
+          else
             @hooks[:after_create]&.call(obj_internal, success)
           end
           @hooks[:after_save]&.call(obj_internal, success)
@@ -360,7 +365,9 @@ module Solis
       def deep_dup(del_side_effects_methods=false)
         # with drawbacks,
         # see: https://medium.com/rubycademy/the-complete-guide-to-create-a-copy-of-an-object-in-ruby-part-ii-cd28a99d58d9
-        entity_copy = deep_copy(self)
+        # entity_copy = deep_copy(self)     # nils instance vars
+        # entity_copy = clone               @ shallow copy
+        entity_copy = Entity.new(get_internal_data_as_jsonld, @model, @type, @store, hooks=@hooks)
         if del_side_effects_methods
           # see: https://stackoverflow.com/questions/27095097/remove-a-method-only-from-an-instance
           ['save', 'destroy'].each { |m| entity_copy.instance_eval("undef :#{m}") }
