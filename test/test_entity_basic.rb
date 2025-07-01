@@ -718,4 +718,34 @@ class TestEntityBasic < Minitest::Test
 
   end
 
+  def test_entity_deep_dup
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "jon doe",
+            "address": {
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "street": "fake street"
+            }
+          }
+        ]
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', nil)
+
+    car_copy = car.deep_dup(true)
+
+    assert_raises(NoMethodError) do
+      car_copy.save
+    end
+
+  end
+
 end

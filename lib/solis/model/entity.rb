@@ -14,6 +14,7 @@ module Solis
     class Entity < OpenStruct
       attr_reader :errors
       def method_missing(method, *args, &block)
+        raise NoMethodError.new(method) unless self.methods.include?(method)
         raise Solis::Error::PropertyNotFound unless get_properties_info.keys.include?(method.to_s)
         super
       end
@@ -354,6 +355,17 @@ module Solis
       def to_pretty_jsonld_flattened_ordered_expanded
         flattened_ordered_expanded = to_jsonld_flattened_ordered_expanded
         JSON.pretty_generate(flattened_ordered_expanded)
+      end
+
+      def deep_dup(del_side_effects_methods=false)
+        # with drawbacks,
+        # see: https://medium.com/rubycademy/the-complete-guide-to-create-a-copy-of-an-object-in-ruby-part-ii-cd28a99d58d9
+        entity_copy = deep_copy(self)
+        if del_side_effects_methods
+          # see: https://stackoverflow.com/questions/27095097/remove-a-method-only-from-an-instance
+          ['save', 'destroy'].each { |m| entity_copy.instance_eval("undef :#{m}") }
+        end
+        entity_copy
       end
 
 
