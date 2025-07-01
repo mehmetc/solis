@@ -573,7 +573,10 @@ module Solis
         @logger.debug("\n\n-- END CRITICAL SECTION: \n\n")
 
         res = ops_generic.map do |op|
-          [op['id'], 'ok']
+          [op['id'], {
+            "success" => true,
+            "message" => ""
+          }]
         end.to_h
         res
 
