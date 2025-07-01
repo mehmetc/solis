@@ -88,6 +88,13 @@ module Solis
         end
       end
 
+      class SaveError < StandardError
+        def initialize(msg)
+          msg = "#{msg}"
+          super(msg)
+        end
+      end
+
       class InternalObjectMissingTypeError < StandardError
         def initialize(obj)
           msg = "following internal object has no type:\n"
@@ -96,7 +103,7 @@ module Solis
         end
       end
 
-      def initialize(obj, model, type, store)
+      def initialize(obj, model, type, store, hooks={})
         super(hash={})
         @model = model
         @errors = []
@@ -108,10 +115,18 @@ module Solis
         # end
         @type = type
         @store = store
+        @persisted = false
+        @hooks = hooks || {}
         set_internal_data_from_jsonld(obj)
         _obj = get_internal_data_as_jsonld
         if !_obj['@type'].nil? && !@type.nil? && !_obj['@type'].eql?(@type)
           raise TypeMismatchError.new(@type, _obj['@type'])
+        end
+        if _obj['@type'].nil? && !@type.nil?
+          _obj['@type'] = @type
+        end
+        if !_obj['@type'].nil? && @type.nil?
+          @type = _obj['@type']
         end
         @context = {
           "@vocab" => @model.namespace
@@ -186,6 +201,14 @@ module Solis
 
         check_store_exists
 
+        obj_internal = get_internal_data_as_jsonld
+        unless @persisted
+          set_internal_data_from_jsonld(@hooks[:before_create]&.call(obj_internal)) if @hooks.key?(:before_create)
+          obj_internal = get_internal_data_as_jsonld
+        end
+        set_internal_data_from_jsonld(@hooks[:before_save]&.call(obj_internal)) if @hooks.key?(:before_save)
+        obj_internal = get_internal_data_as_jsonld
+
         conform_literals, messages_literals, conform_shacl, messages_shacl = validate
 
         unless conform_literals
@@ -197,12 +220,24 @@ module Solis
 
         flattened_ordered_expanded = to_jsonld_flattened_ordered_expanded
 
+        ids_op = []
         flattened_ordered_expanded['@graph'].each do |obj|
-          save_instance(obj)
+          ids_op.concat(save_instance(obj))
         end
 
         unless delayed
-          @store.run_operations
+          res = @store.run_operations(ids_op)
+          success = res.values.collect { |e| e['success'] }.all?
+          messages = res.values.collect { |e| e['message'] }
+          message = messages.join(' ')
+          unless @persisted
+            @hooks[:after_create]&.call(obj_internal, success)
+          end
+          @hooks[:after_save]&.call(obj_internal, success)
+          unless success
+            raise SaveError.new(message)
+          end
+          @persisted = true
         end
 
       end
@@ -244,7 +279,7 @@ module Solis
         check_obj_has_id(obj)
         id = obj['@id']
         id_op = @store.get_data_for_id(id, @context, deep=deep)
-        obj_res, context_res = @store.run_operations(ids=[id_op])[id_op]
+        obj_res, context_res = @store.run_operations([id_op])[id_op]
         if obj_res.empty?
           raise LoadError.new(id)
         end
@@ -267,7 +302,7 @@ module Solis
         check_obj_has_id(obj)
         id = obj['@id']
         id_op = @store.ask_if_id_is_referenced(id)
-        res = @store.run_operations(ids=[id_op])[id_op]
+        res = @store.run_operations([id_op])[id_op]
         res
       end
 
@@ -277,22 +312,28 @@ module Solis
         check_obj_has_id(obj)
         id = obj['@id']
         id_op = @store.ask_if_id_exists(id)
-        res = @store.run_operations(ids=[id_op])[id_op]
+        res = @store.run_operations([id_op])[id_op]
         res
       end
 
       def destroy(delayed=false)
         check_store_exists
+        obj_internal = get_internal_data_as_jsonld
+        @hooks[:before_destroy]&.call(obj_internal)
         obj = get_internal_data_as_jsonld
         check_obj_has_id(obj)
         id = obj['@id']
         id_op = @store.delete_attributes_for_id(id)
         unless delayed
-          res = @store.run_operations(ids=[id_op])[id_op]
-          unless res['success']
-            raise DestroyError.new(res['message'])
+          res = @store.run_operations([id_op])[id_op]
+          success = res['success']
+          message = res['message']
+          @hooks[:after_destroy]&.call(obj_internal, success)
+          unless success
+            raise DestroyError.new(message)
           end
         end
+        @persisted = false
         replace({})
         id_op
       end
@@ -448,7 +489,10 @@ module Solis
         unless hash_jsonld_expanded.key?('@type')
           raise InternalObjectMissingTypeError.new(hash_jsonld_expanded)
         end
-        @store.save_id_with_type(id, hash_jsonld_expanded['@type'][0])
+
+        ids_op = []
+
+        ids_op << @store.save_id_with_type(id, hash_jsonld_expanded['@type'][0])
 
         data.each do |name_attr, content_attr|
 
@@ -458,17 +502,19 @@ module Solis
             if content.key?('@value')
               # a core attribute
               if content['@value'].eql?('@unset')
-                @store.delete_attribute_for_id(id, name_attr)
+                ids_op << @store.delete_attribute_for_id(id, name_attr)
               else
-                @store.save_attribute_for_id(id, name_attr, content['@value'], content['@type'])
+                ids_op << @store.save_attribute_for_id(id, name_attr, content['@value'], content['@type'])
               end
             elsif content.key?('@id')
               # a reference
-              @store.save_attribute_for_id(id, name_attr, content['@id'], 'URI')
+              ids_op << @store.save_attribute_for_id(id, name_attr, content['@id'], 'URI')
             end
           end
 
         end
+
+        ids_op
 
       end
 
