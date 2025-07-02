@@ -76,8 +76,6 @@ class TestEntityOptLocks < Minitest::Test
 
     assert_equal(graph_truth == graph_to_check, true)
 
-    # puts JSON.pretty_generate(car.get_internal_data)
-
     car.save
 
     puts "\n\nREPO CONTENT:\n\n"
@@ -112,6 +110,98 @@ class TestEntityOptLocks < Minitest::Test
     graph_to_check = RDF::Graph.new(data: repository)
 
     assert_equal(graph_truth == graph_to_check, true)
+
+  end
+
+  def test_first_saved_wins
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "jon doe",
+            "driving_license": {
+              "_id": "https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a",
+              "address": {
+                "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+                "street": "fake street",
+                "number": [1, 15]
+              }
+            }
+          }
+        ]
+      }
+    )
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
+
+    car_1 = Solis::Model::Entity.new(data, @model, 'Car', store)
+    car_2 = Solis::Model::Entity.new(data, @model, 'Car', store)
+
+    car_1.save
+
+    assert_raises(Solis::Model::Entity::SaveError) do
+      car_2.save
+    end
+
+    car_2.load(deep = true)
+    car_2.save
+
+  end
+
+  def test_first_saved_wins_2
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "jon doe",
+            "driving_license": {
+              "_id": "https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a",
+              "address": {
+                "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+                "street": "fake street",
+                "number": [1, 15]
+              }
+            }
+          }
+        ]
+      }
+    )
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
+
+    car = Solis::Model::Entity.new(data, @model, 'Car', store)
+
+    car.save
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9"
+      }
+    )
+
+    person = Solis::Model::Entity.new(data, @model, 'Person', store)
+
+    person.load(deep = true)
+    person.save
+
+    assert_raises(Solis::Model::Entity::SaveError) do
+      car.save
+    end
+
+    car.load(deep = true)
+    car.save
 
   end
 

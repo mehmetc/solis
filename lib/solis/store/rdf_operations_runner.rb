@@ -12,6 +12,7 @@ module Solis
       # Expects:
       # - @client_sparql
       # - @logger
+      # - @mutex_repository
 
       def run_operations(ids_op='all')
         ops_read = []
@@ -363,15 +364,20 @@ module Solis
         ops_filters = ops_generic.map do |op|
           op_rdf = Marshal.load(Marshal.dump(op))
           case op['name']
-          when 'filter_attributes_to_save_for_id'
+          when 'set_attribute_condition_for_saves'
             id, name_attr, val_attr, type_attr = op_rdf['content']
             s, p, o = prepare_statement(id, name_attr, val_attr, type_attr)
-            op_rdf['content'] = [s, p, o]
+            op_rdf['row_where'] = RDF::Statement(s, p, o).to_s
+          when 'set_not_existing_id_condition_for_saves'
+            id = op_rdf['content'][0]
+            op_rdf['row_where'] = "FILTER NOT EXISTS { <#{id}> ?p ?o }"
           else
             op_rdf = nil
           end
           op_rdf
         end.compact
+
+        clause_where = ops_filters.map { |op| op['row_where'] } .join(' ')
 
         # create empty delete graph
         insert = {
@@ -380,11 +386,6 @@ module Solis
 
         # create empty insert graph
         delete = {
-          'graph' => RDF::Graph.new
-        }
-
-        # create empty where graph
-        where = {
           'graph' => RDF::Graph.new
         }
 
@@ -397,13 +398,6 @@ module Solis
           key_sp = "#{st[0].to_s}_#{st[1].to_s}"
           cache_ops[key_sp] = [] unless cache_ops.key?(key_sp)
           cache_ops[key_sp] << st[2]
-        end
-
-        # begin critical section
-        @logger.debug("\n\n-- BEGIN CRITICAL SECTION: \n\n")
-
-        ops_filters.each do |op_filter|
-          where['graph'] << op_filter['content']
         end
 
         # write graphs
@@ -475,8 +469,11 @@ module Solis
 
         end
 
-        # nothing_to_save = delete['graph'].empty? && insert['graph'].empty?
         nothing_to_save = false
+
+        success = true
+        message = ""
+        message_dirty = "data is dirty"
 
         unless nothing_to_save
 
@@ -485,76 +482,60 @@ module Solis
           case method
           when 1
 
-            rollbacks = []
-
-            # run delete query
-            str_query = SPARQL::Client::Update::DeleteData.new(delete['graph'], graph: @name_graph).to_s
-            @logger.debug("\n\nDELETE QUERY:\n\n")
-            @logger.debug(str_query)
-            @logger.debug("\n\n")
-            begin
-              @client_sparql.delete_data(delete['graph'])
-            rescue RuntimeError => e
-              @logger.debug("error deleting data: #{e.full_message}")
-              @logger.debug("rolling back ...")
-              rollback(rollbacks)
-              raise RuntimeError, e
-            end
-            rollbacks << {
-              type: 'query_insert',
-              graph: delete['graph']
-            }
-
-            # run insert query
-            str_query = SPARQL::Client::Update::InsertData.new(insert['graph'], graph: @name_graph).to_s
-            @logger.debug("\n\nINSERT QUERY:\n\n")
-            @logger.debug(str_query)
-            @logger.debug("\n\n")
-            begin
-              @client_sparql.insert_data(insert['graph'])
-            rescue RuntimeError => e
-              @logger.debug("error inserting data: #{e.full_message}")
-              @logger.debug("rolling back ...")
-              rollback(rollbacks)
-              raise RuntimeError, e
-            end
-            rollbacks << {
-              type: 'query_delete',
-              graph: insert['graph']
-            }
-
           when 2
 
-            # Found out later that the following is possible by SPARQL language.
-            # Of course better than method 1 because supposedly atomic (no rollout strategies needed).
-
-            str_query = SPARQL::Client::Update::DeleteInsert.new(delete['graph'], insert['graph'], where['graph'], graph: @name_graph).to_s
-            @logger.debug("\n\nDELETE/INSERT QUERY:\n\n")
-            @logger.debug(str_query)
-            @logger.debug("\n\n")
-
-            method_di = 1
+            method_di = 3
 
             case method_di
-            when 1
-              # this works
 
-              @client_sparql.delete_insert(delete['graph'], insert['graph'], where['graph'])
-            when 2
-              # this works.
-              # I did hope that this solution would provide report info about the query, but it does not.
-              # Having that is necessary for the optimistic lock logic: if 0 statements were updated,
-              # then it means another concurrent update has succeeded earlier.
-              # Only analyzing the _version values does not indicate which of the concurrent requests updated it.
-              # However, I realized this is not a problem of the library, but of SPARQL specifications itself:
-              # update queries are not supposed to return statistics.
+            when 3
 
-              repository = SPARQL.execute(
-                SPARQL::Client::Update::DeleteInsert.new(delete['graph'], insert['graph'], where['graph']).to_s,
-                @client_sparql.url,
-                optimize: true, update: true
-              ) do |solution|
-                pp solution
+              case @client_sparql.url
+              when RDF::Queryable
+
+                perform_delete_insert_where_with_report_atomic = lambda do
+                  str_query_ask = "ASK WHERE { #{clause_where} }"
+                  @logger.debug("\n\nASK QUERY:\n\n")
+                  @logger.debug(str_query_ask)
+                  @logger.debug("\n\n")
+                  has_pattern = @client_sparql.query(str_query_ask).true?
+                  if has_pattern
+                    str_query = create_delete_insert_where_query(delete['graph'], insert['graph'], clause_where)
+                    @logger.debug("\n\nDELETE/INSERT QUERY:\n\n")
+                    @logger.debug(str_query)
+                    @logger.debug("\n\n")
+                    @client_sparql.update(str_query)
+                  end
+                  report = { can_update: has_pattern }
+                  report
+                end
+                report = nil
+                if @mutex_repository.nil?
+                  report = perform_delete_insert_where_with_report_atomic.call
+                else
+                  @mutex_repository.synchronize do
+                    report = perform_delete_insert_where_with_report_atomic.call
+                  end
+                end
+                unless report[:can_update]
+                  success = false
+                  message = message_dirty
+                end
+
+
+              else
+
+                query = create_delete_insert_where_query(delete['graph'], insert['graph'], clause_where, name_graph=@name_graph)
+                @logger.debug("\n\nDELETE/INSERT QUERY:\n\n")
+                @logger.debug(query)
+                @logger.debug("\n\n")
+                response = client.response(query)
+                report = client.parse_report(response)
+                if report[:count_update] == 0
+                  success = false
+                  message = message_dirty
+                end
+
               end
 
             end
@@ -563,17 +544,18 @@ module Solis
 
         end
 
-        # end critical section
-        @logger.debug("\n\n-- END CRITICAL SECTION: \n\n")
-
         res = ops_generic.map do |op|
           [op['id'], {
-            "success" => true,
-            "message" => ""
+            "success" => success,
+            "message" => message
           }]
         end.to_h
         res
 
+      end
+
+      def prepare_subject(id)
+        RDF::URI(id)
       end
 
       def prepare_subject_and_predicate(id, name_attr)
@@ -604,24 +586,13 @@ module Solis
         objects
       end
 
-      def rollback(rollbacks)
-        rollbacks.each_with_index do |op, i|
-          @logger.debug("\n\nROLLBACK QUERY: #{i+1}")
-          case op[:type]
-          when 'query_insert'
-            str_query = SPARQL::Client::Update::InsertData.new(op[:graph], graph: @name_graph).to_s
-            @logger.debug("\n\nINSERT QUERY (AS ROLLBACK QUERY):\n\n")
-            @logger.debug(str_query)
-            @logger.debug("\n\n")
-            @client_sparql.insert_data(op[:graph])
-          when 'query_delete'
-            str_query = SPARQL::Client::Update::DeleteData.new(op[:graph], graph: @name_graph).to_s
-            @logger.debug("\n\nDELETE QUERY (AS ROLLBACK QUERY):\n\n")
-            @logger.debug(str_query)
-            @logger.debug("\n\n")
-            @client_sparql.delete_data(op[:graph])
-          end
+      def create_delete_insert_where_query(graph_delete, graph_insert, clause_where, name_graph=nil)
+        str_query = ""
+        unless name_graph.nil?
+          str_query += "WITH GRAPH <#{name_graph}>"
         end
+        str_query += "DELETE { #{graph_delete.dump(:ntriples)} } INSERT { #{graph_insert.dump(:ntriples)} } WHERE { #{clause_where} }"
+        str_query
       end
 
     end

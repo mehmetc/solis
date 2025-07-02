@@ -240,7 +240,7 @@ module Solis
           res = @store.run_operations(ids_op)
           success = res.values.collect { |e| e['success'] }.all?
           messages = res.values.collect { |e| e['message'] }
-          message = messages.join(' ')
+          message = messages[0]
           if @persisted
             @hooks[:after_update]&.call(obj_internal, success)
           else
@@ -536,8 +536,10 @@ module Solis
         version_value = data[URI_DB_OPTIMISTIC_LOCK_VERSION][0]['@value']
         version_type = data[URI_DB_OPTIMISTIC_LOCK_VERSION][0]['@type']
 
-        unless version_value == 0
-          ids_op << @store.filter_attributes_to_save_for_id(id, URI_DB_OPTIMISTIC_LOCK_VERSION, version_value, version_type)
+        if version_value == 0
+          ids_op << @store.set_not_existing_id_condition_for_saves(id)
+        else
+          ids_op << @store.set_attribute_condition_for_saves(id, URI_DB_OPTIMISTIC_LOCK_VERSION, version_value, version_type)
         end
 
         data.each do |name_attr, content_attr|

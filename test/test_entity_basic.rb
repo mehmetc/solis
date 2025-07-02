@@ -354,7 +354,7 @@ class TestEntityBasic < Minitest::Test
         "_id": "https://example.com/caf57ff7-b568-43b3-81bb-f31b7371d8db",
         "name": "mary jane",
         "address": {
-          "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+          "_id": "https://example.com/15120d60-9272-4c8d-ba1b-b1ee040ad396",
           "street": "fake street"
         }
       }
