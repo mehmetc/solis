@@ -12,7 +12,10 @@ module Solis
   class Model
 
     class Entity < OpenStruct
-      attr_reader :errors, :store
+
+      URI_DB_OPTIMISTIC_LOCK_VERSION = 'https://libis.be/solis/metadata/db/locks/optimistic/_version'
+
+      attr_reader :errors
       def method_missing(method, *args, &block)
         raise NoMethodError.new(method) unless self.methods.include?(method)
         raise Solis::Error::PropertyNotFound unless get_properties_info.keys.include?(method.to_s)
@@ -138,6 +141,7 @@ module Solis
         end
         set_internal_data_from_jsonld(_obj)
         add_ids_if_not_exists!
+        add_versions_if_not_exists!
       end
 
       def to_pre_validate_jsonld
@@ -145,6 +149,9 @@ module Solis
         # flatten + expand + clean internal data before validating it
         flattened_ordered_expanded = to_jsonld_flattened_ordered_expanded
         Solis::Utils::JSONLD.clean_flattened_expanded_from_unset_data!(flattened_ordered_expanded['@graph'])
+        flattened_ordered_expanded['@graph'].each do |obj|
+          obj.delete(URI_DB_OPTIMISTIC_LOCK_VERSION)
+        end
         @model.logger.debug("=== flattened + deps sorted + expanded + cleaned JSON-LD:")
         @model.logger.debug(JSON.pretty_generate(flattened_ordered_expanded))
 
@@ -243,6 +250,7 @@ module Solis
           unless success
             raise SaveError.new(message)
           end
+          increment_versions!
           @persisted = true
         end
 
@@ -434,6 +442,18 @@ module Solis
         set_internal_data_from_jsonld(obj)
       end
 
+      def add_versions_if_not_exists!
+        obj = get_internal_data_as_jsonld
+        Solis::Utils::JSONLD.add_default_attributes_if_not_exists!(obj, URI_DB_OPTIMISTIC_LOCK_VERSION, 0)
+        set_internal_data_from_jsonld(obj)
+      end
+
+      def increment_versions!
+        obj = get_internal_data_as_jsonld
+        Solis::Utils::JSONLD.increment_attributes!(obj, URI_DB_OPTIMISTIC_LOCK_VERSION)
+        set_internal_data_from_jsonld(obj)
+      end
+
       def expand_obj(obj)
 
         @model.logger.debug("======= object:")
@@ -513,6 +533,13 @@ module Solis
 
         ids_op << @store.save_id_with_type(id, hash_jsonld_expanded['@type'][0])
 
+        version_value = data[URI_DB_OPTIMISTIC_LOCK_VERSION][0]['@value']
+        version_type = data[URI_DB_OPTIMISTIC_LOCK_VERSION][0]['@type']
+
+        unless version_value == 0
+          ids_op << @store.filter_attributes_to_save_for_id(id, URI_DB_OPTIMISTIC_LOCK_VERSION, version_value, version_type)
+        end
+
         data.each do |name_attr, content_attr|
 
           next if ['@id', '@type'].include?(name_attr)
@@ -523,7 +550,11 @@ module Solis
               if content['@value'].eql?('@unset')
                 ids_op << @store.delete_attribute_for_id(id, name_attr)
               else
-                ids_op << @store.save_attribute_for_id(id, name_attr, content['@value'], content['@type'])
+                if name_attr.eql?(URI_DB_OPTIMISTIC_LOCK_VERSION)
+                  ids_op << @store.save_attribute_for_id(id, name_attr, content['@value'] + 1, content['@type'])
+                else
+                  ids_op << @store.save_attribute_for_id(id, name_attr, content['@value'], content['@type'])
+                end
               end
             elsif content.key?('@id')
               # a reference

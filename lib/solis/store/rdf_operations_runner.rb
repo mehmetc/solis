@@ -9,8 +9,6 @@ module Solis
 
     module RDFOperationsRunner
 
-      URI_DB_OPTIMISTIC_LOCK_VERSION = 'https://libis.be/solis/metadata/db/locks/optimistic/_version'
-
       # Expects:
       # - @client_sparql
       # - @logger
@@ -67,9 +65,7 @@ module Solis
           query = @client_sparql.select.where([s, :p, :o])
           query.each_solution do |solution|
             @logger.debug([s, solution.p, solution.o])
-            unless URI_DB_OPTIMISTIC_LOCK_VERSION.eql?(solution.p.to_s)
-              g << [s, solution.p, solution.o]
-            end
+            g << [s, solution.p, solution.o]
             if deep
               # if solution.o.is_a?(RDF::URI) or solution.o.is_a?(RDF::Literal::AnyURI)
               if solution.o.is_a?(RDF::URI)
@@ -358,9 +354,24 @@ module Solis
             id, name_attr = op_rdf['content']
             s, p = prepare_subject_and_predicate(id, name_attr)
             op_rdf['content'] = [s, p]
+          else
+            op_rdf = nil
           end
           op_rdf
-        end
+        end.compact
+
+        ops_filters = ops_generic.map do |op|
+          op_rdf = Marshal.load(Marshal.dump(op))
+          case op['name']
+          when 'filter_attributes_to_save_for_id'
+            id, name_attr, val_attr, type_attr = op_rdf['content']
+            s, p, o = prepare_statement(id, name_attr, val_attr, type_attr)
+            op_rdf['content'] = [s, p, o]
+          else
+            op_rdf = nil
+          end
+          op_rdf
+        end.compact
 
         # create empty delete graph
         insert = {
@@ -391,25 +402,8 @@ module Solis
         # begin critical section
         @logger.debug("\n\n-- BEGIN CRITICAL SECTION: \n\n")
 
-        # get involved ids
-        ids = Set.new
-        ops.each do |op|
-          st = op['content']
-          ids.add(st[0])
-        end
-
-        # update graphs for optimistic locks logic
-        p_version = RDF.URI(URI_DB_OPTIMISTIC_LOCK_VERSION)
-        ids.each do |id|
-          version_old = @client_sparql.select.where([id, p_version, :o]).each_solution&.first&.o
-          version_new = (version_old || 0) + 1
-          unless version_old.nil?
-            delete['graph'] << [id, p_version, version_old]
-          end
-          insert['graph'] << [id, p_version, version_new]
-          unless version_old.nil?
-            where['graph'] << [id, p_version, version_old]
-          end
+        ops_filters.each do |op_filter|
+          where['graph'] << op_filter['content']
         end
 
         # write graphs

@@ -48,6 +48,24 @@ module Solis
 
       end
 
+      def filter_attributes_to_save_for_id(id, name_attr, val_attr, type_attr)
+
+        op = {
+          "id" => SecureRandom.uuid,
+          "name" => "filter_attributes_to_save_for_id",
+          "type" => "write",
+          "opts" => nil,
+          "content" => [id, name_attr, val_attr, type_attr]
+        }
+
+        @logger.debug(op)
+
+        @ops << op
+
+        op['id']
+
+      end
+
       def delete_attribute_for_id(id, name_attr)
 
         op = {

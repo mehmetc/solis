@@ -207,6 +207,30 @@ module Solis
         end
       end
 
+      def self.add_default_attributes_if_not_exists!(obj, name_attr, val_def)
+        obj[name_attr] = obj[name_attr] || val_def
+        obj.each_value do |val_attr|
+          val_attr = [val_attr] unless val_attr.is_a?(Array)
+          val_attr.each do |e|
+            if e.is_a?(Hash) and !e.key?('@value')
+              add_default_attributes_if_not_exists!(e, name_attr, val_def)
+            end
+          end
+        end
+      end
+
+      def self.increment_attributes!(obj, name_attr)
+        obj[name_attr] += 1
+        obj.each_value do |val_attr|
+          val_attr = [val_attr] unless val_attr.is_a?(Array)
+          val_attr.each do |e|
+            if e.is_a?(Hash) and !e.key?('@value')
+              increment_attributes!(e, name_attr)
+            end
+          end
+        end
+      end
+
       def self.make_jsonld_hierarchy_context
         context = {
           # the following to allow easily adding inheritance triples
