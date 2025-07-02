@@ -264,6 +264,7 @@ module Solis
       def replace(obj)
         set_internal_data_from_jsonld(obj)
         add_ids_if_not_exists!
+        add_versions_if_not_exists!
       end
 
       def patch(obj_patch, opts={})
@@ -285,6 +286,7 @@ module Solis
         set_internal_data_from_jsonld(obj)
         # in case new references are added, get them an "id" where missing
         add_ids_if_not_exists!
+        add_versions_if_not_exists!
       end
 
       def load(deep=false)
