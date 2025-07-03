@@ -104,10 +104,12 @@ module Solis
         unless hash_json.is_a?(Hash)
           raise TypeError, "hash_json not an hash"
         end
+        hash_json_copy = Marshal.load(Marshal.dump(hash_json))
+        hash_json_copy.delete('@context')
         hash_jsonld = {
           "@context" => context,
           "@graph" => [
-            hash_json
+            hash_json_copy
           ]
         }
         hash_jsonld
@@ -200,6 +202,7 @@ module Solis
       def self.add_ids_if_not_exists!(obj, namespace)
         obj['@id'] = obj['@id'] || URI.join(namespace, SecureRandom.uuid).to_s
         obj.each do |name_attr, val_attr|
+          next if RESERVED_FIELDS.include?(name_attr)
           val_attr = [val_attr] unless val_attr.is_a?(Array)
           val_attr.each do |e|
             if e.is_a?(Hash) and !e.key?('@value')
@@ -211,7 +214,8 @@ module Solis
 
       def self.add_default_attributes_if_not_exists!(obj, name_attr, val_def)
         obj[name_attr] = obj[name_attr] || val_def
-        obj.each_value do |val_attr|
+        obj.each do |_name_attr, val_attr|
+          next if RESERVED_FIELDS.include?(_name_attr)
           val_attr = [val_attr] unless val_attr.is_a?(Array)
           val_attr.each do |e|
             if e.is_a?(Hash) and !e.key?('@value')
@@ -223,7 +227,8 @@ module Solis
 
       def self.increment_attributes!(obj, name_attr)
         obj[name_attr] += 1
-        obj.each_value do |val_attr|
+        obj.each do |_name_attr, val_attr|
+          next if RESERVED_FIELDS.include?(_name_attr)
           val_attr = [val_attr] unless val_attr.is_a?(Array)
           val_attr.each do |e|
             if e.is_a?(Hash) and !e.key?('@value')
