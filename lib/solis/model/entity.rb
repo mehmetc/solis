@@ -111,37 +111,34 @@ module Solis
         @attributes = OpenStruct.new
         @model = model
         @errors = []
-        # if type.nil?
-        #   raise MissingTypeError
-        # end
-        # if model.shapes[type].nil?
-        #   raise TypeNotFoundError
-        # end
-        @type = type
         @store = store
         @persisted = false
         @hooks = hooks || {}
         set_internal_data_from_jsonld(obj)
         _obj = get_internal_data_as_jsonld
-        if !_obj['@type'].nil? && !@type.nil? && !_obj['@type'].eql?(@type)
-          raise TypeMismatchError.new(@type, _obj['@type'])
+        if !_obj['@type'].nil? && !type.nil? && !_obj['@type'].eql?(type)
+          raise TypeMismatchError.new(type, _obj['@type'])
         end
-        if _obj['@type'].nil? && !@type.nil?
-          _obj['@type'] = @type
+        if _obj['@type'].nil? && !type.nil?
+          _obj['@type'] = type
         end
-        if !_obj['@type'].nil? && @type.nil?
-          @type = _obj['@type']
-        end
-        @context = {
+        context = {
           "@vocab" => @model.namespace
         }
-        unless _obj['@context'].nil?
-          @context = _obj['@context']
-          _obj.delete('@context')
+        if _obj['@context'].nil?
+          _obj['@context'] = context
         end
         set_internal_data_from_jsonld(_obj)
         add_ids_if_not_exists!
         add_versions_if_not_exists!
+      end
+
+      def type
+        get_internal_data_as_jsonld['@type']
+      end
+
+      def context
+        get_internal_data_as_jsonld['@context']
       end
 
       def to_pre_validate_jsonld
@@ -278,7 +275,7 @@ module Solis
         obj = get_internal_data_as_jsonld
         # infer type if reference autoload is requested
         if _opts[:autoload_missing_refs]
-          Solis::Utils::JSONLD.infer_jsonld_types_from_model!(obj, @model, @context, @type)
+          Solis::Utils::JSONLD.infer_jsonld_types_from_model!(obj, @model, self.context, self.type)
         end
         # "plays" the patch on instance
         _obj_patch = Solis::Utils::JSONUtils.deep_replace_prefix_in_name_attr(obj_patch, '_', '@')
@@ -294,21 +291,20 @@ module Solis
         obj = get_internal_data_as_jsonld
         check_obj_has_id(obj)
         id = obj['@id']
-        id_op = @store.get_data_for_id(id, @context, deep=deep)
+        id_op = @store.get_data_for_id(id, self.context, deep=deep)
         obj_res, context_res = @store.run_operations([id_op])[id_op]
         if obj_res.empty?
           raise LoadError.new(id)
         end
-        if !obj_res['@type'].nil? && !@type.nil?
-          type_1 = Solis::Utils::JSONLD.expand_term(@type, @context)
+        if !obj_res['@type'].nil? && !self.type.nil?
+          type_1 = Solis::Utils::JSONLD.expand_term(self.type, self.context)
           type_2 = Solis::Utils::JSONLD.expand_term(obj_res['@type'], context_res)
           if type_1 != type_2
             raise TypeMismatchError.new(type_1, type_2)
           end
         end
-        @type = obj_res['@type'] unless obj_res['@type'].nil?
+        obj_res['@context'] = context_res
         replace(obj_res)
-        @context = context_res
         obj_res
       end
 
@@ -355,11 +351,11 @@ module Solis
       end
 
       def get_shape
-        @model.get_shape_for_entity(Solis::Utils::JSONLD.expand_term(@type, @context))
+        @model.get_shape_for_entity(Solis::Utils::JSONLD.expand_term(self.type, self.context))
       end
 
       def get_properties_info
-        @model.get_properties_info_for_entity(Solis::Utils::JSONLD.expand_term(@type, @context))
+        @model.get_properties_info_for_entity(Solis::Utils::JSONLD.expand_term(self.type, self.context))
       end
 
       def to_pretty_jsonld
@@ -377,7 +373,7 @@ module Solis
         # see: https://medium.com/rubycademy/the-complete-guide-to-create-a-copy-of-an-object-in-ruby-part-ii-cd28a99d58d9
         # entity_copy = deep_copy(self)     # nils instance vars
         # entity_copy = clone               @ shallow copy
-        entity_copy = Entity.new(get_internal_data_as_jsonld, @model, @type, @store, hooks=@hooks)
+        entity_copy = Entity.new(get_internal_data_as_jsonld, @model, self.type, @store, hooks=@hooks)
         if del_side_effects_methods
           # see: https://stackoverflow.com/questions/27095097/remove-a-method-only-from-an-instance
           ['save', 'destroy'].each { |m| entity_copy.instance_eval("undef :#{m}") }
@@ -429,13 +425,13 @@ module Solis
       def to_jsonld(hash_data_json)
 
         # infer "@type"(s) from model, when not available
-        Solis::Utils::JSONLD.infer_jsonld_types_from_model!(hash_data_json, @model, @context, @type)
+        Solis::Utils::JSONLD.infer_jsonld_types_from_model!(hash_data_json, @model, self.context, self.type)
 
         # make json-ld out of json
         # hash_data_jsonld = Solis::Utils::JSONLD.json_object_to_jsonld(hash_data_json, {
         #   "@vocab" => @model.namespace
         # })
-        hash_data_jsonld = Solis::Utils::JSONLD.json_object_to_jsonld(hash_data_json, @context)
+        hash_data_jsonld = Solis::Utils::JSONLD.json_object_to_jsonld(hash_data_json, self.context)
         hash_data_jsonld
       end
 
@@ -461,13 +457,13 @@ module Solis
 
         @model.logger.debug("======= object:")
         @model.logger.debug(JSON.pretty_generate(obj))
-        context_datatypes = Solis::Utils::JSONLD.make_jsonld_datatypes_context_from_model(obj, @model, @context)
+        context_datatypes = Solis::Utils::JSONLD.make_jsonld_datatypes_context_from_model(obj, @model, self.context)
 
         # context = {
         #   "@vocab" => @model.namespace
         # }
         # context.merge!(context_datatypes)
-        context = deep_copy(@context)
+        context = deep_copy(self.context)
         context.merge!(context_datatypes) if context.is_a?(Hash)
 
         @model.logger.debug("======= compacted single object:")
@@ -508,7 +504,7 @@ module Solis
         # expand single items
         flattened_ordered_expanded = deep_copy(flattened_ordered)
         # flattened_ordered_expanded['@context'] = {}
-        flattened_ordered_expanded['@context'] = deep_copy(@context)
+        flattened_ordered_expanded['@context'] = deep_copy(self.context)
         flattened_ordered_expanded['@graph'].map! do |obj|
           expand_obj(obj)
         end
@@ -613,6 +609,7 @@ module Solis
                   if opts[:add_missing_refs]
                     if opts[:autoload_missing_refs]
                       obj_loaded = Entity.new(item_val_patch, @model, nil, @store).load(deep=true)
+                      obj_loaded.delete('@context')
                       obj[name_attr_patch].push(obj_loaded)
                     else
                       obj[name_attr_patch].push(item_val_patch)
@@ -632,6 +629,7 @@ module Solis
                   if opts[:add_missing_refs]
                     if opts[:autoload_missing_refs]
                       obj_loaded = Entity.new(item_val_patch, @model, nil, @store).load(deep=true)
+                      obj_loaded.delete('@context')
                       obj[name_attr_patch] = obj_loaded
                     else
                       obj[name_attr_patch] = item_val_patch
