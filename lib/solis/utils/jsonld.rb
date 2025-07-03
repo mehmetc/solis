@@ -21,6 +21,8 @@ module Solis
   module Utils
     module JSONLD
 
+      RESERVED_FIELDS = ['@id', '@type', '@context', '@graph']
+
       def self.expand(obj)
         arr = JSON::LD::API.expand(obj, options: {
         })
@@ -31,7 +33,7 @@ module Solis
         # For the validation, the type is let be inferred by the SHACL validator.
         arr.each do |obj|
           obj.each do |name_attr, val_attr|
-            next if ['@id', '@type'].include?(name_attr)
+            next if RESERVED_FIELDS.include?(name_attr)
             val_attr.each do |spec|
               if spec.key?('@value')
                 if spec.key?('@type') and spec['@type'].eql?('http://www.w3.org/2001/XMLSchema#string')
@@ -102,10 +104,12 @@ module Solis
         unless hash_json.is_a?(Hash)
           raise TypeError, "hash_json not an hash"
         end
+        hash_json_copy = Marshal.load(Marshal.dump(hash_json))
+        hash_json_copy.delete('@context')
         hash_jsonld = {
           "@context" => context,
           "@graph" => [
-            hash_json
+            hash_json_copy
           ]
         }
         hash_jsonld
@@ -131,7 +135,7 @@ module Solis
         # NOTE: currently only meant for a _compacted_ JSON-LD object
         data['@type'] = type_root if data['@type'].nil?
         data.each do |name_attr, val_attr|
-          next if ['@id', '@type'].include?(name_attr)
+          next if RESERVED_FIELDS.include?(name_attr)
           val_attr = [val_attr] unless val_attr.is_a?(Array)
           val_attr.each do |e|
             if is_object_an_embedded_entity_or_ref(e)
@@ -164,7 +168,7 @@ module Solis
         type = obj['@type']
         type_expanded = expand_term(type, context)
         obj.each_key do |name_attr|
-          next if ['@id', '@type'].include?(name_attr)
+          next if RESERVED_FIELDS.include?(name_attr)
           name_attr_expanded = expand_term(name_attr, context)
           datatype = model.get_property_datatype_for_entity(type_expanded, name_attr_expanded)
           context_datatypes[name_attr] = {
@@ -178,7 +182,7 @@ module Solis
       def self.clean_flattened_expanded_from_unset_data!(flattened_expanded)
         flattened_expanded.each do |obj|
           obj.each do |name_attr, content_attr|
-            next if ['@id', '@type'].include?(name_attr)
+            next if RESERVED_FIELDS.include?(name_attr)
             content_attr.map! do |content|
               (content.key?('@value') and content['@value'].eql?('@unset')) ? nil : content
             end
@@ -198,10 +202,37 @@ module Solis
       def self.add_ids_if_not_exists!(obj, namespace)
         obj['@id'] = obj['@id'] || URI.join(namespace, SecureRandom.uuid).to_s
         obj.each do |name_attr, val_attr|
+          next if RESERVED_FIELDS.include?(name_attr)
           val_attr = [val_attr] unless val_attr.is_a?(Array)
           val_attr.each do |e|
             if e.is_a?(Hash) and !e.key?('@value')
               add_ids_if_not_exists!(e, namespace)
+            end
+          end
+        end
+      end
+
+      def self.add_default_attributes_if_not_exists!(obj, name_attr, val_def)
+        obj[name_attr] = obj[name_attr] || val_def
+        obj.each do |_name_attr, val_attr|
+          next if RESERVED_FIELDS.include?(_name_attr)
+          val_attr = [val_attr] unless val_attr.is_a?(Array)
+          val_attr.each do |e|
+            if e.is_a?(Hash) and !e.key?('@value')
+              add_default_attributes_if_not_exists!(e, name_attr, val_def)
+            end
+          end
+        end
+      end
+
+      def self.increment_attributes!(obj, name_attr)
+        obj[name_attr] += 1
+        obj.each do |_name_attr, val_attr|
+          next if RESERVED_FIELDS.include?(_name_attr)
+          val_attr = [val_attr] unless val_attr.is_a?(Array)
+          val_attr.each do |e|
+            if e.is_a?(Hash) and !e.key?('@value')
+              increment_attributes!(e, name_attr)
             end
           end
         end
@@ -246,7 +277,7 @@ module Solis
       def self.anyuris_to_uris(obj)
         obj2 = Marshal.load(Marshal.dump(obj))
         obj.each do |name_attr, content_attr|
-          next if ['@id', '@type'].include?(name_attr)
+          next if RESERVED_FIELDS.include?(name_attr)
           content_attr.each_with_index do |e, i|
             if e['@type'].eql?('http://www.w3.org/2001/XMLSchema#anyURI')
               obj2[name_attr][i] = {
@@ -261,7 +292,7 @@ module Solis
       def self.compact_values(obj, f_conv)
         obj2 = Marshal.load(Marshal.dump(obj))
         obj.each do |name_attr, content_attr|
-          next if ['@id', '@type'].include?(name_attr)
+          next if RESERVED_FIELDS.include?(name_attr)
           content_attr.each_with_index do |e, i|
             unless e.key?('@id')
               obj2[name_attr][i] = f_conv.call(e['@value'], e['@type'])
@@ -276,7 +307,7 @@ module Solis
         messages = []
         graph.each do |obj|
           obj.each do |name_attr, content_attr|
-            next if ['@id', '@type'].include?(name_attr)
+            next if RESERVED_FIELDS.include?(name_attr)
             content_attr.each do |e|
               if e.key?('@type')
                 type = e['@type']

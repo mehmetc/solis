@@ -16,10 +16,13 @@ module SPARQL
         str_report = graph.query([nil, RDF::URI('http://www.w3.org/2005/sparql-results#value'), nil]).first_object.to_s
         if str_report.start_with?('Delete')
           report[:count_delete] = str_report.scan(/[0-9]+/)[0].to_i
+          report[:count_update] = report[:count_delete]
         elsif str_report.start_with?('Insert')
           report[:count_insert] = str_report.scan(/[0-9]+/)[0].to_i
+          report[:count_update] = report[:count_insert]
         elsif str_report.start_with?('Modify')
           report[:count_delete], report[:count_insert] = str_report.scan(/[0-9]+/).collect { |v| v.to_i }
+          report[:count_update] = report[:count_delete] + report[:count_insert]
         end
       end
       report
