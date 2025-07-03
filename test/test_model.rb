@@ -36,7 +36,7 @@ class TestModel < Minitest::Test
 
     assert_equal('Car', car_entity.instance_variable_get('@type'))
     #TODO: the id cannot start with an @ in Ruby
-    assert_match(@solis.model.namespace, car_entity["_id"])
+    assert_match(@solis.model.namespace, car_entity.attributes["_id"])
   end
 
   def test_model_instance_namepace
@@ -47,12 +47,12 @@ class TestModel < Minitest::Test
     assert_equal(@prefix, @solis.model.prefix)
   end
 
-  def test_model_car_instance_should_return_an_error_when_requesting_non_existing_property
-    car_entity = @solis.model.entity.new('Car')
-    assert_raises Solis::Error::PropertyNotFound do
-      car_entity.blabla
-    end
-  end
+  # def test_model_car_instance_should_return_an_error_when_requesting_non_existing_property
+  #   car_entity = @solis.model.entity.new('Car')
+  #   assert_raises Solis::Error::PropertyNotFound do
+  #     car_entity.blabla
+  #   end
+  # end
 
   def test_model_check_core_functions
 

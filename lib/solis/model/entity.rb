@@ -11,16 +11,16 @@ require_relative '../utils/json'
 module Solis
   class Model
 
-    class Entity < OpenStruct
+    class Entity
 
       URI_DB_OPTIMISTIC_LOCK_VERSION = 'https://libis.be/solis/metadata/db/locks/optimistic/_version'
 
-      attr_reader :errors
-      def method_missing(method, *args, &block)
-        raise NoMethodError.new(method) unless self.methods.include?(method)
-        raise Solis::Error::PropertyNotFound unless get_properties_info.keys.include?(method.to_s)
-        super
-      end
+      attr_reader :errors, :attributes
+      # def method_missing(method, *args, &block)
+      #   raise NoMethodError.new(method) unless self.methods.include?(method)
+      #   raise Solis::Error::PropertyNotFound unless get_properties_info.keys.include?(method.to_s)
+      #   super
+      # end
 
       class MissingTypeError < StandardError
         def initialize
@@ -108,7 +108,7 @@ module Solis
       end
 
       def initialize(obj, model, type, store, hooks={})
-        super(hash={})
+        @attributes = OpenStruct.new
         @model = model
         @errors = []
         # if type.nil?
@@ -257,7 +257,7 @@ module Solis
       end
 
       def get_internal_data()
-        obj = deep_copy(self.to_h).stringify_keys
+        obj = deep_copy(@attributes.to_h).stringify_keys
         obj
       end
 
@@ -413,7 +413,7 @@ module Solis
         # in case, in the future, diff algorithms are used,
         # deep_copy() would recreate all internal objects ref,
         # not fooling them.
-        obj = deep_copy(self.to_h).stringify_keys
+        obj = deep_copy(@attributes.to_h).stringify_keys
         obj = Solis::Utils::JSONUtils.deep_replace_prefix_in_name_attr(obj, '_', '@')
         obj
       end
@@ -422,7 +422,8 @@ module Solis
         # deep_copy(): see get_internal_data_as_jsonld
         obj2 = deep_copy(obj)
         obj2 = Solis::Utils::JSONUtils.deep_replace_prefix_in_name_attr(obj2, '@', '_')
-        self.marshal_load(obj2.symbolize_keys)
+        # @attributes.marshal_load(obj2.symbolize_keys)
+        @attributes.send(:marshal_load, obj2.symbolize_keys)
       end
 
       def to_jsonld(hash_data_json)

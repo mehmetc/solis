@@ -38,8 +38,8 @@ class TestEntityBasic < Minitest::Test
 
     car = Solis::Model::Entity.new(data, @model, 'Car', nil)
 
-    assert_equal(car['_id'], "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be")
-    assert_equal(car.owners[0]['address']['_id'], "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea")
+    assert_equal(car.attributes['_id'], "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be")
+    assert_equal(car.attributes.owners[0]['address']['_id'], "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea")
 
   end
 
@@ -62,9 +62,9 @@ class TestEntityBasic < Minitest::Test
 
     car = Solis::Model::Entity.new(data, @model, 'Car', nil)
 
-    assert_equal(car['_id'].nil?, false)
-    assert_equal(car.owners[0]['_id'].nil?, false)
-    assert_equal(car.owners[0]['address']['_id'].nil?, false)
+    assert_equal(car.attributes['_id'].nil?, false)
+    assert_equal(car.attributes.owners[0]['_id'].nil?, false)
+    assert_equal(car.attributes.owners[0]['address']['_id'].nil?, false)
 
   end
 
@@ -162,8 +162,8 @@ class TestEntityBasic < Minitest::Test
 
     car.replace(data_2)
 
-    assert_equal(car.color, 'black')
-    assert_equal(car.owners[0]['address']['street'], 'other fake street')
+    assert_equal(car.attributes.color, 'black')
+    assert_equal(car.attributes.owners[0]['address']['street'], 'other fake street')
 
   end
 
@@ -204,8 +204,8 @@ class TestEntityBasic < Minitest::Test
 
     car.patch(obj_patch)
 
-    assert_equal(car.color, 'black')
-    assert_equal(car.owners[0]['name'], 'john smith')
+    assert_equal(car.attributes.color, 'black')
+    assert_equal(car.attributes.owners[0]['name'], 'john smith')
 
   end
 
@@ -245,8 +245,8 @@ class TestEntityBasic < Minitest::Test
       car.patch(obj_patch)
     end
 
-    assert_equal(car.color, ["green", "yellow"])
-    assert_equal(car.brand, "toyota")
+    assert_equal(car.attributes.color, ["green", "yellow"])
+    assert_equal(car.attributes.brand, "toyota")
 
   end
 
@@ -289,15 +289,15 @@ class TestEntityBasic < Minitest::Test
       car.patch(obj_patch)
     end
 
-    assert_equal((car.color-["green", "yellow"]).size, 0)
+    assert_equal((car.attributes.color-["green", "yellow"]).size, 0)
 
     car.patch(obj_patch, opts={
       add_missing_refs: true,
       autoload_missing_refs: false
     })
 
-    assert_equal(car.color, 'black')
-    assert_equal(car.owners[1]['name'], 'john smith')
+    assert_equal(car.attributes.color, 'black')
+    assert_equal(car.attributes.owners[1]['name'], 'john smith')
 
   end
 
@@ -389,7 +389,7 @@ class TestEntityBasic < Minitest::Test
 
     assert_equal(car.valid?, true)
 
-    assert_equal(car.owners.size, 2)
+    assert_equal(car.attributes.owners.size, 2)
 
   end
 
@@ -482,7 +482,7 @@ class TestEntityBasic < Minitest::Test
       append_attributes: true
     })
 
-    assert_equal((car.color-["green", "yellow", "black"]).size, 0)
+    assert_equal((car.attributes.color-["green", "yellow", "black"]).size, 0)
 
   end
 
@@ -567,9 +567,9 @@ class TestEntityBasic < Minitest::Test
 
     assert_equal(car.valid?, true)
 
-    assert_equal(car.color, 'black')
-    assert_equal(car.brand, 'nissan')
-    assert_equal(car.owners[0]['name'], 'john smith')
+    assert_equal(car.attributes.color, 'black')
+    assert_equal(car.attributes.brand, 'nissan')
+    assert_equal(car.attributes.owners[0]['name'], 'john smith')
 
   end
   def test_entity_patch_depth0_1
@@ -609,7 +609,7 @@ class TestEntityBasic < Minitest::Test
 
     car.patch(obj_patch)
 
-    assert_equal(car.brand, "@unset")
+    assert_equal(car.attributes.brand, "@unset")
 
   end
 
@@ -645,7 +645,7 @@ class TestEntityBasic < Minitest::Test
 
     car.patch(obj_patch)
 
-    assert_equal(car.owners, "@unset")
+    assert_equal(car.attributes.owners, "@unset")
 
   end
 
@@ -687,7 +687,7 @@ class TestEntityBasic < Minitest::Test
 
     car.patch(obj_patch)
 
-    assert_equal(car.owners[0]["address"], "@unset")
+    assert_equal(car.attributes.owners[0]["address"], "@unset")
 
   end
 
