@@ -44,7 +44,11 @@ class TestEntityOptLocks < Minitest::Test
 
     car = Solis::Model::Entity.new(data, @model, 'Car', store)
 
+    assert_equal(car.version, 0)
+
     car.save
+
+    assert_equal(car.version, 1)
 
     puts "\n\nREPO CONTENT:\n\n"
     puts repository.dump(:ntriples)
@@ -77,6 +81,8 @@ class TestEntityOptLocks < Minitest::Test
     assert_equal(graph_truth == graph_to_check, true)
 
     car.save
+
+    assert_equal(car.version, 2)
 
     puts "\n\nREPO CONTENT:\n\n"
     puts repository.dump(:ntriples)

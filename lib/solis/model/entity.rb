@@ -141,6 +141,10 @@ module Solis
         get_internal_data_as_jsonld['@context']
       end
 
+      def version
+        get_internal_data_as_jsonld[URI_DB_OPTIMISTIC_LOCK_VERSION]
+      end
+
       def to_pre_validate_jsonld
 
         # flatten + expand + clean internal data before validating it
