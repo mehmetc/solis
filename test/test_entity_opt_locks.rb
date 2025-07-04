@@ -13,6 +13,8 @@ class TestEntityOptLocks < Minitest::Test
       tmp_dir: dir_tmp
     })
 
+    @uri_version = Solis::Model::Entity::URI_DB_OPTIMISTIC_LOCK_VERSION
+
   end
 
   def test_correct_increment_version
@@ -58,20 +60,20 @@ class TestEntityOptLocks < Minitest::Test
       <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <https://example.com/street> "fake street" .
       <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <https://example.com/number> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
       <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <https://example.com/number> "15"^^<http://www.w3.org/2001/XMLSchema#integer> .
-      <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <https://libis.be/solis/metadata/db/locks/optimistic/_version> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
+      <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <#{@uri_version}> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
       <https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/DrivingLicense" .
       <https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a> <https://example.com/address> <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> .
-      <https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a> <https://libis.be/solis/metadata/db/locks/optimistic/_version> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
+      <https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a> <#{@uri_version}> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
       <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Person" .
       <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <https://example.com/name> "jon doe" .
       <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <https://example.com/driving_license> <https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a> .
-      <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <https://libis.be/solis/metadata/db/locks/optimistic/_version> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
+      <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <#{@uri_version}> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Car" .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/color> "green" .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/color> "yellow" .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/brand> "toyota" .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/owners> <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> .
-      <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://libis.be/solis/metadata/db/locks/optimistic/_version> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
+      <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <#{@uri_version}> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
     )
     graph_truth = RDF::Graph.new
     graph_truth.from_ttl(str_ttl_truth)
@@ -95,20 +97,20 @@ class TestEntityOptLocks < Minitest::Test
       <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <https://example.com/street> "fake street" .
       <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <https://example.com/number> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
       <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <https://example.com/number> "15"^^<http://www.w3.org/2001/XMLSchema#integer> .
-      <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <https://libis.be/solis/metadata/db/locks/optimistic/_version> "2"^^<http://www.w3.org/2001/XMLSchema#integer> .
+      <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <#{@uri_version}> "2"^^<http://www.w3.org/2001/XMLSchema#integer> .
       <https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/DrivingLicense" .
       <https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a> <https://example.com/address> <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> .
-      <https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a> <https://libis.be/solis/metadata/db/locks/optimistic/_version> "2"^^<http://www.w3.org/2001/XMLSchema#integer> .
+      <https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a> <#{@uri_version}> "2"^^<http://www.w3.org/2001/XMLSchema#integer> .
       <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Person" .
       <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <https://example.com/name> "jon doe" .
       <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <https://example.com/driving_license> <https://example.com/f23dd664-adf0-4b86-a309-bd5e9e18ed5a> .
-      <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <https://libis.be/solis/metadata/db/locks/optimistic/_version> "2"^^<http://www.w3.org/2001/XMLSchema#integer> .
+      <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <#{@uri_version}> "2"^^<http://www.w3.org/2001/XMLSchema#integer> .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Car" .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/color> "green" .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/color> "yellow" .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/brand> "toyota" .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/owners> <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> .
-      <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://libis.be/solis/metadata/db/locks/optimistic/_version> "2"^^<http://www.w3.org/2001/XMLSchema#integer> .
+      <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <#{@uri_version}> "2"^^<http://www.w3.org/2001/XMLSchema#integer> .
     )
     graph_truth = RDF::Graph.new
     graph_truth.from_ttl(str_ttl_truth)

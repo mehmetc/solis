@@ -108,6 +108,12 @@ module Solis
       end
 
       def initialize(obj, model, type, store, hooks={})
+
+        # "obj" contains an extension of JSON-LD syntax.
+        # - '@' prefix can be replaced with '_';
+        # - non-native data types (integer, float, boolean) don't need to be given
+        #   the '@type' indication, since it will be autofilled from the model when existing;
+
         @attributes = OpenStruct.new
         @model = model
         @errors = []
