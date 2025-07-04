@@ -225,6 +225,32 @@ module Solis
         end
       end
 
+      def self.collect_attributes_in_map(obj, name_attr, map)
+        map[obj['@id']] = obj[name_attr] if obj.key?(name_attr)
+        obj.each do |_name_attr, val_attr|
+          next if RESERVED_FIELDS.include?(_name_attr)
+          val_attr = [val_attr] unless val_attr.is_a?(Array)
+          val_attr.each do |e|
+            if e.is_a?(Hash) and !e.key?('@value')
+              collect_attributes_in_map(e, name_attr, map)
+            end
+          end
+        end
+      end
+
+      def self.apply_attributes_from_map!(obj, name_attr, map)
+        obj[name_attr] = map[obj['@id']] if map.key?(name_attr)
+        obj.each do |_name_attr, val_attr|
+          next if RESERVED_FIELDS.include?(_name_attr)
+          val_attr = [val_attr] unless val_attr.is_a?(Array)
+          val_attr.each do |e|
+            if e.is_a?(Hash) and !e.key?('@value')
+              apply_attributes_from_map!(e, name_attr, map)
+            end
+          end
+        end
+      end
+
       def self.increment_attributes!(obj, name_attr)
         obj[name_attr] += 1
         obj.each do |_name_attr, val_attr|
