@@ -91,6 +91,8 @@ class TestEntityCircularDeps < Minitest::Test
 
     car_1.load(deep = true)
 
+    assert_equal(car_1.valid?, true)
+
   end
 
 end
