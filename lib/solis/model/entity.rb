@@ -509,7 +509,14 @@ module Solis
         flattened = Solis::Utils::JSONLD.flatten_jsonld(hash_data_jsonld)
         @model.logger.debug("=== flattened JSON-LD:")
         @model.logger.debug(JSON.pretty_generate(flattened))
-        flattened_ordered = Solis::Utils::JSONLD.sort_flat_jsonld_by_deps(flattened)
+        begin
+          flattened_ordered = Solis::Utils::JSONLD.sort_flat_jsonld_by_deps(flattened)
+        rescue TSort::Cyclic
+          @model.logger.warn("cyclic dependencies in:")
+          @model.logger.warn(JSON.pretty_generate(flattened))
+          @model.logger.warn("objects will not e sorted")
+          flattened_ordered = flattened
+        end
         @model.logger.debug("=== flattened + deps sorted JSON-LD:")
         @model.logger.debug(JSON.pretty_generate(flattened_ordered))
 
