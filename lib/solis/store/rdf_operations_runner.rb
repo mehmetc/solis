@@ -62,7 +62,10 @@ module Solis
       def get_data_for_subject(s, context, deep)
         # create graph of query results
         graph = RDF::Graph.new
-        fill_graph_from_subject_root = lambda do |g, s, deep|
+        traversed = []
+        fill_graph_from_subject_root = lambda do |g, s, traversed, deep|
+          return if traversed.include?(s.to_s)
+          traversed << s.to_s
           query = @client_sparql.select.where([s, :p, :o])
           query.each_solution do |solution|
             @logger.debug([s, solution.p, solution.o])
@@ -70,12 +73,14 @@ module Solis
             if deep
               # if solution.o.is_a?(RDF::URI) or solution.o.is_a?(RDF::Literal::AnyURI)
               if solution.o.is_a?(RDF::URI)
-                fill_graph_from_subject_root.call(g, RDF::URI(solution.o), deep)
+                # unless traversed.include?(solution.o.to_s)
+                  fill_graph_from_subject_root.call(g, RDF::URI(solution.o), traversed, deep)
+                # end
               end
             end
           end
         end
-        fill_graph_from_subject_root.call(graph, s, deep)
+        fill_graph_from_subject_root.call(graph, s, traversed, deep)
         # turn graph into JSON-LD hash
         jsonld = JSON::LD::API.fromRDF(graph)
         @logger.debug(JSON.pretty_generate(jsonld))
@@ -130,7 +135,7 @@ module Solis
             success = false
           else
             res = jsonld_compacted_framed['@graph'][0]
-            res.merge!(jsonld_compacted_framed['@context'])
+            res['@context'] = jsonld_compacted_framed['@context']
           end
         else
           res = jsonld_compacted_framed
