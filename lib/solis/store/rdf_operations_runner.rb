@@ -62,7 +62,10 @@ module Solis
       def get_data_for_subject(s, context, deep)
         # create graph of query results
         graph = RDF::Graph.new
-        fill_graph_from_subject_root = lambda do |g, s, deep|
+        traversed = []
+        fill_graph_from_subject_root = lambda do |g, s, traversed, deep|
+          return if traversed.include?(s.to_s)
+          traversed << s.to_s
           query = @client_sparql.select.where([s, :p, :o])
           query.each_solution do |solution|
             @logger.debug([s, solution.p, solution.o])
@@ -70,12 +73,14 @@ module Solis
             if deep
               # if solution.o.is_a?(RDF::URI) or solution.o.is_a?(RDF::Literal::AnyURI)
               if solution.o.is_a?(RDF::URI)
-                fill_graph_from_subject_root.call(g, RDF::URI(solution.o), deep)
+                # unless traversed.include?(solution.o.to_s)
+                  fill_graph_from_subject_root.call(g, RDF::URI(solution.o), traversed, deep)
+                # end
               end
             end
           end
         end
-        fill_graph_from_subject_root.call(graph, s, deep)
+        fill_graph_from_subject_root.call(graph, s, traversed, deep)
         # turn graph into JSON-LD hash
         jsonld = JSON::LD::API.fromRDF(graph)
         @logger.debug(JSON.pretty_generate(jsonld))
@@ -119,17 +124,31 @@ module Solis
         @logger.debug(JSON.pretty_generate(jsonld_compacted_framed))
         # produce result
         res = {}
+        message = ""
+        success = true
         # if framing created a "@graph" (empty) attribute,
-        # then there was no matching result in the framing
-        unless jsonld_compacted_framed.key?('@graph')
+        # then there was either no matching result in the framing,
+        # or embedded objects with the same type (only first matters)
+        if jsonld_compacted_framed.key?('@graph')
+          if jsonld_compacted_framed['@graph'].size == 0
+            message = "no entity with id '#{s.to_s}'"
+            success = false
+          else
+            res = jsonld_compacted_framed['@graph'][0]
+            res['@context'] = jsonld_compacted_framed['@context']
+          end
+        else
           res = jsonld_compacted_framed
         end
         context = res.delete('@context')
-        # puts JSON.pretty_generate(res)
-        # if res.empty?
-        #   raise StandardError, "no entity with id '#{s.to_s}'"
-        # end
-        [res, context]
+        {
+          "success" => success,
+          "message" => message,
+          "data" => {
+            "obj" => res,
+            "context" => context
+          }
+        }
       end
 
       def ask_if_object_is_referenced(o)

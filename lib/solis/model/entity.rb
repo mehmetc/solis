@@ -79,8 +79,8 @@ module Solis
       end
 
       class LoadError < StandardError
-        def initialize(ref)
-          msg = "no entity with id '#{ref}'"
+        def initialize(msg)
+          msg = "#{msg}"
           super(msg)
         end
       end
@@ -302,9 +302,11 @@ module Solis
         check_obj_has_id(obj)
         id = obj['@id']
         id_op = @store.get_data_for_id(id, self.context, deep=deep)
-        obj_res, context_res = @store.run_operations([id_op])[id_op]
-        if obj_res.empty?
-          raise LoadError.new(id)
+        res = @store.run_operations([id_op])[id_op]
+        obj_res = res['data']['obj']
+        context_res = res['data']['context']
+        unless res['success']
+          raise LoadError.new(res['message'])
         end
         if !obj_res['@type'].nil? && !self.type.nil?
           type_1 = Solis::Utils::JSONLD.expand_term(self.type, self.context)
@@ -507,7 +509,14 @@ module Solis
         flattened = Solis::Utils::JSONLD.flatten_jsonld(hash_data_jsonld)
         @model.logger.debug("=== flattened JSON-LD:")
         @model.logger.debug(JSON.pretty_generate(flattened))
-        flattened_ordered = Solis::Utils::JSONLD.sort_flat_jsonld_by_deps(flattened)
+        begin
+          flattened_ordered = Solis::Utils::JSONLD.sort_flat_jsonld_by_deps(flattened)
+        rescue TSort::Cyclic
+          @model.logger.warn("cyclic dependencies in:")
+          @model.logger.warn(JSON.pretty_generate(flattened))
+          @model.logger.warn("objects will not e sorted")
+          flattened_ordered = flattened
+        end
         @model.logger.debug("=== flattened + deps sorted JSON-LD:")
         @model.logger.debug(JSON.pretty_generate(flattened_ordered))
 
@@ -648,6 +657,14 @@ module Solis
                   else
                     raise MissingRefError.new(item_val_patch['@id'])
                   end
+                end
+              elsif obj[name_attr_patch].nil?
+                if opts[:autoload_missing_refs]
+                  obj_loaded = Entity.new(item_val_patch, @model, nil, @store).load(deep=true)
+                  obj_loaded.delete('@context')
+                  obj[name_attr_patch] = obj_loaded
+                else
+                  obj[name_attr_patch] = item_val_patch
                 end
               else
                 raise PatchTypeMismatchError.new(item_val_patch['@id'])
