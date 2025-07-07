@@ -649,6 +649,14 @@ module Solis
                     raise MissingRefError.new(item_val_patch['@id'])
                   end
                 end
+              elsif obj[name_attr_patch].nil?
+                if opts[:autoload_missing_refs]
+                  obj_loaded = Entity.new(item_val_patch, @model, nil, @store).load(deep=true)
+                  obj_loaded.delete('@context')
+                  obj[name_attr_patch] = obj_loaded
+                else
+                  obj[name_attr_patch] = item_val_patch
+                end
               else
                 raise PatchTypeMismatchError.new(item_val_patch['@id'])
               end
