@@ -79,8 +79,8 @@ module Solis
       end
 
       class LoadError < StandardError
-        def initialize(ref)
-          msg = "no entity with id '#{ref}'"
+        def initialize(msg)
+          msg = "#{msg}"
           super(msg)
         end
       end
@@ -302,9 +302,11 @@ module Solis
         check_obj_has_id(obj)
         id = obj['@id']
         id_op = @store.get_data_for_id(id, self.context, deep=deep)
-        obj_res, context_res = @store.run_operations([id_op])[id_op]
-        if obj_res.empty?
-          raise LoadError.new(id)
+        res = @store.run_operations([id_op])[id_op]
+        obj_res = res['data']['obj']
+        context_res = res['data']['context']
+        unless res['success']
+          raise LoadError.new(res['message'])
         end
         if !obj_res['@type'].nil? && !self.type.nil?
           type_1 = Solis::Utils::JSONLD.expand_term(self.type, self.context)

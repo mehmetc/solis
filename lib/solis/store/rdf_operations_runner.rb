@@ -119,17 +119,31 @@ module Solis
         @logger.debug(JSON.pretty_generate(jsonld_compacted_framed))
         # produce result
         res = {}
+        message = ""
+        success = true
         # if framing created a "@graph" (empty) attribute,
-        # then there was no matching result in the framing
-        unless jsonld_compacted_framed.key?('@graph')
+        # then there was either no matching result in the framing,
+        # or embedded objects with the same type (only first matters)
+        if jsonld_compacted_framed.key?('@graph')
+          if jsonld_compacted_framed['@graph'].size == 0
+            message = "no entity with id '#{s.to_s}'"
+            success = false
+          else
+            res = jsonld_compacted_framed['@graph'][0]
+            res.merge!(jsonld_compacted_framed['@context'])
+          end
+        else
           res = jsonld_compacted_framed
         end
         context = res.delete('@context')
-        # puts JSON.pretty_generate(res)
-        # if res.empty?
-        #   raise StandardError, "no entity with id '#{s.to_s}'"
-        # end
-        [res, context]
+        {
+          "success" => success,
+          "message" => message,
+          "data" => {
+            "obj" => res,
+            "context" => context
+          }
+        }
       end
 
       def ask_if_object_is_referenced(o)
