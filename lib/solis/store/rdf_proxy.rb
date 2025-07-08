@@ -16,7 +16,7 @@ module Solis
       include Solis::Store::OperationsCollector
       include Solis::Store::RDFOperationsRunner
 
-      attr_reader :logger
+      attr_reader :logger, :client_sparql
 
       def initialize(repository, name_graph, params = {})
         # all the rest:
