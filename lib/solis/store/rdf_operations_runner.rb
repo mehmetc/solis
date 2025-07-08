@@ -107,7 +107,7 @@ module Solis
         @logger.debug(JSON.pretty_generate(jsonld_compacted))
         # find the type of the (root) object with URI "s"
         obj_root = jsonld_compacted.find { |e| e['@id'] == s.to_s }
-        type = obj_root.nil? ? nil : obj_root['@type']
+        type = obj_root.nil? ? nil : obj_root['@type'][0]
         # frame JSON-LD; this will:
         # - compact attributes thanks to "@vocab"
         # - embed (at any depth) objects to the root one, thanks to @embed;
@@ -364,7 +364,7 @@ module Solis
           case op['name']
           when 'save_id_with_type'
             id, _, type = op_rdf['content']
-            s, p, o = [RDF::URI(id), RDF::RDFV.type, type]
+            s, p, o = [RDF::URI(id), RDF::RDFV.type, RDF::URI(type)]
             op_rdf['content'] = [s, p, o]
           when 'save_attribute_for_id'
             id, name_attr, val_attr, type_attr = op_rdf['content']
