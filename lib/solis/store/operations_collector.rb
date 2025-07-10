@@ -176,6 +176,24 @@ module Solis
 
       end
 
+      def run_raw_query(query, type_query)
+
+        op = {
+          "id" => SecureRandom.uuid,
+          "name" => "run_raw_query",
+          "type" => "any",
+          "opts" => nil,
+          "content" => [query, type_query]
+        }
+
+        @logger.debug(op)
+
+        @ops << op
+
+        op['id']
+
+      end
+
 
     end
 
