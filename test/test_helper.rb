@@ -11,6 +11,8 @@ require "solis/utils/rdf"
 require "solis/model/entity"
 require "solis/store/rdf_proxy"
 require "solis/mock/sparql_client"
+require "solis/query/query_runner"
+require "solis/query/query_builder"
 require "http"
 
 require "minitest/autorun"

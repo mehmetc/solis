@@ -14,9 +14,14 @@ module Solis
       # - @logger
       # - @mutex_repository
 
+      def query_langs
+        ['SPARQL']
+      end
+
       def run_operations(ids_op='all')
         ops_read = []
         ops_write = []
+        ops_any = []
         indexes = []
         @ops.each_with_index do |op, index|
           if ids_op.is_a?(Array)
@@ -24,8 +29,10 @@ module Solis
           end
           if op['type'].eql?('read')
             ops_read << op
-          else
+          elsif op['type'].eql?('write')
             ops_write << op
+          else
+            ops_any << op
           end
           indexes << index
         end
@@ -35,6 +42,7 @@ module Solis
         # This way, @ops can be updated successfully.
         res.merge!(run_write_operations(ops_write))
         res.merge!(run_read_operations(ops_read))
+        res.merge!(run_any_operations(ops_any))
         # remove performed operations from list;
         # following does not seem thread-safe, but ok for the now ...
         indexes.sort.reverse_each { |index| @ops.delete_at(index) }
@@ -107,7 +115,7 @@ module Solis
         @logger.debug(JSON.pretty_generate(jsonld_compacted))
         # find the type of the (root) object with URI "s"
         obj_root = jsonld_compacted.find { |e| e['@id'] == s.to_s }
-        type = obj_root.nil? ? nil : obj_root['@type']
+        type = obj_root.nil? ? nil : obj_root['@type'][0]
         # frame JSON-LD; this will:
         # - compact attributes thanks to "@vocab"
         # - embed (at any depth) objects to the root one, thanks to @embed;
@@ -187,6 +195,29 @@ module Solis
           [op['id'], r]
         end.to_h
         res
+      end
+
+      def run_any_operations(ops_generic)
+        res = ops_generic.map do |op|
+          case op['name']
+          when 'run_raw_query'
+            query, type_query = op['content']
+            r = _run_raw_query(query, type_query)
+          end
+          [op['id'], r]
+        end.to_h
+        res
+      end
+
+
+      def _run_raw_query(query, type_query)
+        results = @client_sparql.query(query)
+        case type_query
+        when 'find_records'
+          results.map { |solution| solution[:s].to_s }
+        when 'count_records'
+          results.first[:count].to_i
+        end
       end
 
       def run_write_operations(ops)
@@ -364,7 +395,7 @@ module Solis
           case op['name']
           when 'save_id_with_type'
             id, _, type = op_rdf['content']
-            s, p, o = [RDF::URI(id), RDF::RDFV.type, type]
+            s, p, o = [RDF::URI(id), RDF::RDFV.type, RDF::URI(type)]
             op_rdf['content'] = [s, p, o]
           when 'save_attribute_for_id'
             id, name_attr, val_attr, type_attr = op_rdf['content']
