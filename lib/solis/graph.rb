@@ -292,6 +292,23 @@ module Solis
                 "#{resource.class.graph_name.gsub(/\/$/,'')}/#{belongs_to_resource_name.tableize}?filter[id]=#{resource_ids.join(',')}" unless remote_resources.nil? || resource_ids.empty?
               end
             end
+          elsif (value[:mincount] && value[:mincount] == 1) || (value[:maxcount] && value[:maxcount] == 1)
+            has_one_resource_name = value[:datatype].nil? ? value[:class].gsub(self.model.graph_name, '') : value[:datatype].to_s.classify
+            LOGGER.info "\t\t\t#{resource_name}(#{resource_name.gsub('Resource','').tableize.singularize}) has_one #{has_one_resource_name}(#{key})"
+            resource.has_one(key.to_sym, foreign_key: :id, primary_key: :id, resource: graph.shape_as_resource("#{has_one_resource_name}", stack_level << has_one_resource_name)) do
+              link do |resource|
+                remote_resources = resource.instance_variable_get("@#{key}")
+                if remote_resources
+                  remote_resources = [remote_resources] unless remote_resources.is_a?(Array)
+                  resource_ids = remote_resources.map do |remote_resource|
+                    remote_resource.id =~ /^http/ ? remote_resource.id.split('/').last : remote_resource.id
+                  end
+
+                end
+
+                "#{resource.class.graph_name.gsub(/\/$/,'')}/#{has_one_resource_name.tableize}?filter[id]=#{resource_ids.join(',')}" unless remote_resources.nil? || resource_ids.empty?
+              end
+            end
           else
             has_many_resource_name = value[:datatype].nil? ? value[:class].gsub(self.model.graph_name, '') : value[:datatype].to_s.classify
             LOGGER.info "\t\t\t#{resource_name}(#{resource_name.gsub('Resource','').tableize.singularize}) has_many #{has_many_resource_name}(#{key})"

@@ -225,6 +225,9 @@ values ?s {<#{self.graph_id}>}
           end
         end
 
+        maxcount = original_klass.class.metadata[:attributes][key][:maxcount]
+        value = value.first if maxcount && maxcount == 1 && value.is_a?(Array)
+
         updated_klass.instance_variable_set("@#{key}", value)
       end
 
@@ -483,7 +486,12 @@ values ?s {<#{self.graph_id}>}
         end
       end
 
-      make_graph(graph, hierarchy, id, original_klass, klass_metadata, resolve_all)
+      begin
+        make_graph(graph, hierarchy, id, original_klass, klass_metadata, resolve_all)
+      rescue => e
+        Solis::LOGGER.error(e.message)
+        raise e
+      end
 
       hierarchy.pop
       id

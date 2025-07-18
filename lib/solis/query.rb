@@ -320,7 +320,7 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
 
               if data.key?(attribute) # attribute exists
                 raise "Cardinality error, max = #{solution_model.metadata[:attributes][attribute][:maxcount]}" if solution_model.metadata[:attributes][attribute][:maxcount] == 0
-                if solution_model.metadata[:attributes][attribute][:maxcount] == 1 && data.key?(attribute)
+                if solution_model.metadata[:attributes][attribute][:maxcount] == 1 && data.key?(attribute) && data[attribute].is_a?(Array) && data[attribute].length > 1
                   raise "Cardinality error, max = #{solution_model.metadata[:attributes][attribute][:maxcount]}"
                 elsif solution_model.metadata[:attributes][attribute][:maxcount] == 1
                   data[attribute] = object
