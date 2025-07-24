@@ -21,6 +21,10 @@ module Solis
         @store = params[:store]
         @model = Solis::Model.new(params)
       end
+      def store=(store)
+        @store = store
+        @model.instance_variable_set(:@store, store)
+      end
     end.new(params_hash)
   end
 end

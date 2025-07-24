@@ -8,6 +8,7 @@ require_relative "model/parser/shacl"
 require_relative "utils/namespace"
 require_relative "utils/prefix_resolver"
 require_relative "utils/jsonld"
+require_relative "utils/string"
 
 module Solis
   class Model
@@ -82,6 +83,7 @@ module Solis
       options[:version] ||= version
       options[:description] ||= description
       options[:shapes] ||= @shapes
+      options[:entities] ||= @info_entities
 
       case content_type
       when 'text/vnd.mermaid'
@@ -309,7 +311,7 @@ module Solis
       @shapes.each_key do |name_shape|
         name_entity = Shapes.get_target_class_for_shape(@shapes, name_shape)
         name_plural = plurals[name_entity]
-        @shapes[name_shape][:plural] = name_plural
+        @shapes[name_shape][:plural] = name_plural unless name_plural.nil?
       end
     end
 
@@ -369,11 +371,21 @@ module Solis
     def make_info_entities
       names_entities = Shapes.get_all_classes(@shapes)
       names_entities.each do |name_entity|
-        plurals = Shapes.get_shapes_for_class(@shapes, name_entity).collect { |s| @shapes[s][:plural] }
+        # NOTE: infer CLASS property from SHAPE property.
+        # If multiple shapes have the same target class (rare but can happen ...), just take one value.
+        names_shapes = Shapes.get_shapes_for_class(@shapes, name_entity)
+        names = names_shapes.collect { |s| @shapes[s][:name] }
+        name = names[0]
+        descriptions = names_shapes.collect { |s| @shapes[s][:description] }
+        description = descriptions[0]
+        plurals = names_shapes.collect { |s| @shapes[s][:plural] }
         plural = plurals[0]
         @info_entities[name_entity] = {
           properties: get_properties_info_for_entity(name_entity),
-          plural: plural
+          name: name,
+          description: description,
+          plural: plural,
+          snake_case_name: Solis::Utils::String.camel_to_snake(Solis::Utils::String.extract_name_from_uri(name_entity))
         }
       end
     end
