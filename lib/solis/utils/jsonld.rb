@@ -199,6 +199,10 @@ module Solis
         obj.is_a?(Hash) and obj.key?('@id') and (obj.keys - ['@id', '@type']).empty?
       end
 
+      def self.is_object_an_embedded_entity(obj)
+        is_object_an_embedded_entity_or_ref(obj) and !is_object_a_ref(obj)
+      end
+
       def self.add_ids_if_not_exists!(obj, namespace)
         obj['@id'] = obj['@id'] || URI.join(namespace, SecureRandom.uuid).to_s
         obj.each do |name_attr, val_attr|
@@ -218,33 +222,34 @@ module Solis
           next if RESERVED_FIELDS.include?(_name_attr)
           val_attr = [val_attr] unless val_attr.is_a?(Array)
           val_attr.each do |e|
-            if e.is_a?(Hash) and !e.key?('@value')
+            if is_object_an_embedded_entity(e)
               add_default_attributes_if_not_exists!(e, name_attr, val_def)
             end
           end
         end
       end
 
-      def self.collect_attributes_in_map(obj, name_attr, map)
+      def self.collect_attributes_in_map!(obj, name_attr, map)
         map[obj['@id']] = obj[name_attr] if obj.key?(name_attr)
+        obj.delete(name_attr)
         obj.each do |_name_attr, val_attr|
           next if RESERVED_FIELDS.include?(_name_attr)
           val_attr = [val_attr] unless val_attr.is_a?(Array)
           val_attr.each do |e|
-            if e.is_a?(Hash) and !e.key?('@value')
-              collect_attributes_in_map(e, name_attr, map)
+            if is_object_an_embedded_entity(e)
+              collect_attributes_in_map!(e, name_attr, map)
             end
           end
         end
       end
 
       def self.apply_attributes_from_map!(obj, name_attr, map)
-        obj[name_attr] = map[obj['@id']] if map.key?(name_attr)
+        obj[name_attr] = map[obj['@id']] if map.key?(obj['@id'])
         obj.each do |_name_attr, val_attr|
           next if RESERVED_FIELDS.include?(_name_attr)
           val_attr = [val_attr] unless val_attr.is_a?(Array)
           val_attr.each do |e|
-            if e.is_a?(Hash) and !e.key?('@value')
+            if is_object_an_embedded_entity(e)
               apply_attributes_from_map!(e, name_attr, map)
             end
           end
@@ -257,7 +262,7 @@ module Solis
           next if RESERVED_FIELDS.include?(_name_attr)
           val_attr = [val_attr] unless val_attr.is_a?(Array)
           val_attr.each do |e|
-            if e.is_a?(Hash) and !e.key?('@value')
+            if is_object_an_embedded_entity(e)
               increment_attributes!(e, name_attr)
             end
           end
