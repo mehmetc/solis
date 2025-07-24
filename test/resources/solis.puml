@@ -1,0 +1,161 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam classFontName Arial
+
+class Audit << (S,#ADD1B2) SHACL >> {
+  ' Delta of the change
+  diff : JSON [Required]
+  ' This change follows after change
+  preceding_change : Audit [Optional]
+  ' When was the change initiated
+  created_at : DateTime [Required]
+  ' Who initiated the change
+  created_by : String [Required]
+  ' Why was the change created. one off create, update, delete
+  reason : String [Required]
+  ' useful other data
+  misc : JSON [Optional]
+}
+note bottom of Audit
+  Audit trail
+end note
+
+class Entity << (S,#ADD1B2) SHACL >> {
+  ' Entity name
+  singular : String [Required]
+  ' Plural name for entity
+  plural : String [Required]
+  ' Entity inherits from
+  subclass_of : Entity [Required]
+  ' Context is the same as
+  same_as : URI [Required]
+  ' Entities belonging to this namespace
+  namespace : Namespace [Required]
+  ' Label used in UI component
+  label : label [Optional]
+}
+note bottom of Entity
+  Description of an entity definition.
+end note
+
+class Namespace << (S,#ADD1B2) SHACL >> {
+  ' Namespace name
+  namespace_name : String [Required]
+  ' Namespace prefix
+  prefix : String [Required]
+  ' Description of the namespace
+  description : String [Optional]
+  ' The project the namespace belongs to
+  project : Project [Required]
+}
+note bottom of Namespace
+  An ontology namespace
+end note
+
+class Project << (S,#ADD1B2) SHACL >> {
+  ' Project name
+  project_name : String [Required]
+  ' Description of the project
+  description : String [Optional]
+  ' Is project enabled
+  active : Boolean [Required]
+  ' Project api url
+  url : URI [Required]
+  ' Project url prefix
+  prefix : String [Required]
+  ' api bearer token
+  token : String [Required]
+  ' Owner of the project
+  tenant : Tenant [Required]
+}
+note bottom of Project
+  An ontology project
+end note
+
+class Property << (S,#ADD1B2) SHACL >> {
+  ' name of the property
+  property_name : String [Required]
+  ' description of the property
+  description : String [Required]
+  ' minimum cardinality
+  min : Integer [Optional]
+  ' maximum cardinality
+  max : Integer [Optional]
+  ' data type of the property
+  datatype : URI [Optional]
+  ' same as the referenced Context
+  same_as : URI [Required]
+}
+note bottom of Property
+  An entity property
+end note
+
+class Task << (S,#ADD1B2) SHACL >> {
+}
+note bottom of Task
+  a system generated task
+end note
+
+class Tenant << (S,#ADD1B2) SHACL >> {
+  ' Tenant name
+  tenant_name : String [Required]
+  ' Bio of the tenant
+  description : Audit [Optional]
+  ' User that is a member of a tenant
+  members : User
+  ' Owner of the tenant
+  owner : User [Required]
+}
+note bottom of Tenant
+  Organization that creates projects and has members
+end note
+
+class User << (S,#ADD1B2) SHACL >> {
+  ' User name
+  user_name : String [Required]
+  ' Email of the user
+  email : String [Required]
+}
+note bottom of User
+  Solis user
+end note
+
+class BaseEntity << (S,#ADD1B2) SHACL >> {
+  ' unique record identifier with an ontology
+  id : String [Required]
+  ' audit trail
+  audit : Audit [Required]
+}
+note bottom of BaseEntity
+  Every entity inherits from this. All common properties should be placed inhere
+end note
+
+BaseEntity <|-- Audit : inherits
+BaseEntity <|-- Entity : inherits
+BaseEntity <|-- Namespace : inherits
+BaseEntity <|-- Project : inherits
+BaseEntity <|-- Property : inherits
+BaseEntity <|-- Task : inherits
+BaseEntity <|-- Tenant : inherits
+BaseEntity <|-- User : inherits
+BaseEntity <|-- BaseEntity : inherits
+Audit "1" --* "1" Audit : preceding_change
+Entity "1" --* "1" Entity : subclass_of
+Entity "1" --* "1" Namespace : namespace
+Namespace "1" --* "1" Project : project
+Project "1" --* "1" Tenant : tenant
+Tenant "1" --* "1" Audit : description
+Tenant "1" --* "*" User : members
+Tenant "1" --* "1" User : owner
+BaseEntity "1" --* "*" Audit : audit
+
+legend right
+  Created from SHACL definitions
+  [Required] = minCount >= 1
+  [Optional] = minCount = 0 or not specified
+  [*] = maxCount not specified or > 1
+end legend
+
+@enduml
