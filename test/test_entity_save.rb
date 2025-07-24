@@ -169,4 +169,45 @@ class TestEntitySave < Minitest::Test
 
   end
 
+  def test_entity_loads_refs_while_validate_or_save
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+        "name": "jon doe",
+        "address": {
+          "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+          "street": "fake street"
+        }
+      }
+    )
+
+    person = Solis::Model::Entity.new(data, @model_1, 'Person', store)
+
+    person.save
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9"
+          }
+        ]
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model_1, 'Car', store)
+
+    assert_equal(car.valid?, true)
+
+    car.save
+
+  end
+
 end

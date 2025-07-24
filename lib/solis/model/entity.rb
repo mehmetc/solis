@@ -502,7 +502,12 @@ module Solis
         @model.logger.debug("=== internal JSON full:")
         @model.logger.debug(JSON.pretty_generate(get_internal_data_as_jsonld))
 
-        hash_data_jsonld = to_jsonld(get_internal_data_as_jsonld)
+        hash_data_refsloaded = load_refs(get_internal_data_as_jsonld)
+        @model.logger.debug("=== internal JSON full + refs loaded:")
+        @model.logger.debug(JSON.pretty_generate(hash_data_refsloaded))
+
+        # hash_data_jsonld = to_jsonld(get_internal_data_as_jsonld)
+        hash_data_jsonld = to_jsonld(hash_data_refsloaded)
         @model.logger.debug("=== internal JSON-LD:")
         @model.logger.debug(JSON.pretty_generate(hash_data_jsonld))
 
@@ -695,6 +700,27 @@ module Solis
           end
 
         end
+      end
+
+      def load_refs(obj)
+        obj2 = deep_copy(obj)
+        obj.each do |name_attr, content_attr|
+          next if Solis::Utils::JSONLD::RESERVED_FIELDS.include?(name_attr)
+          if Solis::Utils::JSONLD.is_object_a_ref(content_attr)
+            obj_loaded = Entity.new(content_attr, @model, nil, @store).load(deep=true)
+            obj_loaded.delete('@context')
+            obj2[name_attr] = obj_loaded
+          elsif content_attr.is_a?(Array)
+            content_attr.each_with_index do |e, i|
+              if Solis::Utils::JSONLD.is_object_a_ref(e)
+                obj_loaded = Entity.new(e, @model, nil, @store).load(deep=true)
+                obj_loaded.delete('@context')
+                obj2[name_attr][i] = obj_loaded
+              end
+            end
+          end
+        end
+        obj2
       end
 
     end
