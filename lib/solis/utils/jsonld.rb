@@ -196,7 +196,7 @@ module Solis
       end
 
       def self.is_object_a_ref(obj)
-        obj.is_a?(Hash) and obj.key?('@id') and (obj.keys - ['@id', '@type']).empty?
+        obj.is_a?(Hash) and obj.key?('@id') and (obj.keys.length == 1)
       end
 
       def self.is_object_an_embedded_entity(obj)

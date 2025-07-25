@@ -13,6 +13,13 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
     # Copy in case some deep refs are updated
     entities = Marshal.load(Marshal.dump(options[:entities]))
 
+    # If available, get list of entities sorted from independent to using other entities.
+    # This is important for the uiSchema generation:
+    # uiSchema currently does not use definitions like JSONSchema;
+    # hence, for embedded forms, full uiSchema (sub)graphs have to be copied.
+    # If the entities are already sorted from independent to dependent, this is easier.
+    list_entities = options[:sorted_dependencies] || entities.keys
+
     if entities.empty?
       return "No entities found in repository"
     end
@@ -34,10 +41,13 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
     }
 
     # Process each entity to create schema definitions
-    entities.each do |entity_uri, entity_data|
+    list_entities.each do |entity_uri|
+
+      # Get entity data
+      entity_data = entities[entity_uri]
 
       # Generate a definition for this entity
-      definition = convert_entity_to_json_schema(entity_data, entities)
+      definition, entity_ui_schema = convert_entity_to_json_schema(entity_data, entities, schema)
 
       # Add it to the definitions section
       definition_name = Solis::Utils::String.extract_name_from_uri(entity_uri)
@@ -49,34 +59,12 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
         "$ref" => "#/definitions/#{definition_name}"
       }
 
-      # Extract UI Schema information from definition if it exists
-      if definition["ui:order"]
-        schema["uiSchema"][property_name] = {
-          "ui:order" => definition["ui:order"]
-        }
-
-        # Add any property-specific UI schema elements
-        if definition["properties"]
-          definition["properties"].each do |prop_name, prop_schema|
-            if prop_schema["ui:widget"]
-              schema["uiSchema"][property_name] ||= {}
-              schema["uiSchema"][property_name][prop_name] = {
-                "ui:widget" => prop_schema["ui:widget"]
-              }
-              # Remove from actual schema to avoid validation errors
-              definition["properties"][prop_name].delete("ui:widget")
-            end
-          end
-        end
-
-        # Remove ui:order from actual schema to avoid validation errors
-        definition.delete("ui:order")
-      end
+      schema["uiSchema"][property_name] = entity_ui_schema
 
     end
 
     # FIXED: Use UISchemaWriter properly
-    schema = UISchemaWriter.enhance(schema, options)
+    # schema = UISchemaWriter.enhance(schema, options)
 
     # Return the JSON Schema as a formatted string
     JSON.pretty_generate(schema)
@@ -85,7 +73,7 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
   private
 
   # Helper method to convert a single entity to JSON Schema format
-  def self.convert_entity_to_json_schema(entity_data, all_entities)
+  def self.convert_entity_to_json_schema(entity_data, all_entities, schema)
     definition = {
       "type" => "object",
       "properties" => {},
@@ -103,7 +91,8 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
     end
 
     # Add UI schema hints (will be moved to uiSchema later)
-    definition["ui:order"] = []
+    ui_schema = {}
+    ui_schema["ui:order"] = ['@id']
 
     # Process properties
     if entity_data[:properties] && !entity_data[:properties].empty?
@@ -111,11 +100,12 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
         property_name = Solis::Utils::String.extract_name_from_uri(property_uri)
 
         # Convert property to JSON Schema property
-        json_property = convert_property_to_json_schema_detailed(property_uri, property_data, all_entities)
+        json_property, property_ui_schema = convert_property_to_json_schema_detailed(property_uri, property_data, all_entities, schema)
         definition["properties"][property_name] = json_property
+        ui_schema[property_name] = property_ui_schema unless property_ui_schema.empty?
 
         # Add to UI order
-        definition["ui:order"] << property_name
+        ui_schema["ui:order"] << property_name
 
         # Add to required array if minCount >= 1
         if property_data[:constraints][0][:data][:min_count] && property_data[:constraints][0][:data][:min_count] >= 1
@@ -133,17 +123,18 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
       definition.delete("required")
     end
 
-    definition
+    [definition, ui_schema]
   end
 
   # Enhanced property conversion with full support
-  def self.convert_property_to_json_schema_detailed(property_uri, property_data, all_entities)
+  def self.convert_property_to_json_schema_detailed(property_uri, property_data, all_entities, schema)
 
     # NOTE: this is basic but ok for now, will need to be evolved.
     property = property_data[:constraints][0][:data]
     property[:description] = property_data[:constraints][0][:description]
 
     json_property = {}
+    ui_schema = {}
 
     # Get the title with language support
     title = get_label_for_language(property[:labels], nil) ||
@@ -171,7 +162,20 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
       referenced_entity_uri = property[:class]
       referenced_entity = all_entities[referenced_entity_uri]
       if referenced_entity
-        json_property["$ref"] = "#/definitions/#{Solis::Utils::String.extract_name_from_uri(referenced_entity_uri)}"
+        json_property_ref_id = convert_ref_id_property_to_json_schema
+        json_property["oneOf"] = [
+          json_property_ref_id,
+          { "$ref" => "#/definitions/#{Solis::Utils::String.extract_name_from_uri(referenced_entity_uri)}" }
+        ]
+        ui_schema_ref_id = Solis::Utils::String.camel_to_snake(Solis::Utils::String.extract_name_from_uri(referenced_entity_uri))
+        ui_schema["oneOf"] = []
+        ui_schema["oneOf"] << { "ui:title" => "Select existing #{ui_schema_ref_id} URI" }
+        sub_ui_schema = { "ui:title" => "Create new #{ui_schema_ref_id}" }
+        sub_ui_schema.merge!(schema["uiSchema"][ui_schema_ref_id])
+        ui_schema["oneOf"] << sub_ui_schema
+        # NOTE: above it is important to first show the ID option;
+        # otherwise many relations would be visually as nested full forms,
+        # which is unclear and ugly.
       else
         json_property["type"] = "object"
       end
@@ -198,6 +202,12 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
       end
 
       json_property = array_property
+
+      array_ui_schema = {}
+      array_ui_schema["items"] = ui_schema.dup unless ui_schema.empty?
+
+      ui_schema = array_ui_schema
+
     end
 
     # Add string constraints
@@ -222,24 +232,29 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
       json_property["maximum"] = property[:max_value]
     end
 
-    # Add smart UI widget suggestions (will be moved to uiSchema)
-    if json_property["type"] == "string"
-      if property[:max_length] && property[:max_length] > 100
-        json_property["ui:widget"] = "textarea"
-      else
-        json_property["ui:widget"] = "text"
-      end
-    end
-
-    json_property
+    [json_property, ui_schema]
   end
 
   def self.convert_id_property_to_json_schema(name)
     {
       'type' => 'string',
-      'title' => "ID of the #{name}",
-      'description' => "ID of the #{name}",
+      'title' => "URI of the #{name}",
+      'description' => "URI of the #{name}",
       'readOnly' => true
+    }
+  end
+
+  def self.convert_ref_id_property_to_json_schema
+    {
+      'type' => 'object',
+      'properties' => {
+        '@id' => {
+          'type' => 'string',
+          'title' => "URI",
+          'description' => "URI"
+        }
+      },
+      'required' => ['@id']
     }
   end
 
