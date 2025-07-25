@@ -9,6 +9,7 @@ require_relative "utils/namespace"
 require_relative "utils/prefix_resolver"
 require_relative "utils/jsonld"
 require_relative "utils/string"
+require 'tsort'
 
 module Solis
   class Model
@@ -17,6 +18,7 @@ module Solis
     attr_reader :shapes, :validator, :hash_validator_literals, :namespace
     attr_reader :hierarchy_ext, :hierarchy, :hierarchy_full
     attr_reader :info_entities
+    attr_reader :dependencies, :sorted_dependencies
     attr_reader :plurals
 
     def initialize(params = {})
@@ -56,6 +58,10 @@ module Solis
       make_hierarchy
       @info_entities = {}
       make_info_entities
+      @dependencies = {}
+      make_dependencies
+      @sorted_dependencies = []
+      make_sorted_dependencies
     end
 
     def entity
@@ -84,6 +90,8 @@ module Solis
       options[:description] ||= description
       options[:shapes] ||= @shapes
       options[:entities] ||= @info_entities
+      options[:dependencies] ||= @dependencies
+      options[:sorted_dependencies] ||= @sorted_dependencies
 
       case content_type
       when 'text/vnd.mermaid'
@@ -353,7 +361,7 @@ module Solis
     def merge_info_entity_properties!(properties_1, properties_2)
       properties_2.each do |k, v|
         if properties_1.key?(k)
-          properties_1[k][:constraints] << v[:constraints]
+          properties_1[k][:constraints].concat(v[:constraints])
         else
           properties_1[k] = v
         end
@@ -387,6 +395,29 @@ module Solis
           plural: plural,
           snake_case_name: Solis::Utils::String.camel_to_snake(Solis::Utils::String.extract_name_from_uri(name_entity))
         }
+      end
+    end
+
+    def make_dependencies
+      @dependencies = {}
+      @info_entities.each do |name_entity, data_entity|
+        @dependencies[name_entity] = []
+        data_entity[:properties].each_value do |data_property|
+          data_property[:constraints].each do |constraint|
+            info = constraint[:data]
+            if info.key?(:class)
+              @dependencies[name_entity] << info[:class]
+            end
+          end
+        end
+      end
+    end
+
+    def make_sorted_dependencies
+      begin
+        @sorted_dependencies = TSortableHash[@dependencies].tsort
+      rescue
+        @sorted_dependencies = @dependencies.keys
       end
     end
 
