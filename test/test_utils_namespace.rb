@@ -49,6 +49,13 @@ class TestUtilsNamespace < Minitest::Test
   end
 
 
+  def test_prefix_resolver
+    namespace = "http://xmlns.com/foaf/0.1/"
+    prefix = Solis::Utils::PrefixResolver.resolve_prefix(namespace)
+    assert_equal(prefix, 'foaf')
+  end
+
+
   def test_extract_entities_for_namespace
     entities = Solis::Utils::Namespace.extract_entities_for_namespace(@graph, @namespace)
 

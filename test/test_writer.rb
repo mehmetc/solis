@@ -119,4 +119,22 @@ class TestWriter < Minitest::Test
     assert_includes(s.model.entity.all, 'Item')
   end
 
+  def test_write_shacl_for_bibo
+    s = Solis.new({store: Solis::Store::Memory.new(),model: {
+      prefix: 'bibo',
+      namespace: 'http://purl.org/ontology/bibo/',
+      uri: 'file://test/resources/bibo_owl.xml',
+      content_type: 'application/rdf+xml'
+    }})
+    puts JSON.pretty_generate(s.model.info_entities)
+    puts JSON.pretty_generate(s.model.dependencies)
+    puts JSON.pretty_generate(s.model.context)
+    File.open('./test/resources/bibo_shapes.ttl', 'wb') do |f|
+      f.puts s.model.writer
+    end
+    File.open('./test/resources/bibo.puml', 'wb') do |f|
+      f.puts s.model.writer('text/vnd.plantuml')
+    end
+  end
+
 end
