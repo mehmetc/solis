@@ -50,10 +50,10 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
       definition, entity_ui_schema = convert_entity_to_json_schema(entity_data, entities, schema)
 
       # Add it to the definitions section
-      definition_name = Solis::Utils::String.extract_name_from_uri(entity_uri)
+      definition_name = entity_to_definition_name(entity_data)
       schema["definitions"][definition_name] = definition
 
-      property_name = Solis::Utils::String.camel_to_snake(definition_name)
+      property_name = entity_to_property_name(entity_data)
 
       schema["properties"][property_name] = {
         "$ref" => "#/definitions/#{definition_name}"
@@ -71,6 +71,14 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
   end
 
   private
+
+  def self.entity_to_definition_name(entity_data)
+    "#{entity_data[:prefix]}:#{entity_data[:name]}"
+  end
+
+  def self.entity_to_property_name(entity_data)
+    "#{entity_data[:prefix]}:#{entity_data[:snake_case_name]}"
+  end
 
   # Helper method to convert a single entity to JSON Schema format
   def self.convert_entity_to_json_schema(entity_data, all_entities, schema)
@@ -165,19 +173,33 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
         json_property_ref_id = convert_ref_id_property_to_json_schema
         json_property["oneOf"] = [
           json_property_ref_id,
-          { "$ref" => "#/definitions/#{Solis::Utils::String.extract_name_from_uri(referenced_entity_uri)}" }
+          { "$ref" => "#/definitions/#{entity_to_definition_name(all_entities[referenced_entity_uri])}" }
         ]
-        ui_schema_ref_id = Solis::Utils::String.camel_to_snake(Solis::Utils::String.extract_name_from_uri(referenced_entity_uri))
+        ui_schema_ref_id = entity_to_property_name(all_entities[referenced_entity_uri])
         ui_schema["oneOf"] = []
         ui_schema["oneOf"] << { "ui:title" => "Select existing #{ui_schema_ref_id} URI" }
         sub_ui_schema = { "ui:title" => "Create new #{ui_schema_ref_id}" }
-        sub_ui_schema.merge!(schema["uiSchema"][ui_schema_ref_id])
+        referenced_ui_schema = schema["uiSchema"][ui_schema_ref_id] || {}
+        sub_ui_schema.merge!(referenced_ui_schema)
         ui_schema["oneOf"] << sub_ui_schema
         # NOTE: above it is important to first show the ID option;
         # otherwise many relations would be visually as nested full forms,
         # which is unclear and ugly.
       else
         json_property["type"] = "object"
+      end
+    elsif property[:or] && !property[:or].empty?
+      json_property["oneOf"] = []
+      ui_schema["oneOf"] = []
+      properties = property[:or]
+      properties.each_with_index do |or_property_data, i|
+        or_json_property, or_ui_schema = convert_property_to_json_schema_detailed(property_uri, or_property_data, all_entities, schema)
+        json_property["oneOf"] << or_json_property
+        # NOTE: if an element of "oneOf" is not an object, e.g. string,
+        # the ui:title will go hiding the element title, which is not idea.
+        # Still haven't found a solution ...
+        or_ui_schema["ui:title"] = "Option #{i + 1}"
+        ui_schema["oneOf"] << or_ui_schema
       end
     else
       # Default to string if no type specified
