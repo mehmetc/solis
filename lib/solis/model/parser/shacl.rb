@@ -68,7 +68,12 @@ class SHACLParser
         if property_info[:name].empty?
           raise MissingShapeNameError.new(shape.subject, 'property')
         end
-        
+
+        # h = shapes[shape_uri][:properties].select { |k,v| v[:name] == property_info[:name] }
+        # unless h.empty?
+        #   raise DuplicateShapeNameOrURIError.new(property_uri, 'property', property_info[:name])
+        # end
+
         # prop_key = property_uri.node? ? property_info[:name] : property_uri.to_s
         prop_key = property_uri.to_s
         if shapes[shape_uri][:properties].key?(prop_key)
@@ -95,6 +100,10 @@ class SHACLParser
     shapes_graph.query([property_uri, RDF::Vocab::SHACL.datatype, nil]) do |datatype|
       property_info[:constraints][:datatype] = datatype.object.to_s
     end
+
+    # shapes_graph.query([property_uri, RDF::Vocab::SHACL.nodeKind, nil]) do |nodeKind|
+    #   property_info[:constraints][:datatype] = nodeKind.object.to_s
+    # end
 
     shapes_graph.query([property_uri, RDF::Vocab::SHACL.pattern, nil]) do |pattern|
       property_info[:constraints][:pattern] = pattern.object.to_s
