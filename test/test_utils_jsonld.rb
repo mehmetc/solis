@@ -501,4 +501,8 @@ class TestUtilsJSONLD < Minitest::Test
 
   end
 
+  def test_is_empty_object_an_embedded_entity
+    assert Solis::Utils::JSONLD.is_object_an_embedded_entity({})
+  end
+
 end

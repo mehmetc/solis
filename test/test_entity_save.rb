@@ -210,4 +210,110 @@ class TestEntitySave < Minitest::Test
 
   end
 
+  def test_entity_reset_array_and_resave
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "jon doe",
+            "address": {
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "street": "fake street"
+            }
+          }
+        ]
+      }
+    )
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
+
+    car = Solis::Model::Entity.new(data, @model_1, 'Car', store)
+
+    car.save
+
+    puts "\n\nREPO CONTENT:\n\n"
+    puts repository.dump(:ntriples)
+
+    car.attributes.owners = []
+
+    car.save
+
+    puts "\n\nREPO CONTENT:\n\n"
+    puts repository.dump(:ntriples)
+
+    puts car.to_pretty_json
+
+  end
+
+  def test_entity_create_with_empty_object
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+        "name": "jon doe",
+        "address": {}
+      }
+    )
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
+
+    @model_1.logger.level = Logger::DEBUG
+    store.logger.level = Logger::DEBUG
+
+    person = Solis::Model::Entity.new(data, @model_1, 'Person', store)
+
+    person.save
+
+    puts "\n\nREPO CONTENT:\n\n"
+    puts repository.dump(:ntriples)
+
+    puts person.to_pretty_json
+
+  end
+
+  def test_entity_reset_object_and_resave
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+        "name": "jon doe",
+        "address": {
+          "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+          "street": "fake street"
+        }
+      }
+    )
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
+
+    person = Solis::Model::Entity.new(data, @model_1, 'Person', store)
+
+    person.save
+
+    puts "\n\nREPO CONTENT:\n\n"
+    puts repository.dump(:ntriples)
+
+    person.attributes.address = {}
+
+    @model_1.logger.level = Logger::DEBUG
+    store.logger.level = Logger::DEBUG
+
+    person.save
+
+    puts "\n\nREPO CONTENT:\n\n"
+    puts repository.dump(:ntriples)
+
+    puts person.to_pretty_json
+
+  end
+
 end
+

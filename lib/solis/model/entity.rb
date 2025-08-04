@@ -375,6 +375,10 @@ module Solis
         JSON.pretty_generate(hash_data_jsonld)
       end
 
+      def to_pretty_json
+        JSON.pretty_generate(get_internal_data)
+      end
+
       def to_pretty_jsonld_flattened_ordered_expanded
         flattened_ordered_expanded = to_jsonld_flattened_ordered_expanded
         JSON.pretty_generate(flattened_ordered_expanded)
@@ -459,6 +463,12 @@ module Solis
         set_internal_data_from_jsonld(obj)
       end
 
+      def delete_empty_attributes!
+        obj = get_internal_data_as_jsonld
+        Solis::Utils::JSONUtils.delete_empty_attributes!(obj)
+        set_internal_data_from_jsonld(obj)
+      end
+
       def increment_versions!
         obj = get_internal_data_as_jsonld
         Solis::Utils::JSONLD.increment_attributes!(obj, URI_DB_OPTIMISTIC_LOCK_VERSION)
@@ -502,11 +512,15 @@ module Solis
         @model.logger.debug("=== internal JSON full:")
         @model.logger.debug(JSON.pretty_generate(get_internal_data_as_jsonld))
 
-        hash_data_refsloaded = load_refs(get_internal_data_as_jsonld)
+        obj_raw = get_internal_data_as_jsonld
+        Solis::Utils::JSONUtils.delete_empty_attributes!(obj_raw)
+        @model.logger.debug("=== internal JSON full + empties to @uset:")
+        @model.logger.debug(JSON.pretty_generate(obj_raw))
+
+        hash_data_refsloaded = load_refs(obj_raw)
         @model.logger.debug("=== internal JSON full + refs loaded:")
         @model.logger.debug(JSON.pretty_generate(hash_data_refsloaded))
 
-        # hash_data_jsonld = to_jsonld(get_internal_data_as_jsonld)
         hash_data_jsonld = to_jsonld(hash_data_refsloaded)
         @model.logger.debug("=== internal JSON-LD:")
         @model.logger.debug(JSON.pretty_generate(hash_data_jsonld))
@@ -599,6 +613,10 @@ module Solis
         obj_patch.each do |name_attr_patch, val_attr_patch|
 
           next if ['@id', '@type'].include?(name_attr_patch)
+
+          if obj[name_attr_patch].nil? && val_attr_patch.is_a?(Array)
+            obj[name_attr_patch] = []
+          end
 
           # make attribute value always an array
           val_attr_patch = [val_attr_patch] unless val_attr_patch.is_a?(Array)
