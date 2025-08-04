@@ -188,6 +188,8 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
         referenced_ui_schema = schema["uiSchema"][ui_schema_ref_id] || {}
         sub_ui_schema.merge!(referenced_ui_schema)
         ui_schema["oneOf"] << sub_ui_schema
+        json_property["oneOf"][0]["title"] = "Select existing #{ui_schema_ref_id} URI"
+        json_property["oneOf"][1]["title"] = "Create new #{ui_schema_ref_id}"
         # NOTE: above it is important to first show the ID option;
         # otherwise many relations would be visually as nested full forms,
         # which is unclear and ugly.
@@ -202,6 +204,7 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
         or_property_data[:constraints][0][:data][:min_count] = 0
         or_property_data[:constraints][0][:data][:max_count] = 1
         or_json_property, or_ui_schema = convert_property_to_json_schema_detailed(property_uri, or_property_data, all_entities, schema)
+        or_json_property["title"] = "Option #{i + 1}"
         json_property["oneOf"] << or_json_property
         # NOTE: if an element of "oneOf" is not an object, e.g. string,
         # the ui:title will go hiding the element title, which is not idea.
@@ -220,8 +223,12 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
       # Array property
       array_property = {
         "type" => "array",
-        "items" => json_property.dup
+        "items" => json_property.dup,
+        "default" => []
       }
+      # bringing up this seems necessary for some UI renderers (e.g. JSONForms)
+      array_property["title"] = array_property["items"]["title"] if array_property["items"]["title"]
+      array_property["description"] = array_property["items"]["description"] if array_property["items"]["description"]
 
       if property[:min_count] && property[:min_count] > 0
         array_property["minItems"] = property[:min_count]
@@ -290,6 +297,7 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
   def self.convert_type_property_to_json_schema(entity_uri)
     {
       'const' => entity_uri,
+      'default' => entity_uri,
       'readOnly' => true
     }
   end
