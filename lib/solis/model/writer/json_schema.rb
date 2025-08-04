@@ -47,7 +47,7 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
       entity_data = entities[entity_uri]
 
       # Generate a definition for this entity
-      definition, entity_ui_schema = convert_entity_to_json_schema(entity_data, entities, schema)
+      definition, entity_ui_schema = convert_entity_to_json_schema(entity_uri, entity_data, entities, schema)
 
       # Add it to the definitions section
       definition_name = entity_to_definition_name(entity_data)
@@ -81,7 +81,7 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
   end
 
   # Helper method to convert a single entity to JSON Schema format
-  def self.convert_entity_to_json_schema(entity_data, all_entities, schema)
+  def self.convert_entity_to_json_schema(entity_uri, entity_data, all_entities, schema)
     definition = {
       "type" => "object",
       "properties" => {},
@@ -100,7 +100,14 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
 
     # Add UI schema hints (will be moved to uiSchema later)
     ui_schema = {}
-    ui_schema["ui:order"] = ['@id']
+    ui_schema["ui:order"] = []
+
+    definition["properties"]['@id'] = convert_id_property_to_json_schema(entity_data[:snake_case_name])
+    ui_schema["ui:order"] << '@id'
+
+    definition["properties"]['@type'] = convert_type_property_to_json_schema(entity_uri)
+    definition["required"] << '@type'
+    ui_schema["ui:order"] << '@type'
 
     # Process properties
     if entity_data[:properties] && !entity_data[:properties].empty?
@@ -121,7 +128,6 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
         end
       end
     end
-    definition["properties"]['@id'] = convert_id_property_to_json_schema(entity_data[:snake_case_name])
 
     # Add additionalProperties control
     definition["additionalProperties"] = false
@@ -193,6 +199,8 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
       ui_schema["oneOf"] = []
       properties = property[:or]
       properties.each_with_index do |or_property_data, i|
+        or_property_data[:constraints][0][:data][:min_count] = 0
+        or_property_data[:constraints][0][:data][:max_count] = 1
         or_json_property, or_ui_schema = convert_property_to_json_schema_detailed(property_uri, or_property_data, all_entities, schema)
         json_property["oneOf"] << or_json_property
         # NOTE: if an element of "oneOf" is not an object, e.g. string,
@@ -208,7 +216,7 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
     end
 
     # Add cardinality constraints
-    if property[:max_count] && property[:max_count] > 1
+    if (property[:max_count] && property[:max_count] > 1) || property[:max_count].nil?
       # Array property
       array_property = {
         "type" => "array",
@@ -219,7 +227,7 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
         array_property["minItems"] = property[:min_count]
       end
 
-      if property[:max_count] != Float::INFINITY
+      if (property[:max_count] != Float::INFINITY) && !property[:max_count].nil?
         array_property["maxItems"] = property[:max_count]
       end
 
@@ -275,8 +283,14 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
           'title' => "URI",
           'description' => "URI"
         }
-      },
-      'required' => ['@id']
+      }
+    }
+  end
+
+  def self.convert_type_property_to_json_schema(entity_uri)
+    {
+      'const' => entity_uri,
+      'readOnly' => true
     }
   end
 
