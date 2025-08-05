@@ -4,17 +4,22 @@ require_relative "validator/validatorV1"
 require_relative "validator/validatorV2"
 require_relative "model/literals/edtf"
 require_relative "model/literals/iso8601"
-require_relative "utils/rdf"
 require_relative "model/parser/shacl"
 require_relative "utils/namespace"
 require_relative "utils/prefix_resolver"
 require_relative "utils/jsonld"
+require_relative "utils/string"
+require 'tsort'
+require 'active_support/core_ext/string/inflections'
 
 module Solis
   class Model
 
     attr_reader :store, :graph, :namespace, :prefix, :uri, :content_type, :logger
-    attr_reader :shapes, :validator, :hash_validator_literals, :namespace, :hierarchy
+    attr_reader :shapes, :validator, :hash_validator_literals, :namespace, :context, :context_inv
+    attr_reader :hierarchy_ext, :hierarchy, :hierarchy_full
+    attr_reader :info_entities
+    attr_reader :dependencies, :sorted_dependencies
     attr_reader :plurals
 
     def initialize(params = {})
@@ -23,12 +28,23 @@ module Solis
       raise Solis::Error::BadParameter, "One of :prefix, :namespace, :uri is missing" unless (model.keys & [:prefix, :namespace, :uri]).size == 3
       @logger = params[:logger] || Solis.logger([STDOUT])
       @logger.level = Logger::INFO
+      @graph = Solis::Model::Reader.from_uri(model)
       @namespace = model[:namespace] || Solis::Utils::Namespace.detect_primary_namespace(@graph)
       @prefix = model[:prefix] || Solis::Utils::PrefixResolver.resolve_prefix(@namespace)
       @context = {
-        "@vocab" => @namespace,
+        "@vocab" => @namespace
+      }
+      context = {
         prefix => @namespace
       }
+      namespaces = Solis::Utils::Namespace.extract_unique_namespaces(@graph)
+      namespaces.each do |namespace|
+        next if namespace.eql?(@namespace)
+        prefix = Solis::Utils::PrefixResolver.resolve_prefix(namespace)
+        context[prefix] = namespace
+      end
+      @context.merge!(context)
+      @context_inv = context.invert
       @uri = model[:uri]
       @content_type = model[:content_type]
       @store = params[:store] || nil
@@ -39,16 +55,23 @@ module Solis
 
       @plurals = model[:plurals] || {}
 
-      @graph = Solis::Model::Reader.from_uri(model)
-
       @parser = SHACLParser.new(@graph)
       @shapes = @parser.parse_shapes
       @validator = Solis::SHACLValidatorV2.new(@graph, :graph, {
         path_dir: params[:tmp_dir]
       }) rescue Solis::SHACLValidatorV1.new(@graph, :graph, {})
-      @hierarchy = model[:hierarchy] || {}
-      add_hierarchy_to_shapes
+      @hierarchy_ext = model[:hierarchy] || {}
+      add_hierarchy_ext_to_shapes
       add_plurals_to_shapes
+      @hierarchy = {}
+      @hierarchy_full = {}
+      make_hierarchy
+      @info_entities = {}
+      make_info_entities
+      @dependencies = {}
+      make_dependencies
+      @sorted_dependencies = []
+      make_sorted_dependencies
     end
 
     def entity
@@ -76,6 +99,9 @@ module Solis
       options[:version] ||= version
       options[:description] ||= description
       options[:shapes] ||= @shapes
+      options[:entities] ||= @info_entities
+      options[:dependencies] ||= @dependencies
+      options[:sorted_dependencies] ||= @sorted_dependencies
 
       case content_type
       when 'text/vnd.mermaid'
@@ -136,12 +162,12 @@ module Solis
       _set_object_for_preficate(RDF::Vocab::DC.creator, creator)
     end
 
-    def get_embedded_entity_type_for_entity(name_entity, name_attr)
-      _get_embedded_entity_type_for_entity(name_entity, name_attr)
+    def get_property_entity_for_entity(name_entity, name_attr)
+      _get_property_entity_for_entity(name_entity, name_attr)
     end
 
-    def get_datatype_for_entity(name_entity, name_attr)
-      _get_datatype_for_entity(name_entity, name_attr)
+    def get_property_datatype_for_entity(name_entity, name_attr)
+      _get_property_datatype_for_entity(name_entity, name_attr)
     end
 
     def get_parent_entities_for_entity(name_entity)
@@ -158,7 +184,7 @@ module Solis
         list += _get_parent_entities_for_entity(list[idx])
         idx += 1
       end
-      list[1..]
+      list[1..].uniq
     end
 
     def get_shape_for_entity(name_entity)
@@ -167,14 +193,32 @@ module Solis
     end
 
     def get_properties_info_for_entity(name_entity)
-      name_shape = Shapes.get_shape_for_class(@shapes, name_entity)
-      properties = deep_copy(@shapes[name_shape][:properties])
+      properties = {}
+      names_shapes = Shapes.get_shapes_for_class(@shapes, name_entity)
+      names_shapes.each do |name_shape|
+        property_shapes = deep_copy(@shapes[name_shape][:properties])
+        merge_info_entity_properties!(properties, property_shapes_as_entity_properties(property_shapes))
+      end
       names_entities_parents = get_all_parent_entities_for_entity(name_entity)
       names_entities_parents.each do |name_entity_parent|
-        name_shape_parent = Shapes.get_shape_for_class(@shapes, name_entity_parent)
-        properties.merge!(deep_copy(@shapes[name_shape_parent][:properties]))
+        names_shapes_parent = Shapes.get_shapes_for_class(@shapes, name_entity_parent)
+        names_shapes_parent.each do |name_shape_parent|
+          property_shapes_parent = deep_copy(@shapes[name_shape_parent][:properties])
+          properties_parent = property_shapes_as_entity_properties(property_shapes_parent)
+          merge_info_entity_properties!(properties, properties_parent)
+        end
       end
       properties
+    end
+
+    def get_own_properties_list_for_entity(name_entity)
+      list_properties = []
+      names_shapes = Shapes.get_shapes_for_class(@shapes, name_entity)
+      names_shapes.each do |name_shape|
+        property_shapes = deep_copy(@shapes[name_shape][:properties])
+        list_properties.concat(property_shapes.values.map { |v| v[:path] })
+      end
+      list_properties
     end
 
     def find_entity_by_plural(plural)
@@ -240,7 +284,7 @@ module Solis
       Marshal.load(Marshal.dump(obj))
     end
 
-    def _get_embedded_entity_type_for_entity(name_entity, name_attr)
+    def _get_property_entity_for_entity(name_entity, name_attr)
       res = nil
       # first check directly in shape
       name_shape = Shapes.get_shape_for_class(@shapes, name_entity)
@@ -250,13 +294,13 @@ module Solis
         names_entities_parents = get_parent_entities_for_entity(name_entity)
         names_entities_parents.each do |name_entity_parent|
           next unless res.nil?
-          res = _get_embedded_entity_type_for_entity(name_entity_parent, name_attr)
+          res = _get_property_entity_for_entity(name_entity_parent, name_attr)
         end unless names_entities_parents.nil?
       end
       res
     end
 
-    def _get_datatype_for_entity(name_entity, name_attr)
+    def _get_property_datatype_for_entity(name_entity, name_attr)
       res = nil
       # first check directly in shape
       name_shape = Shapes.get_shape_for_class(@shapes, name_entity)
@@ -266,7 +310,7 @@ module Solis
         names_entities_parents = get_parent_entities_for_entity(name_entity)
         names_entities_parents.each do |name_entity_parent|
           next unless res.nil?
-          res = _get_datatype_for_entity(name_entity_parent, name_attr)
+          res = _get_property_datatype_for_entity(name_entity_parent, name_attr)
         end unless names_entities_parents.nil?
       end
       res
@@ -274,12 +318,14 @@ module Solis
 
     def _get_parent_entities_for_entity(name_entity)
       names_entities_parents = []
-      name_shape = Shapes.get_shape_for_class(@shapes, name_entity)
-      names_nodes_parents = Shapes.get_parent_shapes_for_shape(@shapes, name_shape)
-      names_entities_parents += names_nodes_parents.map do |uri|
-        res = @shapes.select { |k,v| v[:uri] == uri }
-        res[uri][:target_class] rescue nil
-      end.compact
+      names_shapes = Shapes.get_shapes_for_class(@shapes, name_entity)
+      names_shapes.each do |name_shape|
+        names_nodes_parents = Shapes.get_parent_shapes_for_shape(@shapes, name_shape)
+        names_entities_parents += names_nodes_parents.map do |uri|
+          res = @shapes.select { |k,v| v[:uri] == uri }
+          res[uri][:target_class] rescue nil
+        end.compact.uniq
+      end
       names_entities_parents
     end
 
@@ -293,24 +339,136 @@ module Solis
       @shapes.each_key do |name_shape|
         name_entity = Shapes.get_target_class_for_shape(@shapes, name_shape)
         name_plural = plurals[name_entity]
-        @shapes[name_shape][:plural] = name_plural
+        @shapes[name_shape][:plural] = name_plural unless name_plural.nil?
+        snake_case_name_entity = Solis::Utils::String.camel_to_snake(Solis::Utils::String.extract_name_from_uri(name_entity))
+        @shapes[name_shape][:plural] ||= snake_case_name_entity.pluralize
       end
     end
 
-    def add_hierarchy_to_shapes
-      @hierarchy.each do |name_base_entity, names_base_entities_parents|
+    def add_hierarchy_ext_to_shapes
+      @hierarchy_ext.each do |name_base_entity, names_base_entities_parents|
         name_entity = Solis::Utils::JSONLD.expand_term(name_base_entity, @context)
-        name_shape = Shapes.get_shape_for_class(@shapes, name_entity)
-        if name_shape.nil?
+        names_shapes = Shapes.get_shapes_for_class(@shapes, name_entity)
+        if names_shapes.empty?
           name_shape = "#{name_entity}Shape"
           @shapes[name_shape] = {properties: {}, uri: name_shape, target_class: name_entity, nodes: [], closed: false, plural: nil}
+          names_shapes = [name_shape]
         end
         names_base_entities_parents.each do |name_base_entity_parent|
           name_entity_parent = Solis::Utils::JSONLD.expand_term(name_base_entity_parent, @context)
-          name_shape_parent = Shapes.get_shape_for_class(@shapes, name_entity_parent)
-          @shapes[name_shape][:nodes] << @shapes[name_shape_parent][:uri]
+          names_shapes_parent = Shapes.get_shapes_for_class(@shapes, name_entity_parent)
+          names_shapes_parent.each do |name_shape_parent|
+            names_shapes.each do |name_shape|
+              @shapes[name_shape][:nodes] << @shapes[name_shape_parent][:uri]
+            end
+          end
         end
       end
     end
+
+    def property_shapes_as_entity_properties(property_shapes)
+      properties = {}
+      property_shapes.each_value do |shape|
+        unless properties.key?(shape[:path])
+          properties[shape[:path]] = { constraints: [] }
+        end
+        constraints = deep_copy(shape[:constraints])
+        if constraints.key?(:or)
+          constraints[:or].map! do |o|
+            h = {
+              o[:path] => o
+            }
+            property_shapes_as_entity_properties(h).values[0]
+          end
+        end
+        properties[shape[:path]][:constraints] << {
+          description: shape[:description],
+          data: constraints
+        }
+      end
+      properties
+    end
+
+    def merge_info_entity_properties!(properties_1, properties_2)
+      properties_2.each do |k, v|
+        if properties_1.key?(k)
+          properties_1[k][:constraints].concat(v[:constraints])
+        else
+          properties_1[k] = v
+        end
+      end
+    end
+
+    def make_hierarchy
+      names_entities = Shapes.get_all_classes(@shapes)
+      names_entities.each do |name_entity|
+        @hierarchy[name_entity] = get_parent_entities_for_entity(name_entity)
+        @hierarchy_full[name_entity] = get_all_parent_entities_for_entity(name_entity)
+      end
+    end
+
+    def make_info_entities
+      names_entities = Shapes.get_all_classes(@shapes)
+      names_entities.each do |name_entity|
+        # NOTE: infer CLASS property from SHAPE property.
+        # If multiple shapes have the same target class (rare but can happen ...), just take one value.
+        names_shapes = Shapes.get_shapes_for_class(@shapes, name_entity)
+        names = names_shapes.collect { |s| @shapes[s][:name] }
+        name = names[0]
+        descriptions = names_shapes.collect { |s| @shapes[s][:description] }
+        description = descriptions[0]
+        plurals = names_shapes.collect { |s| @shapes[s][:plural] }
+        plural = plurals[0]
+        snake_case_name = Solis::Utils::String.camel_to_snake(Solis::Utils::String.extract_name_from_uri(name_entity))
+        namespace_entity = Solis::Utils::String.extract_namespace_from_uri(name_entity)
+        prefix_entity = @context_inv[namespace_entity]
+        @info_entities[name_entity] = {
+          direct_parents: get_parent_entities_for_entity(name_entity),
+          all_parents: get_all_parent_entities_for_entity(name_entity),
+          properties: get_properties_info_for_entity(name_entity),
+          own_properties: get_own_properties_list_for_entity(name_entity),
+          name: name,
+          prefix: prefix_entity,
+          description: description,
+          plural: plural,
+          snake_case_name: snake_case_name
+        }
+      end
+    end
+
+    def make_dependencies
+      @dependencies = {}
+      append_to_deps = lambda do |name_entity, data_property, dependencies|
+        data_property[:constraints].each do |constraint|
+          info = constraint[:data]
+          if info.key?(:class)
+            dependencies[name_entity] << info[:class]
+          end
+          if info.key?(:or)
+            info[:or].each do |data_property_or|
+              append_to_deps.call(name_entity, data_property_or, dependencies)
+            end
+          end
+        end
+      end
+      @info_entities.each do |name_entity, data_entity|
+        @dependencies[name_entity] = []
+        data_entity[:own_properties].each do |name_property|
+          data_property = data_entity[:properties][name_property]
+          append_to_deps.call(name_entity, data_property, @dependencies)
+        end
+        @dependencies[name_entity].uniq!
+      end
+    end
+
+    def make_sorted_dependencies
+      begin
+        @sorted_dependencies = TSortableHash[@dependencies].tsort
+      rescue
+        puts "circular deps found in @dependencies"
+        @sorted_dependencies = @dependencies.keys
+      end
+    end
+
   end
 end

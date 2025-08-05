@@ -8,13 +8,20 @@ module Solis
   class Store
 
     module RDFOperationsRunner
+
       # Expects:
       # - @client_sparql
       # - @logger
+      # - @mutex_repository
+
+      def query_langs
+        ['SPARQL']
+      end
 
       def run_operations(ids_op='all')
         ops_read = []
         ops_write = []
+        ops_any = []
         indexes = []
         @ops.each_with_index do |op, index|
           if ids_op.is_a?(Array)
@@ -22,8 +29,10 @@ module Solis
           end
           if op['type'].eql?('read')
             ops_read << op
-          else
+          elsif op['type'].eql?('write')
             ops_write << op
+          else
+            ops_any << op
           end
           indexes << index
         end
@@ -33,6 +42,7 @@ module Solis
         # This way, @ops can be updated successfully.
         res.merge!(run_write_operations(ops_write))
         res.merge!(run_read_operations(ops_read))
+        res.merge!(run_any_operations(ops_any))
         # remove performed operations from list;
         # following does not seem thread-safe, but ok for the now ...
         indexes.sort.reverse_each { |index| @ops.delete_at(index) }
@@ -60,7 +70,10 @@ module Solis
       def get_data_for_subject(s, context, deep)
         # create graph of query results
         graph = RDF::Graph.new
-        fill_graph_from_subject_root = lambda do |g, s, deep|
+        traversed = []
+        fill_graph_from_subject_root = lambda do |g, s, traversed, deep|
+          return if traversed.include?(s.to_s)
+          traversed << s.to_s
           query = @client_sparql.select.where([s, :p, :o])
           query.each_solution do |solution|
             @logger.debug([s, solution.p, solution.o])
@@ -68,12 +81,14 @@ module Solis
             if deep
               # if solution.o.is_a?(RDF::URI) or solution.o.is_a?(RDF::Literal::AnyURI)
               if solution.o.is_a?(RDF::URI)
-                fill_graph_from_subject_root.call(g, RDF::URI(solution.o), deep)
+                # unless traversed.include?(solution.o.to_s)
+                  fill_graph_from_subject_root.call(g, RDF::URI(solution.o), traversed, deep)
+                # end
               end
             end
           end
         end
-        fill_graph_from_subject_root.call(graph, s, deep)
+        fill_graph_from_subject_root.call(graph, s, traversed, deep)
         # turn graph into JSON-LD hash
         jsonld = JSON::LD::API.fromRDF(graph)
         @logger.debug(JSON.pretty_generate(jsonld))
@@ -100,7 +115,7 @@ module Solis
         @logger.debug(JSON.pretty_generate(jsonld_compacted))
         # find the type of the (root) object with URI "s"
         obj_root = jsonld_compacted.find { |e| e['@id'] == s.to_s }
-        type = obj_root.nil? ? nil : obj_root['@type']
+        type = obj_root.nil? ? nil : obj_root['@type'][0]
         # frame JSON-LD; this will:
         # - compact attributes thanks to "@vocab"
         # - embed (at any depth) objects to the root one, thanks to @embed;
@@ -117,17 +132,31 @@ module Solis
         @logger.debug(JSON.pretty_generate(jsonld_compacted_framed))
         # produce result
         res = {}
+        message = ""
+        success = true
         # if framing created a "@graph" (empty) attribute,
-        # then there was no matching result in the framing
-        unless jsonld_compacted_framed.key?('@graph')
+        # then there was either no matching result in the framing,
+        # or embedded objects with the same type (only first matters)
+        if jsonld_compacted_framed.key?('@graph')
+          if jsonld_compacted_framed['@graph'].size == 0
+            message = "no entity with id '#{s.to_s}'"
+            success = false
+          else
+            res = jsonld_compacted_framed['@graph'][0]
+            res['@context'] = jsonld_compacted_framed['@context']
+          end
+        else
           res = jsonld_compacted_framed
         end
         context = res.delete('@context')
-        # puts JSON.pretty_generate(res)
-        # if res.empty?
-        #   raise StandardError, "no entity with id '#{s.to_s}'"
-        # end
-        [res, context]
+        {
+          "success" => success,
+          "message" => message,
+          "data" => {
+            "obj" => res,
+            "context" => context
+          }
+        }
       end
 
       def ask_if_object_is_referenced(o)
@@ -168,6 +197,29 @@ module Solis
         res
       end
 
+      def run_any_operations(ops_generic)
+        res = ops_generic.map do |op|
+          case op['name']
+          when 'run_raw_query'
+            query, type_query = op['content']
+            r = _run_raw_query(query, type_query)
+          end
+          [op['id'], r]
+        end.to_h
+        res
+      end
+
+
+      def _run_raw_query(query, type_query)
+        results = @client_sparql.query(query)
+        case type_query
+        when 'find_records'
+          results.map { |solution| solution[:s].to_s }
+        when 'count_records'
+          results.first[:count].to_i
+        end
+      end
+
       def run_write_operations(ops)
         ops_save = []
         ops_destroy = []
@@ -203,92 +255,139 @@ module Solis
       end
 
       def delete_attributes_for_subjects(ss)
+#         unless ss.empty?
+#           str_ids = ss.map { |s| "<#{s.to_s}>" }.join(' ')
+#
+#           # Fixed single query: only delete if subjects are NOT referenced
+#           str_query = %(
+# WITH <#{@client_sparql.options[:graph]}>
+#   DELETE {
+#     ?s ?p ?o
+#   }
+#   WHERE {
+#     VALUES ?s { #{str_ids} }
+#     ?s ?p ?o .
+#     FILTER NOT EXISTS {
+#       ?other_entity ?any_property ?s
+#     }
+#   }
+#     )
+#
+#           @logger.debug("\n\nDELETE QUERY:\n\n")
+#           @logger.debug(str_query)
+#           @logger.debug("\n\n")
+#
+#           # Count subjects before deletion to check if any were actually deleted
+#           count_query = %(
+#       SELECT (COUNT(DISTINCT ?s) AS ?count) WHERE {
+#         VALUES ?s { #{str_ids} }
+#         ?s ?p ?o .
+#         FILTER NOT EXISTS {
+#           ?other_entity ?any_property ?s
+#         }
+#       }
+#     )
+#
+#           # Check how many subjects can be safely deleted
+#           count_result = @client_sparql.query(count_query)
+#           deletable_count = count_result.first[:count].to_i
+#
+#           if deletable_count == 0
+#             # Check if subjects exist but are referenced
+#             exist_query = %(
+#         ASK WHERE {
+#           VALUES ?s { #{str_ids} }
+#           ?s ?p ?o
+#         }
+#       )
+#
+#             subjects_exist = @client_sparql.ask(exist_query)
+#
+#             if subjects_exist
+#               return {
+#                 "success" => false,
+#                 "message" => "Cannot delete: subjects are referenced by other entities"
+#               }
+#             else
+#               return {
+#                 "success" => true,
+#                 "message" => "No subjects found to delete"
+#               }
+#             end
+#           end
+#
+#           # Execute the deletion
+#           begin
+#             repository = @client_sparql.query(str_query, update: true)
+#
+#             if deletable_count < ss.length
+#               return {
+#                 "success" => false,
+#                 "message" => "Only #{deletable_count} of #{ss.length} subjects could be deleted (others are referenced)"
+#               }
+#             else
+#               return {
+#                 "success" => true,
+#                 "message" => "Successfully deleted #{deletable_count} subject(s)"
+#               }
+#             end
+#           rescue => e
+#             return {
+#               "success" => false,
+#               "message" => "Delete failed: #{e.message}"
+#             }
+#           end
+#         end
         unless ss.empty?
-          str_ids = ss.map { |s| "<#{s.to_s}>" }.join(' ')
-
-          # Fixed single query: only delete if subjects are NOT referenced
+          str_ids = ss.map { |s| "<#{s.to_s}>" } .join(' ')
+          # This query string takes care of:
+          # - deleting attributes of one of more subjects
+          # - checking that those subjects are not objects in other triples
+          # (i.e. they are not referenced)
+          # Both together in the same query.
           str_query = %(
-WITH <#{@client_sparql.options[:graph]}>
-  DELETE {
-    ?s ?p ?o
-  }
-  WHERE {
-    VALUES ?s { #{str_ids} }
-    ?s ?p ?o .
-    FILTER NOT EXISTS {
-      ?other_entity ?any_property ?s
-    }
-  }
-    )
-
+                    DELETE {
+                      ?s ?p ?o
+                    }
+                    WHERE {
+                      FILTER NOT EXISTS { ?s_ref ?p_ref ?s } .
+                      VALUES ?s { #{str_ids} } .
+                      ?s ?p ?o .
+                    }
+                  )
           @logger.debug("\n\nDELETE QUERY:\n\n")
           @logger.debug(str_query)
           @logger.debug("\n\n")
-
-          # Count subjects before deletion to check if any were actually deleted
-          count_query = %(
-      SELECT (COUNT(DISTINCT ?s) AS ?count) WHERE {
-        VALUES ?s { #{str_ids} }
-        ?s ?p ?o .
-        FILTER NOT EXISTS {
-          ?other_entity ?any_property ?s
-        }
-      }
-    )
-
-          # Check how many subjects can be safely deleted
-          count_result = @client_sparql.query(count_query)
-          deletable_count = count_result.first[:count].to_i
-
-          if deletable_count == 0
-            # Check if subjects exist but are referenced
-            exist_query = %(
-        ASK WHERE {
-          VALUES ?s { #{str_ids} }
-          ?s ?p ?o
-        }
-      )
-
-            subjects_exist = @client_sparql.ask(exist_query)
-
-            if subjects_exist
-              return {
-                "success" => false,
-                "message" => "Cannot delete: subjects are referenced by other entities"
-              }
-            else
-              return {
-                "success" => true,
-                "message" => "No subjects found to delete"
-              }
-            end
+          # run query
+          # TODO: repository seems a snapshot of the triple store
+          # after the query.
+          # This seems inefficient, especially if the store contains
+          # a lot of triple. To check better ...
+          repository = @client_sparql.query(str_query, update: true)
+          # check if delete failed because subjects were referenced
+          client_sparql = SPARQL::Client.new(repository)
+          subjects_were_referenced = client_sparql.ask
+                                                  .where([:s_ref, :p_ref, :s])
+                                                  .values(:s, *ss)
+                                                  .true?
+          # if subjects_were_referenced
+          #   raise StandardError, "any of these '#{str_ids}' was referenced"
+          # end
+          success = !subjects_were_referenced
+          message = ''
+          if subjects_were_referenced
+            message = "any of these '#{str_ids}' was referenced"
           end
-
-          # Execute the deletion
-          begin
-            repository = @client_sparql.query(str_query, update: true)
-
-            if deletable_count < ss.length
-              return {
-                "success" => false,
-                "message" => "Only #{deletable_count} of #{ss.length} subjects could be deleted (others are referenced)"
-              }
-            else
-              return {
-                "success" => true,
-                "message" => "Successfully deleted #{deletable_count} subject(s)"
-              }
-            end
-          rescue => e
-            return {
-              "success" => false,
-              "message" => "Delete failed: #{e.message}"
-            }
-          end
+          {
+            "success" => success,
+            "message" => message
+          }
         end
       end
 
       def run_save_operations(ops_generic)
+
+        return {} if ops_generic.empty?
 
         # convert endpoint-agnostic operations into RDF operations
         ops = ops_generic.map do |op|
@@ -296,7 +395,7 @@ WITH <#{@client_sparql.options[:graph]}>
           case op['name']
           when 'save_id_with_type'
             id, _, type = op_rdf['content']
-            s, p, o = [RDF::URI(id), RDF::RDFV.type, type]
+            s, p, o = [RDF::URI(id), RDF::RDFV.type, RDF::URI(type)]
             op_rdf['content'] = [s, p, o]
           when 'save_attribute_for_id'
             id, name_attr, val_attr, type_attr = op_rdf['content']
@@ -306,9 +405,29 @@ WITH <#{@client_sparql.options[:graph]}>
             id, name_attr = op_rdf['content']
             s, p = prepare_subject_and_predicate(id, name_attr)
             op_rdf['content'] = [s, p]
+          else
+            op_rdf = nil
           end
           op_rdf
-        end
+        end.compact
+
+        ops_filters = ops_generic.map do |op|
+          op_rdf = Marshal.load(Marshal.dump(op))
+          case op['name']
+          when 'set_attribute_condition_for_saves'
+            id, name_attr, val_attr, type_attr = op_rdf['content']
+            s, p, o = prepare_statement(id, name_attr, val_attr, type_attr)
+            op_rdf['row_where'] = RDF::Statement(s, p, o).to_s
+          when 'set_not_existing_id_condition_for_saves'
+            id = op_rdf['content'][0]
+            op_rdf['row_where'] = "FILTER NOT EXISTS { <#{id}> ?p ?o }"
+          else
+            op_rdf = nil
+          end
+          op_rdf
+        end.compact
+
+        clause_where = ops_filters.map { |op| op['row_where'] } .join(' ')
 
         # create empty delete graph
         insert = {
@@ -330,9 +449,6 @@ WITH <#{@client_sparql.options[:graph]}>
           cache_ops[key_sp] = [] unless cache_ops.key?(key_sp)
           cache_ops[key_sp] << st[2]
         end
-
-        # begin critical section
-        @logger.debug("\n\n-- BEGIN CRITICAL SECTION: \n\n")
 
         # write graphs
         ops.each do |op|
@@ -401,107 +517,95 @@ WITH <#{@client_sparql.options[:graph]}>
 
           end
 
-
         end
 
+        nothing_to_save = false
 
-        unless delete['graph'].empty? and insert['graph'].empty?
+        success = true
+        message = ""
+        message_dirty = "data is dirty"
+
+        unless nothing_to_save
 
           method = 2
 
           case method
           when 1
 
-            rollbacks = []
-
-            # run delete query
-            str_query = SPARQL::Client::Update::DeleteData.new(delete['graph'], graph: @name_graph).to_s
-            @logger.debug("\n\nDELETE QUERY:\n\n")
-            @logger.debug(str_query)
-            @logger.debug("\n\n")
-            begin
-              @client_sparql.delete_data(delete['graph'])
-            rescue RuntimeError => e
-              @logger.debug("error deleting data: #{e.full_message}")
-              @logger.debug("rolling back ...")
-              rollback(rollbacks)
-              raise RuntimeError, e
-            end
-            rollbacks << {
-              type: 'query_insert',
-              graph: delete['graph']
-            }
-
-            # run insert query
-            str_query = SPARQL::Client::Update::InsertData.new(insert['graph'], graph: @name_graph).to_s
-            @logger.debug("\n\nINSERT QUERY:\n\n")
-            @logger.debug(str_query)
-            @logger.debug("\n\n")
-            begin
-              @client_sparql.insert_data(insert['graph'])
-            rescue RuntimeError => e
-              @logger.debug("error inserting data: #{e.full_message}")
-              @logger.debug("rolling back ...")
-              rollback(rollbacks)
-              raise RuntimeError, e
-            end
-            rollbacks << {
-              type: 'query_delete',
-              graph: insert['graph']
-            }
-
           when 2
 
-            # Found out later that the following is possible by SPARQL language.
-            # Of course better than method 1 because supposedly atomic (no rollout strategies needed).
-
-            str_query = SPARQL::Client::Update::DeleteInsert.new(delete['graph'], insert['graph'], nil, graph: @name_graph).to_s
-            @logger.debug("\n\nDELETE/INSERT QUERY:\n\n")
-            @logger.debug(str_query)
-            @logger.debug("\n\n")
-
-            method_di = 1
+            method_di = 3
 
             case method_di
-            when 1
-              # this works
 
-              @client_sparql.delete_insert(delete['graph'], insert['graph'], nil)
-            when 2
-              # this does not, which is strange because the DELETE/WHERE query works
-              # when using @client_sparql.query(str_query, update: true).
-              # It would be nice to have it running so we can use the raw SPARQL query string
-              # and be sure it is not internally split into DELETE + INSERT.
+            when 3
 
-              # str_query = "WITH <#{@name_graph}>"
-              # unless delete['graph'].empty?
-              #   str_query += "\nDELETE {\n#{delete['graph'].dump(:ntriples)}}"
-              # end
-              # unless insert['graph'].empty?
-              #   str_query += "\nINSERT {\n#{insert['graph'].dump(:ntriples)}}"
-              # end
-              # # str_query += "\nWHERE { }\n"
-              # # str_query += "\nWHERE { ?s ?p ?o }\n"
-              # puts str_query
+              case @client_sparql.url
+              when RDF::Queryable
 
-              @client_sparql.query(str_query, update: true)
-              # @client_sparql.instance_variable_set("@op", :update)
-              # puts @client_sparql.instance_variable_get("@op")
-              # SPARQL.execute(str_query, @client_sparql.url, update: true)
+                perform_delete_insert_where_with_report_atomic = lambda do
+                  str_query_ask = "ASK WHERE { #{clause_where} }"
+                  @logger.debug("\n\nASK QUERY:\n\n")
+                  @logger.debug(str_query_ask)
+                  @logger.debug("\n\n")
+                  has_pattern = @client_sparql.query(str_query_ask).true?
+                  if has_pattern
+                    str_query = create_delete_insert_where_query(delete['graph'], insert['graph'], clause_where)
+                    @logger.debug("\n\nDELETE/INSERT QUERY:\n\n")
+                    @logger.debug(str_query)
+                    @logger.debug("\n\n")
+                    @client_sparql.update(str_query)
+                  end
+                  report = { can_update: has_pattern }
+                  report
+                end
+                report = nil
+                if @mutex_repository.nil?
+                  report = perform_delete_insert_where_with_report_atomic.call
+                else
+                  @mutex_repository.synchronize do
+                    report = perform_delete_insert_where_with_report_atomic.call
+                  end
+                end
+                unless report[:can_update]
+                  success = false
+                  message = message_dirty
+                end
+
+
+              else
+
+                query = create_delete_insert_where_query(delete['graph'], insert['graph'], clause_where, name_graph=@name_graph)
+                @logger.debug("\n\nDELETE/INSERT QUERY:\n\n")
+                @logger.debug(query)
+                @logger.debug("\n\n")
+                response = client.response(query)
+                report = client.parse_report(response)
+                if report[:count_update] == 0
+                  success = false
+                  message = message_dirty
+                end
+
+              end
+
             end
 
           end
 
         end
 
-        # end critical section
-        @logger.debug("\n\n-- END CRITICAL SECTION: \n\n")
-
         res = ops_generic.map do |op|
-          [op['id'], 'ok']
+          [op['id'], {
+            "success" => success,
+            "message" => message
+          }]
         end.to_h
         res
 
+      end
+
+      def prepare_subject(id)
+        RDF::URI(id)
       end
 
       def prepare_subject_and_predicate(id, name_attr)
@@ -532,24 +636,13 @@ WITH <#{@client_sparql.options[:graph]}>
         objects
       end
 
-      def rollback(rollbacks)
-        rollbacks.each_with_index do |op, i|
-          @logger.debug("\n\nROLLBACK QUERY: #{i+1}")
-          case op[:type]
-          when 'query_insert'
-            str_query = SPARQL::Client::Update::InsertData.new(op[:graph], graph: @name_graph).to_s
-            @logger.debug("\n\nINSERT QUERY (AS ROLLBACK QUERY):\n\n")
-            @logger.debug(str_query)
-            @logger.debug("\n\n")
-            @client_sparql.insert_data(op[:graph])
-          when 'query_delete'
-            str_query = SPARQL::Client::Update::DeleteData.new(op[:graph], graph: @name_graph).to_s
-            @logger.debug("\n\nDELETE QUERY (AS ROLLBACK QUERY):\n\n")
-            @logger.debug(str_query)
-            @logger.debug("\n\n")
-            @client_sparql.delete_data(op[:graph])
-          end
+      def create_delete_insert_where_query(graph_delete, graph_insert, clause_where, name_graph=nil)
+        str_query = ""
+        unless name_graph.nil?
+          str_query += "WITH GRAPH <#{name_graph}>"
         end
+        str_query += "DELETE { #{graph_delete.dump(:ntriples)} } INSERT { #{graph_insert.dump(:ntriples)} } WHERE { #{clause_where} }"
+        str_query
       end
 
     end

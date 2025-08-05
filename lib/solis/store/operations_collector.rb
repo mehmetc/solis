@@ -48,6 +48,42 @@ module Solis
 
       end
 
+      def set_attribute_condition_for_saves(id, name_attr, val_attr, type_attr)
+
+        op = {
+          "id" => SecureRandom.uuid,
+          "name" => "set_attribute_condition_for_saves",
+          "type" => "write",
+          "opts" => nil,
+          "content" => [id, name_attr, val_attr, type_attr]
+        }
+
+        @logger.debug(op)
+
+        @ops << op
+
+        op['id']
+
+      end
+
+      def set_not_existing_id_condition_for_saves(id)
+
+        op = {
+          "id" => SecureRandom.uuid,
+          "name" => "set_not_existing_id_condition_for_saves",
+          "type" => "write",
+          "opts" => nil,
+          "content" => [id]
+        }
+
+        @logger.debug(op)
+
+        @ops << op
+
+        op['id']
+
+      end
+
       def delete_attribute_for_id(id, name_attr)
 
         op = {
@@ -130,6 +166,24 @@ module Solis
           "type" => "write",
           "opts" => nil,
           "content" => [id]
+        }
+
+        @logger.debug(op)
+
+        @ops << op
+
+        op['id']
+
+      end
+
+      def run_raw_query(query, type_query)
+
+        op = {
+          "id" => SecureRandom.uuid,
+          "name" => "run_raw_query",
+          "type" => "any",
+          "opts" => nil,
+          "content" => [query, type_query]
         }
 
         @logger.debug(op)

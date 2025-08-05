@@ -13,6 +13,9 @@ class TestUtilsNamespace < Minitest::Test
     @graph = @solis.model.graph
     @namespace = @solis.model.namespace
     @prefix = @solis.model.prefix
+    File.open('./test/resources/bibo_shapes.ttl', 'wb') do |f|
+      f.puts @solis.model.writer
+    end
   end
 
   def test_extract_unique_namespaces
@@ -43,6 +46,13 @@ class TestUtilsNamespace < Minitest::Test
 
     primary_prefix = Solis::Utils::PrefixResolver.resolve_prefix(primary)
     assert_equal primary_prefix, @prefix
+  end
+
+
+  def test_prefix_resolver
+    namespace = "http://xmlns.com/foaf/0.1/"
+    prefix = Solis::Utils::PrefixResolver.resolve_prefix(namespace)
+    assert_equal(prefix, 'foaf')
   end
 
 

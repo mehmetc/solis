@@ -26,6 +26,34 @@ module Solis
         obj2
       end
 
+      def self.delete_empty_attributes!(obj)
+        obj.each do |name_attr, val_attr|
+          if [Array, Hash].include?(val_attr.class) && val_attr.empty?
+            obj[name_attr] = '@unset'
+          else
+            if val_attr.is_a?(Array)
+              val_attr.each do |e|
+                if e.is_a?(Hash)
+                  delete_empty_attributes!(e)
+                end
+              end
+            elsif val_attr.is_a?(Hash)
+              delete_empty_attributes!(val_attr)
+            end
+          end
+        end
+      end
+
+      # very smart: https://stackoverflow.com/a/50471832
+      def self.recursive_compact!(hash_or_array, exclude_types=[])
+        p = proc do |*args|
+          v = args.last
+          v.delete_if(&p) if v.respond_to?(:delete_if)
+          v.nil? || v.respond_to?(:"empty?") && v.empty? && !exclude_types.include?(v.class)
+        end
+        hash_or_array.delete_if(&p)
+      end
+
     end
   end
 end

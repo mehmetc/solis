@@ -57,11 +57,11 @@ class TestEntityBulkOps < Minitest::Test
     store.run_operations
 
     str_ttl_truth = %(
-      <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Car" .
+      <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.com/Car> .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/color> "green" .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/color> "yellow" .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/brand> "toyota" .
-      <https://example.com/77f77a12-d05a-4872-b789-e25219302e8a> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Car" .
+      <https://example.com/77f77a12-d05a-4872-b789-e25219302e8a> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.com/Car> .
       <https://example.com/77f77a12-d05a-4872-b789-e25219302e8a> <https://example.com/color> "pink" .
       <https://example.com/77f77a12-d05a-4872-b789-e25219302e8a> <https://example.com/brand> "subaru" .
     )
@@ -69,6 +69,7 @@ class TestEntityBulkOps < Minitest::Test
     graph_truth.from_ttl(str_ttl_truth)
 
     graph_to_check = RDF::Graph.new(data: repository)
+    delete_metadata_from_graph(graph_to_check)
 
     assert_equal(graph_truth == graph_to_check, true)
 
@@ -76,11 +77,11 @@ class TestEntityBulkOps < Minitest::Test
     car_2.destroy(delayed=true)
 
     str_ttl_truth = %(
-      <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Car" .
+      <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.com/Car> .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/color> "green" .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/color> "yellow" .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/brand> "toyota" .
-      <https://example.com/77f77a12-d05a-4872-b789-e25219302e8a> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Car" .
+      <https://example.com/77f77a12-d05a-4872-b789-e25219302e8a> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.com/Car> .
       <https://example.com/77f77a12-d05a-4872-b789-e25219302e8a> <https://example.com/color> "pink" .
       <https://example.com/77f77a12-d05a-4872-b789-e25219302e8a> <https://example.com/brand> "subaru" .
     )
@@ -88,6 +89,7 @@ class TestEntityBulkOps < Minitest::Test
     graph_truth.from_ttl(str_ttl_truth)
 
     graph_to_check = RDF::Graph.new(data: repository)
+    delete_metadata_from_graph(graph_to_check)
 
     assert_equal(graph_truth == graph_to_check, true)
 

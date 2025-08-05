@@ -36,7 +36,9 @@ Gem::Specification.new do |spec|
   # Uncomment to register a new dependency of your gem
   # spec.add_dependency "example-gem", "~> 1.0"
   spec.add_dependency "json", "~> 2.12"
-  spec.add_dependency "linkeddata", "~> 3.3"
+  spec.add_dependency "linkeddata", "~> 3.3.1"
+  spec.add_dependency "sparql", "~> 3.3.0"
+  spec.add_dependency "sparql-client", "~> 3.3.0"
   spec.add_dependency "graphiti", "~> 1.8"
   spec.add_dependency "graphiti_graphql", "~> 0.1"
   spec.add_dependency "data_collector", "~> 0.62"

@@ -34,9 +34,9 @@ class TestModel < Minitest::Test
   def test_model_instantiate_car_entity
     car_entity = @solis.model.entity.new('Car')
 
-    assert_equal('Car', car_entity.instance_variable_get('@type'))
+    assert_equal('Car', car_entity.attributes['_type'])
     #TODO: the id cannot start with an @ in Ruby
-    assert_match(@solis.model.namespace, car_entity["_id"])
+    assert_match(@solis.model.namespace, car_entity.attributes["_id"])
   end
 
   def test_model_instance_namepace
@@ -47,12 +47,12 @@ class TestModel < Minitest::Test
     assert_equal(@prefix, @solis.model.prefix)
   end
 
-  def test_model_car_instance_should_return_an_error_when_requesting_non_existing_property
-    car_entity = @solis.model.entity.new('Car')
-    assert_raises Solis::Error::PropertyNotFound do
-      car_entity.blabla
-    end
-  end
+  # def test_model_car_instance_should_return_an_error_when_requesting_non_existing_property
+  #   car_entity = @solis.model.entity.new('Car')
+  #   assert_raises Solis::Error::PropertyNotFound do
+  #     car_entity.blabla
+  #   end
+  # end
 
   def test_model_check_core_functions
 
@@ -85,7 +85,9 @@ class TestModel < Minitest::Test
         hierarchy: hierarchy,
         plurals: {
           'Car' => 'cars',
-          'ElectricCar' => 'electric_cars'
+          'ElectricCar' => 'electric_cars',
+          'Person' => 'persons',
+          'Address' => 'addresses'
         }
       })
 
@@ -98,24 +100,27 @@ class TestModel < Minitest::Test
       r = model.get_parent_entities_for_entity('https://example.com/Car')
       assert_equal(r.empty?, true)
 
-      r = model.get_embedded_entity_type_for_entity('https://example.com/Car', 'https://example.com/owners')
+      r = model.get_property_entity_for_entity('https://example.com/Car', 'https://example.com/owners')
       assert_equal(r == 'https://example.com/Person', true)
 
-      r = model.get_embedded_entity_type_for_entity('https://example.com/ElectricCar', 'https://example.com/owners')
+      r = model.get_property_entity_for_entity('https://example.com/ElectricCar', 'https://example.com/owners')
       assert_equal(r == 'https://example.com/Person', true)
 
-      # thi may vary in the future, might expand term internally ....
-      r = model.get_embedded_entity_type_for_entity('https://example.com/ElectricCar', 'owners')
+      r = model.get_property_entity_for_entity('https://example.com/ElectricCar', 'owners')
       assert_equal(r.nil?, true)
 
-      r = model.get_embedded_entity_type_for_entity('https://example.com/ElectricCar', nil)
+      r = model.get_property_entity_for_entity('https://example.com/ElectricCar', nil)
       assert_equal(r.nil?, true)
 
-      r = model.get_datatype_for_entity('https://example.com/ElectricCar', 'https://example.com/color')
+      r = model.get_property_datatype_for_entity('https://example.com/ElectricCar', 'https://example.com/color')
       assert_equal(r == 'http://www.w3.org/2001/XMLSchema#string', true)
 
       r = model.get_properties_info_for_entity('https://example.com/ElectricCar')
       assert_equal(r.key?('https://example.com/color'), true)
+
+      r = model.info_entities
+      assert_equal(r.key?('https://example.com/ElectricCar'), true)
+      assert_equal(r['https://example.com/ElectricCar'][:properties].key?('https://example.com/color'), true)
 
       r = model.get_shape_for_entity('https://example.com/ElectricCar')
       assert_equal(r[:uri] == 'https://example.com/ElectricCarShape', true)
@@ -123,6 +128,9 @@ class TestModel < Minitest::Test
 
       assert_equal(model.find_entity_by_plural('electric_cars'), 'https://example.com/ElectricCar')
       assert_equal(model.find_entity_by_plural('electric_carsss'), nil)
+
+      assert_equal(model.hierarchy['https://example.com/Car'], [])
+      assert_equal(model.hierarchy['https://example.com/ElectricCar'], ['https://example.com/Car'])
 
     end
 

@@ -1,0 +1,483 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam classFontName Arial
+
+class Event << (S,#ADD1B2) >> {
+  ' The organizer of an event; includes conference organizers, but also government agencies or other bodies that are responsible for conducting hearings.
+  organizer : Agent
+}
+
+class Agent << (S,#ADD1B2) >> {
+}
+
+class AcademicArticle << (S,#ADD1B2) >> {
+}
+
+class Article << (S,#ADD1B2) >> {
+}
+
+class AudioDocument << (S,#ADD1B2) >> {
+}
+
+class AudioVisualDocument << (S,#ADD1B2) >> {
+  ' A Film director.
+  director : Agent
+}
+
+class Bill << (S,#ADD1B2) >> {
+}
+
+class Book << (S,#ADD1B2) >> {
+}
+
+class BookSection << (S,#ADD1B2) >> {
+  ' An chapter number
+  chapter : String
+}
+
+class Brief << (S,#ADD1B2) >> {
+}
+
+class Chapter << (S,#ADD1B2) >> {
+}
+
+class Code << (S,#ADD1B2) >> {
+  hasPart : Legislation [Required]
+}
+
+class CollectedDocument << (S,#ADD1B2) >> {
+  hasPart : Document [Required]
+}
+
+class Collection << (S,#ADD1B2) >> {
+  eissn : String
+  issn : String
+  ' The number of volumes contained in a collection of documents (usually a series, periodical, etc.).
+  numVolumes : String
+  ' Distributor of a document or a collection of documents.
+  distributor : Agent
+  ' A person having managerial and sometimes policy-making responsibility for the editorial part of a publishing firm or of a newspaper, magazine, or other publication.
+  editor : Agent
+  ' An entity responsible for issuing often informally published documents such as press releases, reports, etc.
+  issuer : Agent
+  ' Owner of a document or a collection of documents.
+  owner : Agent
+  ' Producer of a document or a collection of documents.
+  producer : Agent
+  ' A person who translates written document from one language to another.
+  translator : Agent
+  asin : String
+  coden : String
+  doi : String
+  eanucc13 : String
+  gtin14 : String
+  handle : String
+  identifier : String
+  isbn10 : String
+  isbn13 : String
+  lccn : String
+  oclcnum : String
+  pmid : String
+  sici : String
+  upc : String
+  ' Universal Resource Identifier of a document
+  uri : String
+  hasPart : any
+}
+
+class Conference << (S,#ADD1B2) >> {
+}
+
+class CourtReporter << (S,#ADD1B2) >> {
+  hasPart : LegalDocument [Required]
+}
+
+class Document << (S,#ADD1B2) >> {
+  ' An ordered list of authors. Normally, this list is seen as a priority list that order authors by importance.
+  authorList : any
+  ' Relates a document to another document that cites the
+first document.
+  citedBy : Document
+  ' Relates a document to another document that is cited
+by the first document as reference, comment, review, quotation or for
+another purpose.
+  cites : Document
+  ' An ordered list of contributors. Normally, this list is seen as a priority list that order contributors by importance.
+  contributorList : any
+  ' An ordered list of editors. Normally, this list is seen as a priority list that order editors by importance.
+  editorList : any
+  ' Relates a document to an event; for example, a paper to a conference.
+  presentedAt : Event
+  ' The resource in which another resource is reproduced.
+  reproducedIn : Document
+  ' Relates a review document to a reviewed thing (resource, item, etc.).
+  reviewOf : Resource
+  ' The publication status of (typically academic) content.
+  status : DocumentStatus
+  ' Relates a document to some transcribed original.
+  transcriptOf : Resource
+  ' Relates a translated document to the original document.
+  translationOf : Document
+  ' This property is for a plain-text rendering of the content of a Document. While the plain-text content of an entire document could be described by this property.
+  content : String
+  ' The name defining a special edition of a document. Normally its a literal value composed of a version number and words.
+  edition : String
+  ' A description (often numeric) that locates an item within a containing document or collection.
+  locator : String
+  ' The number of pages contained in a document
+  numPages : String
+  ' A generic item or document number. Not to be confused with issue number.
+  number : String
+  ' Ending page number within a continuous page range.
+  pageEnd : String
+  ' Starting page number within a continuous page range.
+  pageStart : String
+  ' A string of non-contiguous page spans that locate a Document within a Collection. Example: 23-25, 34, 54-56. For continuous page ranges, use the pageStart and pageEnd properties.
+  pages : String
+  ' A section number
+  section : String
+  shortDescription : String
+  ' The abbreviation of a title.
+  shortTitle : String
+  ' A volume number
+  volume : String
+  ' Distributor of a document or a collection of documents.
+  distributor : Agent
+  ' A person having managerial and sometimes policy-making responsibility for the editorial part of a publishing firm or of a newspaper, magazine, or other publication.
+  editor : Agent
+  ' An entity responsible for issuing often informally published documents such as press releases, reports, etc.
+  issuer : Agent
+  ' Owner of a document or a collection of documents.
+  owner : Agent
+  ' Producer of a document or a collection of documents.
+  producer : Agent
+  ' A person who translates written document from one language to another.
+  translator : Agent
+  asin : String
+  coden : String
+  doi : String
+  eanucc13 : String
+  gtin14 : String
+  handle : String
+  identifier : String
+  isbn10 : String
+  isbn13 : String
+  lccn : String
+  oclcnum : String
+  pmid : String
+  sici : String
+  upc : String
+  ' Universal Resource Identifier of a document
+  uri : String
+}
+
+class DocumentPart << (S,#ADD1B2) >> {
+  isPartOf : any [Optional]
+}
+
+class DocumentStatus << (S,#ADD1B2) >> {
+}
+
+class EditedBook << (S,#ADD1B2) >> {
+}
+
+class Email << (S,#ADD1B2) >> {
+}
+
+class Event << (S,#ADD1B2) >> {
+  ' Relates an event to associated documents; for example, conference to a paper.
+  presents : Document
+}
+
+class Excerpt << (S,#ADD1B2) >> {
+}
+
+class Film << (S,#ADD1B2) >> {
+}
+
+class Hearing << (S,#ADD1B2) >> {
+}
+
+class Image << (S,#ADD1B2) >> {
+}
+
+class Interview << (S,#ADD1B2) >> {
+}
+
+class Issue << (S,#ADD1B2) >> {
+  ' An issue number
+  issue : String
+  hasPart : Article [Required]
+}
+
+class Journal << (S,#ADD1B2) >> {
+  hasPart : Issue [Required]
+}
+
+class LegalCaseDocument << (S,#ADD1B2) >> {
+}
+
+class LegalDecision << (S,#ADD1B2) >> {
+  ' A legal decision that affirms a ruling.
+  affirmedBy : LegalDecision
+  ' A legal decision that reverses a ruling.
+  reversedBy : LegalDecision
+  ' A legal decision on appeal that takes action on a case (affirming it, reversing it, etc.).
+  subsequentLegalDecision : LegalDecision
+}
+
+class LegalDocument << (S,#ADD1B2) >> {
+  ' A court associated with a legal document; for example, that which issues a decision.
+  court : Organization
+  ' The date on which a legal case is argued before a court. Date is of format xsd:date
+  argued : String
+}
+
+class Legislation << (S,#ADD1B2) >> {
+}
+
+class Letter << (S,#ADD1B2) >> {
+}
+
+class Magazine << (S,#ADD1B2) >> {
+  hasPart : Issue [Required]
+}
+
+class Manual << (S,#ADD1B2) >> {
+}
+
+class Manuscript << (S,#ADD1B2) >> {
+}
+
+class Map << (S,#ADD1B2) >> {
+}
+
+class MultiVolumeBook << (S,#ADD1B2) >> {
+  hasPart : Book
+}
+
+class Newspaper << (S,#ADD1B2) >> {
+  hasPart : Issue [Required]
+}
+
+class Note << (S,#ADD1B2) >> {
+  ' Critical or explanatory note for a Document.
+  annotates : Resource
+}
+
+class Patent << (S,#ADD1B2) >> {
+}
+
+class Performance << (S,#ADD1B2) >> {
+  performer : Agent
+}
+
+class Periodical << (S,#ADD1B2) >> {
+  hasPart : Issue [Required]
+}
+
+class PersonalCommunication << (S,#ADD1B2) >> {
+}
+
+class PersonalCommunicationDocument << (S,#ADD1B2) >> {
+  ' An agent that receives a communication document.
+  recipient : Agent
+}
+
+class Proceedings << (S,#ADD1B2) >> {
+}
+
+class Quote << (S,#ADD1B2) >> {
+}
+
+class ReferenceSource << (S,#ADD1B2) >> {
+}
+
+class Report << (S,#ADD1B2) >> {
+}
+
+class Series << (S,#ADD1B2) >> {
+  hasPart : Document
+}
+
+class Slide << (S,#ADD1B2) >> {
+}
+
+class Slideshow << (S,#ADD1B2) >> {
+  hasPart : Slide
+}
+
+class Specification << (S,#ADD1B2) >> {
+}
+
+class Standard << (S,#ADD1B2) >> {
+}
+
+class Statute << (S,#ADD1B2) >> {
+}
+
+class Thesis << (S,#ADD1B2) >> {
+  ' The thesis degree.
+  degree : ThesisDegree
+}
+
+class ThesisDegree << (S,#ADD1B2) >> {
+}
+
+class Webpage << (S,#ADD1B2) >> {
+}
+
+class Website << (S,#ADD1B2) >> {
+  hasPart : Webpage [Required]
+}
+
+class Workshop << (S,#ADD1B2) >> {
+}
+
+class List << (S,#ADD1B2) >> {
+}
+
+class Seq << (S,#ADD1B2) >> {
+}
+
+class Resource << (S,#ADD1B2) >> {
+  ' A summary of the resource.
+  abstract : String
+}
+
+class Thing << (S,#ADD1B2) >> {
+}
+
+class Agent << (S,#ADD1B2) >> {
+  ' An agent that is interviewed by another agent.
+  interviewee : Agent
+  ' An agent that interview another agent.
+  interviewer : Agent
+  ' The prefix of a name
+  prefixName : String
+  ' The suffix of a name
+  suffixName : String
+}
+
+class Document << (S,#ADD1B2) >> {
+}
+
+class Image << (S,#ADD1B2) >> {
+}
+
+class Organization << (S,#ADD1B2) >> {
+}
+
+class Person << (S,#ADD1B2) >> {
+}
+
+Article <|-- AcademicArticle : inherits
+Document <|-- Article : inherits
+Document <|-- AudioDocument : inherits
+Document <|-- AudioVisualDocument : inherits
+Legislation <|-- Bill : inherits
+Document <|-- Book : inherits
+DocumentPart <|-- BookSection : inherits
+LegalCaseDocument <|-- Brief : inherits
+BookSection <|-- Chapter : inherits
+Periodical <|-- Code : inherits
+Document <|-- CollectedDocument : inherits
+Event <|-- Conference : inherits
+Periodical <|-- CourtReporter : inherits
+Document <|-- DocumentPart : inherits
+CollectedDocument <|-- EditedBook : inherits
+PersonalCommunicationDocument <|-- Email : inherits
+DocumentPart <|-- Excerpt : inherits
+AudioVisualDocument <|-- Film : inherits
+Event <|-- Hearing : inherits
+Document <|-- Image : inherits
+Event <|-- Interview : inherits
+CollectedDocument <|-- Issue : inherits
+Periodical <|-- Journal : inherits
+LegalDocument <|-- LegalCaseDocument : inherits
+LegalCaseDocument <|-- LegalDecision : inherits
+Document <|-- LegalDocument : inherits
+LegalDocument <|-- Legislation : inherits
+PersonalCommunicationDocument <|-- Letter : inherits
+Periodical <|-- Magazine : inherits
+Document <|-- Manual : inherits
+Document <|-- Manuscript : inherits
+Image <|-- Map : inherits
+Collection <|-- MultiVolumeBook : inherits
+Periodical <|-- Newspaper : inherits
+Document <|-- Note : inherits
+Document <|-- Patent : inherits
+Event <|-- Performance : inherits
+Collection <|-- Periodical : inherits
+Event <|-- PersonalCommunication : inherits
+Document <|-- PersonalCommunicationDocument : inherits
+Book <|-- Proceedings : inherits
+Excerpt <|-- Quote : inherits
+Document <|-- ReferenceSource : inherits
+Document <|-- Report : inherits
+Collection <|-- Series : inherits
+DocumentPart <|-- Slide : inherits
+Document <|-- Slideshow : inherits
+Document <|-- Specification : inherits
+Specification <|-- Standard : inherits
+Legislation <|-- Statute : inherits
+Document <|-- Thesis : inherits
+Document <|-- Webpage : inherits
+Collection <|-- Website : inherits
+Event <|-- Workshop : inherits
+Event "1" --* "*" Agent : organizer
+AudioVisualDocument "1" --* "*" Agent : director
+Code "1" --* "*" Legislation : hasPart
+CollectedDocument "1" --* "*" Document : hasPart
+Collection "1" --* "*" Agent : distributor
+Collection "1" --* "*" Agent : editor
+Collection "1" --* "*" Agent : issuer
+Collection "1" --* "*" Agent : owner
+Collection "1" --* "*" Agent : producer
+Collection "1" --* "*" Agent : translator
+CourtReporter "1" --* "*" LegalDocument : hasPart
+Document "1" --* "*" Document : citedBy
+Document "1" --* "*" Document : cites
+Document "1" --* "*" Event : presentedAt
+Document "1" --* "*" Document : reproducedIn
+Document "1" --* "*" Resource : reviewOf
+Document "1" --* "*" DocumentStatus : status
+Document "1" --* "*" Resource : transcriptOf
+Document "1" --* "*" Document : translationOf
+Document "1" --* "*" Agent : distributor
+Document "1" --* "*" Agent : editor
+Document "1" --* "*" Agent : issuer
+Document "1" --* "*" Agent : owner
+Document "1" --* "*" Agent : producer
+Document "1" --* "*" Agent : translator
+Event "1" --* "*" Document : presents
+Issue "1" --* "*" Article : hasPart
+Journal "1" --* "*" Issue : hasPart
+LegalDecision "1" --* "*" LegalDecision : affirmedBy
+LegalDecision "1" --* "*" LegalDecision : reversedBy
+LegalDecision "1" --* "*" LegalDecision : subsequentLegalDecision
+LegalDocument "1" --* "*" Organization : court
+Magazine "1" --* "*" Issue : hasPart
+MultiVolumeBook "1" --* "*" Book : hasPart
+Newspaper "1" --* "*" Issue : hasPart
+Note "1" --* "*" Resource : annotates
+Performance "1" --* "*" Agent : performer
+Periodical "1" --* "*" Issue : hasPart
+PersonalCommunicationDocument "1" --* "*" Agent : recipient
+Series "1" --* "*" Document : hasPart
+Slideshow "1" --* "*" Slide : hasPart
+Thesis "1" --* "*" ThesisDegree : degree
+Website "1" --* "*" Webpage : hasPart
+Agent "1" --* "*" Agent : interviewee
+Agent "1" --* "*" Agent : interviewer
+
+legend right
+  Created from SHACL definitions
+  [Required] = minCount >= 1
+  [Optional] = minCount = 0 or not specified
+  [*] = maxCount not specified or > 1
+end legend
+
+@enduml

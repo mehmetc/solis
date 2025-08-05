@@ -21,6 +21,8 @@ module Solis
   module Utils
     module JSONLD
 
+      RESERVED_FIELDS = ['@id', '@type', '@context', '@graph']
+
       def self.expand(obj)
         arr = JSON::LD::API.expand(obj, options: {
         })
@@ -31,7 +33,7 @@ module Solis
         # For the validation, the type is let be inferred by the SHACL validator.
         arr.each do |obj|
           obj.each do |name_attr, val_attr|
-            next if ['@id', '@type'].include?(name_attr)
+            next if RESERVED_FIELDS.include?(name_attr)
             val_attr.each do |spec|
               if spec.key?('@value')
                 if spec.key?('@type') and spec['@type'].eql?('http://www.w3.org/2001/XMLSchema#string')
@@ -102,10 +104,12 @@ module Solis
         unless hash_json.is_a?(Hash)
           raise TypeError, "hash_json not an hash"
         end
+        hash_json_copy = Marshal.load(Marshal.dump(hash_json))
+        hash_json_copy.delete('@context')
         hash_jsonld = {
           "@context" => context,
           "@graph" => [
-            hash_json
+            hash_json_copy
           ]
         }
         hash_jsonld
@@ -131,13 +135,13 @@ module Solis
         # NOTE: currently only meant for a _compacted_ JSON-LD object
         data['@type'] = type_root if data['@type'].nil?
         data.each do |name_attr, val_attr|
-          next if ['@id', '@type'].include?(name_attr)
+          next if RESERVED_FIELDS.include?(name_attr)
           val_attr = [val_attr] unless val_attr.is_a?(Array)
           val_attr.each do |e|
             if is_object_an_embedded_entity_or_ref(e)
               type_root_expanded = expand_term(type_root, context)
               name_attr_expanded = expand_term(name_attr, context)
-              type_embedded = model.get_embedded_entity_type_for_entity(type_root_expanded, name_attr_expanded)
+              type_embedded = model.get_property_entity_for_entity(type_root_expanded, name_attr_expanded)
               infer_jsonld_types_from_model!(e, model, context, type_embedded)
             end
           end
@@ -164,9 +168,9 @@ module Solis
         type = obj['@type']
         type_expanded = expand_term(type, context)
         obj.each_key do |name_attr|
-          next if ['@id', '@type'].include?(name_attr)
+          next if RESERVED_FIELDS.include?(name_attr)
           name_attr_expanded = expand_term(name_attr, context)
-          datatype = model.get_datatype_for_entity(type_expanded, name_attr_expanded)
+          datatype = model.get_property_datatype_for_entity(type_expanded, name_attr_expanded)
           context_datatypes[name_attr] = {
             '@type' => datatype
           } unless datatype.nil?
@@ -178,7 +182,7 @@ module Solis
       def self.clean_flattened_expanded_from_unset_data!(flattened_expanded)
         flattened_expanded.each do |obj|
           obj.each do |name_attr, content_attr|
-            next if ['@id', '@type'].include?(name_attr)
+            next if RESERVED_FIELDS.include?(name_attr)
             content_attr.map! do |content|
               (content.key?('@value') and content['@value'].eql?('@unset')) ? nil : content
             end
@@ -192,16 +196,80 @@ module Solis
       end
 
       def self.is_object_a_ref(obj)
-        obj.is_a?(Hash) and obj.key?('@id') and (obj.keys - ['@id', '@type']).empty?
+        obj.is_a?(Hash) and obj.key?('@id') and (obj.keys.length == 1)
+      end
+
+      def self.is_object_a_blank_node(obj)
+        obj.is_a?(Hash) and obj.key?('@id') and obj['@id'].start_with?('_:')
+      end
+
+      def self.is_object_an_embedded_entity(obj)
+        is_object_an_embedded_entity_or_ref(obj) and !is_object_a_ref(obj)
       end
 
       def self.add_ids_if_not_exists!(obj, namespace)
+        return if obj.empty?
         obj['@id'] = obj['@id'] || URI.join(namespace, SecureRandom.uuid).to_s
         obj.each do |name_attr, val_attr|
+          next if RESERVED_FIELDS.include?(name_attr)
           val_attr = [val_attr] unless val_attr.is_a?(Array)
           val_attr.each do |e|
             if e.is_a?(Hash) and !e.key?('@value')
               add_ids_if_not_exists!(e, namespace)
+            end
+          end
+        end
+      end
+
+      def self.add_default_attributes_if_not_exists!(obj, name_attr, val_def)
+        return if obj.empty?
+        obj[name_attr] = obj[name_attr] || val_def
+        obj.each do |_name_attr, val_attr|
+          next if RESERVED_FIELDS.include?(_name_attr)
+          val_attr = [val_attr] unless val_attr.is_a?(Array)
+          val_attr.each do |e|
+            if is_object_an_embedded_entity(e)
+              add_default_attributes_if_not_exists!(e, name_attr, val_def)
+            end
+          end
+        end
+      end
+
+      def self.collect_attributes_in_map!(obj, name_attr, map)
+        map[obj['@id']] = obj[name_attr] if obj.key?(name_attr)
+        obj.delete(name_attr)
+        obj.each do |_name_attr, val_attr|
+          next if RESERVED_FIELDS.include?(_name_attr)
+          val_attr = [val_attr] unless val_attr.is_a?(Array)
+          val_attr.each do |e|
+            if is_object_an_embedded_entity(e)
+              collect_attributes_in_map!(e, name_attr, map)
+            end
+          end
+        end
+      end
+
+      def self.apply_attributes_from_map!(obj, name_attr, map)
+        obj[name_attr] = map[obj['@id']] if map.key?(obj['@id'])
+        obj.each do |_name_attr, val_attr|
+          next if RESERVED_FIELDS.include?(_name_attr)
+          val_attr = [val_attr] unless val_attr.is_a?(Array)
+          val_attr.each do |e|
+            if is_object_an_embedded_entity(e)
+              apply_attributes_from_map!(e, name_attr, map)
+            end
+          end
+        end
+      end
+
+      def self.increment_attributes!(obj, name_attr)
+        obj[name_attr] += 1 if obj.key?(name_attr)
+        obj.each do |_name_attr, val_attr|
+          next if RESERVED_FIELDS.include?(_name_attr)
+          val_attr = [val_attr] unless val_attr.is_a?(Array)
+          val_attr.each do |e|
+            if is_object_an_embedded_entity(e)
+              increment_attributes!(e, name_attr)
             end
           end
         end
@@ -220,7 +288,7 @@ module Solis
 
       def self.make_jsonld_triples_from_hierarchy(model)
         triples = []
-        model.hierarchy.each do |name_class, names_classes_parents|
+        model.hierarchy_ext.each do |name_class, names_classes_parents|
           names_classes_parents.each do |name_class_parent|
             triples.append({
                              "@id" => URI.join(model.namespace, name_class).to_s,
@@ -246,7 +314,7 @@ module Solis
       def self.anyuris_to_uris(obj)
         obj2 = Marshal.load(Marshal.dump(obj))
         obj.each do |name_attr, content_attr|
-          next if ['@id', '@type'].include?(name_attr)
+          next if RESERVED_FIELDS.include?(name_attr)
           content_attr.each_with_index do |e, i|
             if e['@type'].eql?('http://www.w3.org/2001/XMLSchema#anyURI')
               obj2[name_attr][i] = {
@@ -261,7 +329,7 @@ module Solis
       def self.compact_values(obj, f_conv)
         obj2 = Marshal.load(Marshal.dump(obj))
         obj.each do |name_attr, content_attr|
-          next if ['@id', '@type'].include?(name_attr)
+          next if RESERVED_FIELDS.include?(name_attr)
           content_attr.each_with_index do |e, i|
             unless e.key?('@id')
               obj2[name_attr][i] = f_conv.call(e['@value'], e['@type'])
@@ -276,7 +344,7 @@ module Solis
         messages = []
         graph.each do |obj|
           obj.each do |name_attr, content_attr|
-            next if ['@id', '@type'].include?(name_attr)
+            next if RESERVED_FIELDS.include?(name_attr)
             content_attr.each do |e|
               if e.key?('@type')
                 type = e['@type']

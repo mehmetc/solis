@@ -1,5 +1,6 @@
 require_relative 'generic'
 require_relative 'ui_schema'
+require_relative "../../utils/string"
 require 'rdf'
 require 'rdf/vocab'
 require 'json'
@@ -7,23 +8,31 @@ require 'json'
 class JSONSchemaWriter < Solis::Model::Writer::Generic
   def self.write(repository, options = {})
     return "No repository provided" if repository.nil?
-    return "options[:shapes] missing" unless options.key?(:shapes)
+    return "options[:entities] missing" unless options.key?(:entities)
 
-    shapes = adapt_parse_shapes_to_extract_shapes_format(options[:shapes])
+    # Copy in case some deep refs are updated
+    entities = Marshal.load(Marshal.dump(options[:entities]))
 
-    if shapes.empty?
-      return "No SHACL shapes found in repository"
+    # If available, get list of entities sorted from independent to using other entities.
+    # This is important for the uiSchema generation:
+    # uiSchema currently does not use definitions like JSONSchema;
+    # hence, for embedded forms, full uiSchema (sub)graphs have to be copied.
+    # If the entities are already sorted from independent to dependent, this is easier.
+    list_entities = options[:sorted_dependencies] || entities.keys
+
+    if entities.empty?
+      return "No entities found in repository"
     end
 
-    return '{"error": "No SHACL shapes found in repository"}' if shapes.empty?
+    return '{"error": "No entities found in repository"}' if entities.empty?
 
     language_code = nil # TODO: get from properties
 
     # Create the base JSON Schema document
     schema = {
       "$schema" => "https://json-schema.org/draft/2019-09/schema",
-      "title" => options[:title] || "Generated from SHACL definitions",
-      "description" => options[:description] || "JSON Schema generated from SHACL shapes",
+      "title" => options[:title] || "Generated from entities definitions",
+      "description" => options[:description] || "JSON Schema generated from entities",
       "type" => "object",
       "definitions" => {},
       "properties" => {},
@@ -31,58 +40,31 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
       "uiSchema" => {} # Add UI Schema for JSON Schema Form libraries
     }
 
-    # Process each shape to create schema definitions
-    shapes.each do |shape_uri, shape_data|
-      # Generate a definition for this shape
-      definition = convert_shape_to_json_schema(shape_data, shapes)
+    # Process each entity to create schema definitions
+    list_entities.each do |entity_uri|
+
+      # Get entity data
+      entity_data = entities[entity_uri]
+
+      # Generate a definition for this entity
+      definition, entity_ui_schema = convert_entity_to_json_schema(entity_uri, entity_data, entities, schema)
 
       # Add it to the definitions section
-      definition_name = get_class_name(shape_data[:name] || extract_name_from_uri(shape_uri))
+      definition_name = entity_to_definition_name(entity_data)
       schema["definitions"][definition_name] = definition
 
-      # FIXED: Always add root properties for each shape (unless it inherits from another shape)
-      unless shape_data[:node] && shape_data[:node] != shape_uri
-        property_name = definition_name.gsub(/Shape$/, '')
-        property_name = underscore(property_name)
+      property_name = entity_to_property_name(entity_data)
 
-        # Get the title and description for the root property
-        title = shape_data[:name] || property_name.capitalize
-        description = shape_data[:description] || "#{property_name.capitalize} object"
+      schema["properties"][property_name] = {
+        "$ref" => "#/definitions/#{definition_name}"
+      }
 
-        schema["properties"][property_name] = {
-          "$ref" => "#/definitions/#{definition_name}",
-          "title" => title,
-          "description" => description
-        }
+      schema["uiSchema"][property_name] = entity_ui_schema
 
-        # Extract UI Schema information from definition if it exists
-        if definition["ui:order"]
-          schema["uiSchema"][property_name] = {
-            "ui:order" => definition["ui:order"]
-          }
-
-          # Add any property-specific UI schema elements
-          if definition["properties"]
-            definition["properties"].each do |prop_name, prop_schema|
-              if prop_schema["ui:widget"]
-                schema["uiSchema"][property_name] ||= {}
-                schema["uiSchema"][property_name][prop_name] = {
-                  "ui:widget" => prop_schema["ui:widget"]
-                }
-                # Remove from actual schema to avoid validation errors
-                definition["properties"][prop_name].delete("ui:widget")
-              end
-            end
-          end
-
-          # Remove ui:order from actual schema to avoid validation errors
-          definition.delete("ui:order")
-        end
-      end
     end
 
     # FIXED: Use UISchemaWriter properly
-    schema = UISchemaWriter.enhance(schema, options)
+    # schema = UISchemaWriter.enhance(schema, options)
 
     # Return the JSON Schema as a formatted string
     JSON.pretty_generate(schema)
@@ -90,103 +72,58 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
 
   private
 
-  # STEP 5: Adapter method to convert parse_shapes format to extract_shapes format
-  def self.adapt_parse_shapes_to_extract_shapes_format(parse_shapes_output)
-    adapted_shapes = {}
-
-    parse_shapes_output.each do |shape_uri, shape_data|
-      adapted_shapes[shape_uri] = {
-        uri: shape_data[:uri],
-        name: shape_data[:name],
-        description: shape_data[:description],
-        target_class: shape_data[:target_class],
-        node: shape_data[:nodes].first, # Take first node for inheritance relationship
-        properties: [],
-        labels: {},
-        descriptions: {}
-      }
-
-      # Add labels and descriptions for internationalization support
-      if shape_data[:description] && !shape_data[:description].empty?
-        adapted_shapes[shape_uri][:descriptions]['default'] = shape_data[:description]
-      end
-
-      if shape_data[:name] && !shape_data[:name].empty?
-        adapted_shapes[shape_uri][:labels]['default'] = shape_data[:name]
-      end
-
-      # Convert properties from hash to array format
-      shape_data[:properties].each do |property_path, property_info|
-        adapted_property = {
-          name: property_info[:name],
-          path: property_info[:path],
-          description: property_info[:description],
-          datatype: property_info.dig(:constraints, :datatype),
-          min_count: property_info.dig(:constraints, :min_count),
-          max_count: property_info.dig(:constraints, :max_count),
-          class: property_info.dig(:constraints, :class),
-          # Add additional JSON Schema specific properties if available
-          pattern: property_info.dig(:constraints, :pattern),
-          min_length: property_info.dig(:constraints, :min_length),
-          max_length: property_info.dig(:constraints, :max_length),
-          min_value: property_info.dig(:constraints, :min_value),
-          max_value: property_info.dig(:constraints, :max_value),
-          # Add support for multilingual labels and descriptions
-          labels: {},
-          descriptions: {}
-        }
-
-        # Add default labels/descriptions
-        if property_info[:name]
-          adapted_property[:labels]['default'] = property_info[:name]
-        end
-        if property_info[:description]
-          adapted_property[:descriptions]['default'] = property_info[:description]
-        end
-
-        adapted_shapes[shape_uri][:properties] << adapted_property
-      end
-    end
-
-    adapted_shapes
+  def self.entity_to_definition_name(entity_data)
+    "#{entity_data[:prefix]}:#{entity_data[:name]}"
   end
 
-  # Helper method to convert a single shape to JSON Schema format
-  def self.convert_shape_to_json_schema(shape_data, all_shapes)
+  def self.entity_to_property_name(entity_data)
+    "#{entity_data[:prefix]}:#{entity_data[:snake_case_name]}"
+  end
+
+  # Helper method to convert a single entity to JSON Schema format
+  def self.convert_entity_to_json_schema(entity_uri, entity_data, all_entities, schema)
     definition = {
       "type" => "object",
       "properties" => {},
       "required" => []
     }
 
-    # Add shape description if available
-    if shape_data[:description] && !shape_data[:description].empty?
-      definition["description"] = shape_data[:description]
+    # Add entity description if available
+    if entity_data[:description] && !entity_data[:description].empty?
+      definition["description"] = entity_data[:description]
     end
 
-    # Add shape title if available
-    if shape_data[:name] && !shape_data[:name].empty?
-      definition["title"] = shape_data[:name]
+    # Add entity title if available
+    if entity_data[:name] && !entity_data[:name].empty?
+      definition["title"] = entity_data[:name]
     end
 
     # Add UI schema hints (will be moved to uiSchema later)
-    definition["ui:order"] = []
+    ui_schema = {}
+    ui_schema["ui:order"] = []
+
+    definition["properties"]['@id'] = convert_id_property_to_json_schema(entity_data[:snake_case_name])
+    ui_schema["ui:order"] << '@id'
+
+    definition["properties"]['@type'] = convert_type_property_to_json_schema(entity_uri)
+    definition["required"] << '@type'
+    ui_schema["ui:order"] << '@type'
 
     # Process properties
-    if shape_data[:properties] && !shape_data[:properties].empty?
-      shape_data[:properties].each do |property|
-        property_name = property[:name] || extract_name_from_uri(property[:path])
-        property_name = underscore(property_name)
+    if entity_data[:properties] && !entity_data[:properties].empty?
+      entity_data[:properties].each do |property_uri, property_data|
+        property_name = Solis::Utils::String.extract_name_from_uri(property_uri)
 
         # Convert property to JSON Schema property
-        json_property = convert_property_to_json_schema_detailed(property, all_shapes)
+        json_property, property_ui_schema = convert_property_to_json_schema_detailed(property_uri, property_data, all_entities, schema)
         definition["properties"][property_name] = json_property
+        ui_schema[property_name] = property_ui_schema unless property_ui_schema.empty?
 
         # Add to UI order
-        definition["ui:order"] << property_name
+        ui_schema["ui:order"] << property_name
 
         # Add to required array if minCount >= 1
-        if property[:min_count] && property[:min_count] >= 1
+        if property_data[:constraints][0][:data][:min_count] && property_data[:constraints][0][:data][:min_count] >= 1
           definition["required"] << property_name
         end
       end
@@ -200,33 +137,23 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
       definition.delete("required")
     end
 
-    # Handle inheritance - allOf with parent definition
-    if shape_data[:node] && shape_data[:node] != shape_data[:uri]
-      parent_shape = all_shapes[shape_data[:node]]
-      if parent_shape
-        parent_name = get_class_name(parent_shape[:name] || extract_name_from_uri(shape_data[:node]))
-
-        # Use allOf to combine with the parent schema
-        definition = {
-          "allOf" => [
-            { "$ref" => "#/definitions/#{parent_name}" },
-            definition
-          ]
-        }
-      end
-    end
-
-    definition
+    [definition, ui_schema]
   end
 
   # Enhanced property conversion with full support
-  def self.convert_property_to_json_schema_detailed(property, all_shapes)
+  def self.convert_property_to_json_schema_detailed(property_uri, property_data, all_entities, schema)
+
+    # NOTE: this is basic but ok for now, will need to be evolved.
+    property = property_data[:constraints][0][:data]
+    property[:description] = property_data[:constraints][0][:description]
+
     json_property = {}
+    ui_schema = {}
 
     # Get the title with language support
     title = get_label_for_language(property[:labels], nil) ||
       property[:name] ||
-      extract_name_from_uri(property[:path])
+      Solis::Utils::String.extract_name_from_uri(property_uri)
 
     # Get description with language support
     description = get_label_for_language(property[:descriptions], nil) ||
@@ -238,20 +165,52 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
 
     # Handle datatype vs class reference
     if property[:datatype] && !property[:datatype].empty?
-      # Map SHACL datatype to JSON Schema type
-      type_info = map_shacl_datatype_to_json_schema(property[:datatype])
+      # Map RDF datatype to JSON Schema type
+      type_info = map_rdf_datatype_to_json_schema(property[:datatype])
       json_property.merge!(type_info)
 
       # Add default value
       json_property["default"] = default_value_for_type(type_info["type"])
 
     elsif property[:class] && !property[:class].empty?
-      # Reference to another shape/object
-      referenced_shape = all_shapes.values.find { |s| s[:target_class] == property[:class] }
-      if referenced_shape && referenced_shape[:name]
-        json_property["$ref"] = "#/definitions/#{referenced_shape[:name]}"
+      referenced_entity_uri = property[:class]
+      referenced_entity = all_entities[referenced_entity_uri]
+      if referenced_entity
+        json_property_ref_id = convert_ref_id_property_to_json_schema
+        json_property["oneOf"] = [
+          json_property_ref_id,
+          { "$ref" => "#/definitions/#{entity_to_definition_name(all_entities[referenced_entity_uri])}" }
+        ]
+        ui_schema_ref_id = entity_to_property_name(all_entities[referenced_entity_uri])
+        ui_schema["oneOf"] = []
+        ui_schema["oneOf"] << { "ui:title" => "Select existing #{ui_schema_ref_id} URI" }
+        sub_ui_schema = { "ui:title" => "Create new #{ui_schema_ref_id}" }
+        referenced_ui_schema = schema["uiSchema"][ui_schema_ref_id] || {}
+        sub_ui_schema.merge!(referenced_ui_schema)
+        ui_schema["oneOf"] << sub_ui_schema
+        json_property["oneOf"][0]["title"] = "Select existing #{ui_schema_ref_id} URI"
+        json_property["oneOf"][1]["title"] = "Create new #{ui_schema_ref_id}"
+        # NOTE: above it is important to first show the ID option;
+        # otherwise many relations would be visually as nested full forms,
+        # which is unclear and ugly.
       else
         json_property["type"] = "object"
+      end
+    elsif property[:or] && !property[:or].empty?
+      json_property["oneOf"] = []
+      ui_schema["oneOf"] = []
+      properties = property[:or]
+      properties.each_with_index do |or_property_data, i|
+        or_property_data[:constraints][0][:data][:min_count] = 0
+        or_property_data[:constraints][0][:data][:max_count] = 1
+        or_json_property, or_ui_schema = convert_property_to_json_schema_detailed(property_uri, or_property_data, all_entities, schema)
+        or_json_property["title"] = "Option #{i + 1}"
+        json_property["oneOf"] << or_json_property
+        # NOTE: if an element of "oneOf" is not an object, e.g. string,
+        # the ui:title will go hiding the element title, which is not idea.
+        # Still haven't found a solution ...
+        or_ui_schema["ui:title"] = "Option #{i + 1}"
+        ui_schema["oneOf"] << or_ui_schema
       end
     else
       # Default to string if no type specified
@@ -260,22 +219,32 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
     end
 
     # Add cardinality constraints
-    if property[:max_count] && property[:max_count] > 1
+    if (property[:max_count] && property[:max_count] > 1) || property[:max_count].nil?
       # Array property
       array_property = {
         "type" => "array",
-        "items" => json_property.dup
+        "items" => json_property.dup,
+        "default" => []
       }
+      # bringing up this seems necessary for some UI renderers (e.g. JSONForms)
+      array_property["title"] = array_property["items"]["title"] if array_property["items"]["title"]
+      array_property["description"] = array_property["items"]["description"] if array_property["items"]["description"]
 
       if property[:min_count] && property[:min_count] > 0
         array_property["minItems"] = property[:min_count]
       end
 
-      if property[:max_count] != Float::INFINITY
+      if (property[:max_count] != Float::INFINITY) && !property[:max_count].nil?
         array_property["maxItems"] = property[:max_count]
       end
 
       json_property = array_property
+
+      array_ui_schema = {}
+      array_ui_schema["items"] = ui_schema.dup unless ui_schema.empty?
+
+      ui_schema = array_ui_schema
+
     end
 
     # Add string constraints
@@ -300,16 +269,37 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
       json_property["maximum"] = property[:max_value]
     end
 
-    # Add smart UI widget suggestions (will be moved to uiSchema)
-    if json_property["type"] == "string"
-      if property[:max_length] && property[:max_length] > 100
-        json_property["ui:widget"] = "textarea"
-      else
-        json_property["ui:widget"] = "text"
-      end
-    end
+    [json_property, ui_schema]
+  end
 
-    json_property
+  def self.convert_id_property_to_json_schema(name)
+    {
+      'type' => 'string',
+      'title' => "URI of the #{name}",
+      'description' => "URI of the #{name}",
+      'readOnly' => true
+    }
+  end
+
+  def self.convert_ref_id_property_to_json_schema
+    {
+      'type' => 'object',
+      'properties' => {
+        '@id' => {
+          'type' => 'string',
+          'title' => "URI",
+          'description' => "URI"
+        }
+      }
+    }
+  end
+
+  def self.convert_type_property_to_json_schema(entity_uri)
+    {
+      'const' => entity_uri,
+      'default' => entity_uri,
+      'readOnly' => true
+    }
   end
 
   # Helper method to get a label in the specified language
@@ -326,8 +316,9 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
     end
   end
 
-  # Helper method to map SHACL datatypes to JSON Schema types
-  def self.map_shacl_datatype_to_json_schema(datatype)
+  # Helper method to map RDF datatypes to JSON Schema types
+  def self.map_rdf_datatype_to_json_schema(datatype)
+    # NOTE: "format" not supported by every client.
     case datatype
     when /string$/
       { "type" => "string" }
@@ -362,31 +353,6 @@ class JSONSchemaWriter < Solis::Model::Writer::Generic
     else
       ""
     end
-  end
-
-  # Convert CamelCase to snake_case
-  def self.underscore(string)
-    string.gsub(/::/, '/').
-      gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2').
-      gsub(/([a-z\d])([A-Z])/, '\1_\2').
-      tr("-", "_").
-      downcase
-  end
-
-  # Extract name from URI
-  def self.extract_name_from_uri(uri)
-    return "" unless uri
-    if uri.include?('#')
-      uri.split('#').last
-    else
-      uri.split('/').last
-    end
-  end
-
-  # Clean and format class names
-  def self.get_class_name(name)
-    return "UnnamedClass" if name.nil? || name.empty?
-    name.strip.gsub(/[^a-zA-Z0-9]/, '')
   end
 
 end

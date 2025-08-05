@@ -50,4 +50,46 @@ class TestUtilsJSON < Minitest::Test
 
   end
 
+  def test_delete_empty_attributes
+
+    data = JSON.parse %(
+      {
+        "color": [],
+        "brand": "",
+        "owners": [
+          {
+            "name": "jon doe",
+            "address": {}
+          },
+          {},
+          {
+            "name": "jon doe 2",
+            "address": {}
+          },
+          3,
+          "",
+          null
+        ]
+      }
+    )
+
+    data2 = Marshal.load(Marshal.dump(data))
+
+    Solis::Utils::JSONUtils.recursive_compact!(data2)
+
+    # puts JSON.pretty_generate(data2)
+
+    assert_equal(data2["color"].nil?, true)
+    assert_equal(data2["brand"].nil?, true)
+    assert_equal(data2["owners"].length, 3)
+    assert_equal(data2["owners"][0]['name'], 'jon doe')
+    assert_equal(data2["owners"][1]['name'], 'jon doe 2')
+    assert_equal(data2["owners"][2], 3)
+
+    data2 = Marshal.load(Marshal.dump(data))
+
+    Solis::Utils::JSONUtils.recursive_compact!(data2, exclude_types=[Array])
+
+  end
+
 end

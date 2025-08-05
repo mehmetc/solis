@@ -4,7 +4,6 @@ Solis::SHACLValidator = Solis::SHACLValidatorV2
 class TestShacl < Minitest::Test
   def setup
     super
-    puts "in setup"
     config = {
       store: Solis::Store::Memory.new(),
       model: {

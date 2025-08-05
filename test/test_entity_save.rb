@@ -79,12 +79,12 @@ class TestEntitySave < Minitest::Test
     puts repository.dump(:ntriples)
 
     str_ttl_truth = %(
-      <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Address" .
+      <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.com/Address> .
       <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <https://example.com/street> "fake street" .
-      <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Person" .
+      <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.com/Person> .
       <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <https://example.com/address> <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> .
       <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <https://example.com/name> "john smith" .
-      <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Car" .
+      <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.com/Car> .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/owners> <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/color> "black" .
     )
@@ -92,6 +92,7 @@ class TestEntitySave < Minitest::Test
     graph_truth.from_ttl(str_ttl_truth)
 
     graph_to_check = RDF::Graph.new(data: repository)
+    delete_metadata_from_graph(graph_to_check)
 
     assert_equal(graph_truth == graph_to_check, true)
 
@@ -148,12 +149,12 @@ class TestEntitySave < Minitest::Test
     puts repository.dump(:ntriples)
 
     str_ttl_truth = %(
-      <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Address" .
+      <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.com/Address> .
       <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <https://example.com/street> "fake street" .
-      <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Person" .
+      <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.com/Person> .
       <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <https://example.com/address> <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> .
       <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <https://example.com/name> "john smith" .
-      <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/ElectricCar" .
+      <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.com/ElectricCar> .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/owners> <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> .
       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/color> "black" .
     )
@@ -162,75 +163,157 @@ class TestEntitySave < Minitest::Test
     graph_truth.from_ttl(str_ttl_truth)
 
     graph_to_check = RDF::Graph.new(data: repository)
+    delete_metadata_from_graph(graph_to_check)
 
     assert_equal(graph_truth == graph_to_check, true)
 
   end
 
-  # def test_entity_save_fail_and_rollback
-  #
-  #   data = JSON.parse %(
-  #     {
-  #       "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
-  #       "color": ["green", "yellow"],
-  #       "brand": "toyota",
-  #       "owners": [
-  #         {
-  #           "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
-  #           "name": "jon doe",
-  #           "address": {
-  #             "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
-  #             "street": "fake street"
-  #           }
-  #         }
-  #       ]
-  #     }
-  #   )
-  #
-  #   repository = RDF::Repository.new
-  #   store = Solis::Store::RDFProxy.new(repository, @name_graph)
-  #
-  #   car = Solis::Model::Entity.new(data, @model_1, 'Car', store)
-  #   puts car.to_pretty_jsonld
-  #   puts car['_id']
-  #
-  #   car.save
-  #
-  #   client_sparql_mock = Solis::Mock::SPARQLClientForRollbackTest.new(repository, graph: @name_graph)
-  #   store.instance_variable_set(:@client_sparql, client_sparql_mock)
-  #
-  #   car.color = 'black'
-  #   begin
-  #     car.save
-  #   rescue RuntimeError => e
-  #     puts "Expected error while saving: #{e.full_message}"
-  #   ensure
-  #
-  #     puts "\n\nREPO CONTENT:\n\n"
-  #     puts repository.dump(:ntriples)
-  #
-  #     str_ttl_truth = %(
-  #       <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Address" .
-  #       <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> <https://example.com/street> "fake street" .
-  #       <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Person" .
-  #       <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <https://example.com/name> "jon doe" .
-  #       <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> <https://example.com/address> <https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea> .
-  #       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "https://example.com/Car" .
-  #       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/brand> "toyota" .
-  #       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/owners> <https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9> .
-  #       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/color> "green" .
-  #       <https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be> <https://example.com/color> "yellow" .
-  #     )
-  #
-  #     graph_truth = RDF::Graph.new
-  #     graph_truth.from_ttl(str_ttl_truth)
-  #
-  #     graph_to_check = RDF::Graph.new(data: repository)
-  #
-  #     assert_equal(graph_truth == graph_to_check, true)
-  #
-  #   end
-  #
-  # end
+  def test_entity_loads_refs_while_validate_or_save
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+        "name": "jon doe",
+        "address": {
+          "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+          "street": "fake street"
+        }
+      }
+    )
+
+    person = Solis::Model::Entity.new(data, @model_1, 'Person', store)
+
+    person.save
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9"
+          }
+        ]
+      }
+    )
+
+    car = Solis::Model::Entity.new(data, @model_1, 'Car', store)
+
+    assert_equal(car.valid?, true)
+
+    car.save
+
+  end
+
+  def test_entity_reset_array_and_resave
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/93b8781d-50de-47e2-a1dc-33cb641fd4be",
+        "color": ["green", "yellow"],
+        "brand": "toyota",
+        "owners": [
+          {
+            "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+            "name": "jon doe",
+            "address": {
+              "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+              "street": "fake street"
+            }
+          }
+        ]
+      }
+    )
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
+
+    car = Solis::Model::Entity.new(data, @model_1, 'Car', store)
+
+    car.save
+
+    puts "\n\nREPO CONTENT:\n\n"
+    puts repository.dump(:ntriples)
+
+    car.attributes.owners = []
+
+    car.save
+
+    puts "\n\nREPO CONTENT:\n\n"
+    puts repository.dump(:ntriples)
+
+    puts car.to_pretty_json
+
+  end
+
+  def test_entity_create_with_empty_object
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+        "name": "jon doe",
+        "address": {}
+      }
+    )
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
+
+    @model_1.logger.level = Logger::DEBUG
+    store.logger.level = Logger::DEBUG
+
+    person = Solis::Model::Entity.new(data, @model_1, 'Person', store)
+
+    person.save
+
+    puts "\n\nREPO CONTENT:\n\n"
+    puts repository.dump(:ntriples)
+
+    puts person.to_pretty_json
+
+  end
+
+  def test_entity_reset_object_and_resave
+
+    data = JSON.parse %(
+      {
+        "_id": "https://example.com/dfd736c6-db76-44ed-b626-cdcec59b69f9",
+        "name": "jon doe",
+        "address": {
+          "_id": "https://example.com/3117582b-cdef-4795-992f-b62efd8bb1ea",
+          "street": "fake street"
+        }
+      }
+    )
+
+    repository = RDF::Repository.new
+    store = Solis::Store::RDFProxy.new(repository, @name_graph)
+
+    person = Solis::Model::Entity.new(data, @model_1, 'Person', store)
+
+    person.save
+
+    puts "\n\nREPO CONTENT:\n\n"
+    puts repository.dump(:ntriples)
+
+    person.attributes.address = {}
+
+    @model_1.logger.level = Logger::DEBUG
+    store.logger.level = Logger::DEBUG
+
+    person.save
+
+    puts "\n\nREPO CONTENT:\n\n"
+    puts repository.dump(:ntriples)
+
+    puts person.to_pretty_json
+
+  end
 
 end
+

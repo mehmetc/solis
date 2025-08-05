@@ -27,7 +27,8 @@ module Solis
           shacl_graph.graph_name = graph.graph_name if graph.named?
 
           # First pass: collect all properties that should be added to all classes
-          universal_properties = collect_universal_properties(graph)
+          # universal_properties = collect_universal_properties(graph)
+          universal_properties = []
 
           # Create a base shape with all universal properties
           base_shape = create_universal_base_shape(graph, universal_properties, shacl_graph)
@@ -43,15 +44,21 @@ module Solis
             shape = RDF::URI.new("#{class_uri}Shape")
 
             shape_definition = graph.first_object([class_uri, RDF::Vocab::SKOS.definition, nil])
-            shape_subclass_of = graph.first_object([class_uri, RDF::RDFS.subClassOf, nil])
-            shape_subclass_of = nil unless graph.first_subject([shape_subclass_of, RDF.type, RDF::OWL.Restriction]).nil?
-            shape_subclass_of = shape_subclass_of.nil? ? class_uri : RDF::URI.new("#{shape_subclass_of}Shape")
+            # shape_subclass_of = graph.first_object([class_uri, RDF::RDFS.subClassOf, nil])
+            # shape_subclass_of = nil unless graph.first_subject([shape_subclass_of, RDF.type, RDF::OWL.Restriction]).nil?
+            # shape_subclass_of = shape_subclass_of.nil? ? class_uri : RDF::URI.new("#{shape_subclass_of}Shape")
 
             shacl_graph << [shape, RDF.type, RDF::Vocab::SHACL.NodeShape]
             shacl_graph << [shape, RDF::Vocab::SHACL.name, class_name] # class_uri.path.split('/').last]
             shacl_graph << [shape, RDF::Vocab::SHACL.targetClass, class_uri]
-            shacl_graph << [shape, RDF::Vocab::SHACL.node, shape_subclass_of] if shape_subclass_of
+            # shacl_graph << [shape, RDF::Vocab::SHACL.node, shape_subclass_of] if shape_subclass_of
             shacl_graph << [shape, RDF::Vocab::SHACL.description, shape_definition] if shape_definition
+
+            graph.query([class_uri, RDF::RDFS.subClassOf, nil]).each do |subclass_stmt|
+              next if graph.first_subject([subclass_stmt.object, RDF.type, RDF::OWL.Restriction])
+              shape_subclass_of = RDF::URI.new("#{subclass_stmt.object}Shape")
+              shacl_graph << [shape, RDF::Vocab::SHACL.node, shape_subclass_of]
+            end
 
             # Reference the universal base shape for common properties
             shacl_graph << [shape, RDF::Vocab::SHACL.node, base_shape] if base_shape
@@ -172,11 +179,13 @@ module Solis
           # Create base shape URI - use graph namespace if available, otherwise generic
           base_namespace = graph.graph_name || "http://solis.libis.be/shapes/"
           base_shape = RDF::URI.new("#{base_namespace}UniversalPropertiesShape")
+          base_class = RDF::URI.new("#{base_namespace}UniversalProperties")
 
           # Define the base shape
           shacl_graph << [base_shape, RDF.type, RDF::Vocab::SHACL.NodeShape]
           shacl_graph << [base_shape, RDF::Vocab::SHACL.name, "UniversalProperties"]
           shacl_graph << [base_shape, RDF::Vocab::SHACL.description, "Base shape containing properties that can be applied to any resource"]
+          shacl_graph << [base_shape, RDF::Vocab::SHACL.targetClass, base_class]
 
           # Add all universal properties to the base shape
           universal_properties.each do |property|
@@ -321,6 +330,7 @@ module Solis
           range = graph.first_object([property, RDF::RDFS.range])
           domain = graph.first_object([property, RDF::RDFS.domain])
           property_definition = graph.first_object([property, RDF::Vocab::SKOS.definition, nil])
+          property_definition ||= graph.first_object([property, RDF::RDFS.comment])
           property_type = graph.first_object([property, RDF.type])
           property_name = safe_class_name(property.to_s)
           sub_property_of = graph.first_object([property, RDF::RDFS.subPropertyOf])
