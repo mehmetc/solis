@@ -62,6 +62,17 @@ class TestEntityQuery < Minitest::Test
     cont = query_builder_car.where(attributes).count
     assert_equal(cont, 1)
 
+    attributes = {
+      "https://example.com/brand" => "toyota"
+    }
+
+    query_builder_car = Solis::Query::QueryBuilder.new(@model.namespace, 'https://example.com/Car', query_runner)
+    entity = query_builder_car.find_by(attributes)
+    assert_equal(entity.class, Solis::Model::Entity)
+
+    cont = query_builder_car.where(attributes).count
+    assert_equal(cont, 1)
+
   end
 
 end

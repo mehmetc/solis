@@ -9,14 +9,17 @@ require_relative "utils/namespace"
 require_relative "utils/prefix_resolver"
 require_relative "utils/jsonld"
 require_relative "utils/string"
+require 'tsort'
+require 'active_support/core_ext/string/inflections'
 
 module Solis
   class Model
 
     attr_reader :store, :graph, :namespace, :prefix, :uri, :content_type, :logger
-    attr_reader :shapes, :validator, :hash_validator_literals, :namespace
+    attr_reader :shapes, :validator, :hash_validator_literals, :namespace, :context, :context_inv
     attr_reader :hierarchy_ext, :hierarchy, :hierarchy_full
     attr_reader :info_entities
+    attr_reader :dependencies, :sorted_dependencies
     attr_reader :plurals
 
     def initialize(params = {})
@@ -25,12 +28,23 @@ module Solis
       raise Solis::Error::BadParameter, "One of :prefix, :namespace, :uri is missing" unless (model.keys & [:prefix, :namespace, :uri]).size == 3
       @logger = params[:logger] || Solis.logger([STDOUT])
       @logger.level = Logger::INFO
+      @graph = Solis::Model::Reader.from_uri(model)
       @namespace = model[:namespace] || Solis::Utils::Namespace.detect_primary_namespace(@graph)
       @prefix = model[:prefix] || Solis::Utils::PrefixResolver.resolve_prefix(@namespace)
       @context = {
-        "@vocab" => @namespace,
+        "@vocab" => @namespace
+      }
+      context = {
         prefix => @namespace
       }
+      namespaces = Solis::Utils::Namespace.extract_unique_namespaces(@graph)
+      namespaces.each do |namespace|
+        next if namespace.eql?(@namespace)
+        prefix = Solis::Utils::PrefixResolver.resolve_prefix(namespace)
+        context[prefix] = namespace
+      end
+      @context.merge!(context)
+      @context_inv = context.invert
       @uri = model[:uri]
       @content_type = model[:content_type]
       @store = params[:store] || nil
@@ -40,8 +54,6 @@ module Solis
       @description = model[:description]
 
       @plurals = model[:plurals] || {}
-
-      @graph = Solis::Model::Reader.from_uri(model)
 
       @parser = SHACLParser.new(@graph)
       @shapes = @parser.parse_shapes
@@ -56,6 +68,10 @@ module Solis
       make_hierarchy
       @info_entities = {}
       make_info_entities
+      @dependencies = {}
+      make_dependencies
+      @sorted_dependencies = []
+      make_sorted_dependencies
     end
 
     def entity
@@ -84,6 +100,8 @@ module Solis
       options[:description] ||= description
       options[:shapes] ||= @shapes
       options[:entities] ||= @info_entities
+      options[:dependencies] ||= @dependencies
+      options[:sorted_dependencies] ||= @sorted_dependencies
 
       case content_type
       when 'text/vnd.mermaid'
@@ -166,7 +184,7 @@ module Solis
         list += _get_parent_entities_for_entity(list[idx])
         idx += 1
       end
-      list[1..]
+      list[1..].uniq
     end
 
     def get_shape_for_entity(name_entity)
@@ -191,6 +209,16 @@ module Solis
         end
       end
       properties
+    end
+
+    def get_own_properties_list_for_entity(name_entity)
+      list_properties = []
+      names_shapes = Shapes.get_shapes_for_class(@shapes, name_entity)
+      names_shapes.each do |name_shape|
+        property_shapes = deep_copy(@shapes[name_shape][:properties])
+        list_properties.concat(property_shapes.values.map { |v| v[:path] })
+      end
+      list_properties
     end
 
     def find_entity_by_plural(plural)
@@ -312,6 +340,8 @@ module Solis
         name_entity = Shapes.get_target_class_for_shape(@shapes, name_shape)
         name_plural = plurals[name_entity]
         @shapes[name_shape][:plural] = name_plural unless name_plural.nil?
+        snake_case_name_entity = Solis::Utils::String.camel_to_snake(Solis::Utils::String.extract_name_from_uri(name_entity))
+        @shapes[name_shape][:plural] ||= snake_case_name_entity.pluralize
       end
     end
 
@@ -338,13 +368,22 @@ module Solis
 
     def property_shapes_as_entity_properties(property_shapes)
       properties = {}
-      property_shapes.each_value do |v|
-        unless properties.key?(v[:path])
-          properties[v[:path]] = { constraints: [] }
+      property_shapes.each_value do |shape|
+        unless properties.key?(shape[:path])
+          properties[shape[:path]] = { constraints: [] }
         end
-        properties[v[:path]][:constraints] << {
-          description: v[:description],
-          data: v[:constraints]
+        constraints = deep_copy(shape[:constraints])
+        if constraints.key?(:or)
+          constraints[:or].map! do |o|
+            h = {
+              o[:path] => o
+            }
+            property_shapes_as_entity_properties(h).values[0]
+          end
+        end
+        properties[shape[:path]][:constraints] << {
+          description: shape[:description],
+          data: constraints
         }
       end
       properties
@@ -353,7 +392,7 @@ module Solis
     def merge_info_entity_properties!(properties_1, properties_2)
       properties_2.each do |k, v|
         if properties_1.key?(k)
-          properties_1[k][:constraints] << v[:constraints]
+          properties_1[k][:constraints].concat(v[:constraints])
         else
           properties_1[k] = v
         end
@@ -380,13 +419,54 @@ module Solis
         description = descriptions[0]
         plurals = names_shapes.collect { |s| @shapes[s][:plural] }
         plural = plurals[0]
+        snake_case_name = Solis::Utils::String.camel_to_snake(Solis::Utils::String.extract_name_from_uri(name_entity))
+        namespace_entity = Solis::Utils::String.extract_namespace_from_uri(name_entity)
+        prefix_entity = @context_inv[namespace_entity]
         @info_entities[name_entity] = {
+          direct_parents: get_parent_entities_for_entity(name_entity),
+          all_parents: get_all_parent_entities_for_entity(name_entity),
           properties: get_properties_info_for_entity(name_entity),
+          own_properties: get_own_properties_list_for_entity(name_entity),
           name: name,
+          prefix: prefix_entity,
           description: description,
           plural: plural,
-          snake_case_name: Solis::Utils::String.camel_to_snake(Solis::Utils::String.extract_name_from_uri(name_entity))
+          snake_case_name: snake_case_name
         }
+      end
+    end
+
+    def make_dependencies
+      @dependencies = {}
+      append_to_deps = lambda do |name_entity, data_property, dependencies|
+        data_property[:constraints].each do |constraint|
+          info = constraint[:data]
+          if info.key?(:class)
+            dependencies[name_entity] << info[:class]
+          end
+          if info.key?(:or)
+            info[:or].each do |data_property_or|
+              append_to_deps.call(name_entity, data_property_or, dependencies)
+            end
+          end
+        end
+      end
+      @info_entities.each do |name_entity, data_entity|
+        @dependencies[name_entity] = []
+        data_entity[:own_properties].each do |name_property|
+          data_property = data_entity[:properties][name_property]
+          append_to_deps.call(name_entity, data_property, @dependencies)
+        end
+        @dependencies[name_entity].uniq!
+      end
+    end
+
+    def make_sorted_dependencies
+      begin
+        @sorted_dependencies = TSortableHash[@dependencies].tsort
+      rescue
+        puts "circular deps found in @dependencies"
+        @sorted_dependencies = @dependencies.keys
       end
     end
 

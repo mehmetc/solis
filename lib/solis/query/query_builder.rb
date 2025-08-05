@@ -1,3 +1,4 @@
+require_relative '../utils/string'
 
 module Solis
   class Query
@@ -210,14 +211,14 @@ module Solis
 
       def build_sparql_find_records_query
         # This is a simplified version - real implementation would be more complex
-        type_uri = "#{@namespace}#{@entity_name}"
+        type_uri = Solis::Utils::String.prepend_namespace_if_not_uri(@namespace, @entity_name)
 
         sparql = "SELECT DISTINCT ?s WHERE {\n"
         sparql += "  ?s a <#{type_uri}> .\n"
 
         # Add conditions
         @conditions.each do |property, value|
-          prop_uri = "#{@namespace}#{property}"
+          prop_uri = Solis::Utils::String.prepend_namespace_if_not_uri(@namespace, property)
           if value.is_a?(String)
             sparql += "  ?s <#{prop_uri}> \"#{value}\" .\n"
           elsif value.is_a?(Integer) || value.is_a?(Float)
@@ -245,14 +246,15 @@ module Solis
       end
 
       def build_sparql_count_records_query
-        type_uri = "#{@namespace}#{@entity_name}"
+        type_uri = Solis::Utils::String.prepend_namespace_if_not_uri(@namespace, @entity_name)
 
         sparql = "SELECT (COUNT(DISTINCT ?s) AS ?count) WHERE {\n"
         sparql += "  ?s a <#{type_uri}> .\n"
 
         # Add conditions (same as build_sparql_query)
         @conditions.each do |property, value|
-          prop_uri = "#{@namespace}#{property}"
+          # prop_uri = "#{@namespace}#{property}"
+          prop_uri = Solis::Utils::String.prepend_namespace_if_not_uri(@namespace, property)
           if value.is_a?(String)
             sparql += "  ?s <#{prop_uri}> \"#{value}\" .\n"
           elsif value.is_a?(Integer) || value.is_a?(Float)

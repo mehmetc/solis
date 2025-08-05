@@ -19,7 +19,7 @@ class TestPlurals < Minitest::Test
     solis = Solis.new(config)
 
     shape_uri = Shapes.find_uri_by_name(solis.model.shapes, 'Car')
-    assert_nil(solis.model.shapes[shape_uri][:plural])
+    assert_equal(solis.model.shapes[shape_uri][:plural], 'cars')
 
   end
 
@@ -33,7 +33,7 @@ class TestPlurals < Minitest::Test
         uri: 'file://test/resources/car/car_shacl.ttl',
         content_type: 'text/turtle',
         plurals: {
-          'Car' => 'cars'
+          'Car' => 'carsss'
         }
       }
     }
@@ -41,7 +41,7 @@ class TestPlurals < Minitest::Test
 
 
     shape_uri = Shapes.find_uri_by_name(solis.model.shapes, 'Car')
-    assert_equal(solis.model.shapes[shape_uri][:plural], 'cars')
+    assert_equal(solis.model.shapes[shape_uri][:plural], 'carsss')
   end
 
 end

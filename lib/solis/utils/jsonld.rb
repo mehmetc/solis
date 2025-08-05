@@ -196,7 +196,11 @@ module Solis
       end
 
       def self.is_object_a_ref(obj)
-        obj.is_a?(Hash) and obj.key?('@id') and (obj.keys - ['@id', '@type']).empty?
+        obj.is_a?(Hash) and obj.key?('@id') and (obj.keys.length == 1)
+      end
+
+      def self.is_object_a_blank_node(obj)
+        obj.is_a?(Hash) and obj.key?('@id') and obj['@id'].start_with?('_:')
       end
 
       def self.is_object_an_embedded_entity(obj)
@@ -204,6 +208,7 @@ module Solis
       end
 
       def self.add_ids_if_not_exists!(obj, namespace)
+        return if obj.empty?
         obj['@id'] = obj['@id'] || URI.join(namespace, SecureRandom.uuid).to_s
         obj.each do |name_attr, val_attr|
           next if RESERVED_FIELDS.include?(name_attr)
@@ -217,6 +222,7 @@ module Solis
       end
 
       def self.add_default_attributes_if_not_exists!(obj, name_attr, val_def)
+        return if obj.empty?
         obj[name_attr] = obj[name_attr] || val_def
         obj.each do |_name_attr, val_attr|
           next if RESERVED_FIELDS.include?(_name_attr)
@@ -257,7 +263,7 @@ module Solis
       end
 
       def self.increment_attributes!(obj, name_attr)
-        obj[name_attr] += 1
+        obj[name_attr] += 1 if obj.key?(name_attr)
         obj.each do |_name_attr, val_attr|
           next if RESERVED_FIELDS.include?(_name_attr)
           val_attr = [val_attr] unless val_attr.is_a?(Array)

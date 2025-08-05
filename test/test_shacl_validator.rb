@@ -1894,4 +1894,159 @@ class TestSHACLValidator < Minitest::Test
 
   end
 
+  def test_validator_ignores_owl_equivalent_class
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+
+      example:CarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a car entity" ;
+              sh:targetClass  example:Car;
+              sh:name         "Car";
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color" ;
+                                sh:description "Color of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+      .
+
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/",
+          "owl": "http://www.w3.org/2002/07/owl#",
+          "owl:equivalentClass": {
+            "@type": "@id"
+          }
+        },
+        "@graph": [
+          {
+            "@id": "https://example.com/Car",
+            "@type": "owl:Class"
+          },
+          {
+            "@id": "https://example.com/AnotherCar",
+            "@type": "owl:Class"
+          },
+          {
+            "@id": "https://example.com/AnotherCar",
+            "owl:equivalentClass": "https://example.com/Car"
+          },
+          {
+            "@id": "http://schema.org/my_car",
+            "@type": "AnotherCar",
+            "color": 123
+          }
+        ]
+      }
+    )
+
+    # graph_data = RDF::Graph.new << JSON::LD::API.toRdf(hash_data_jsonld)
+    # puts graph_data.dump(:ttl)
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, true)
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+      @prefix owl:    <http://www.w3.org/2002/07/owl#> .
+
+      example:Car a owl:Class .
+      example:AnotherCar a owl:Class .
+      example:Car owl:equivalentClass example:AnotherCar .
+
+      example:CarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a car entity" ;
+              sh:targetClass  example:Car;
+              sh:name         "Car";
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color" ;
+                                sh:description "Color of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+      .
+
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/"
+        },
+        "@graph": [
+          {
+            "@id": "http://schema.org/my_car",
+            "@type": "AnotherCar",
+            "color": 123
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, true)
+
+  end
+
+  def test_multiple_target_classes
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+
+      example:CarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a car entity" ;
+              sh:targetClass  example:Car;
+              sh:targetClass  example:AnotherCar;
+              sh:name         "Car";
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color" ;
+                                sh:description "Color of the car" ;
+                                sh:datatype    xsd:string ;
+                                sh:minCount    1 ;
+                                sh:maxCount    1 ; ];
+      .
+
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/"
+        },
+        "@graph": [
+          {
+            "@id": "http://schema.org/my_car",
+            "@type": "Car",
+            "color": 123
+          },
+          {
+            "@id": "http://schema.org/my_car_2",
+            "@type": "AnotherCar",
+            "color": 123
+          }
+        ]
+      }
+    )
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    assert_equal(conform, false)
+
+  end
+
 end

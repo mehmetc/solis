@@ -67,7 +67,7 @@ class TestEntityBasic < Minitest::Test
     assert_equal(car.attributes.owners[0]['address']['_id'].nil?, false)
 
   end
-
+  
   def test_entity_get_shape
 
     data = JSON.parse %(

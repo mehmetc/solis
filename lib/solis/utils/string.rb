@@ -21,6 +21,20 @@ module Solis
         end
       end
 
+      def self.extract_namespace_from_uri(uri)
+        uri.gsub(extract_name_from_uri(uri), '')
+      end
+
+      def self.is_uri(s)
+        # also add "file://" etc.
+        return s.start_with?('http')
+      end
+
+      def self.prepend_namespace_if_not_uri(namespace, s)
+        return s if is_uri(s)
+        "#{namespace}#{s}"
+      end
+
     end
   end
 end
