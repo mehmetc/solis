@@ -505,4 +505,26 @@ class TestUtilsJSONLD < Minitest::Test
     assert Solis::Utils::JSONLD.is_object_an_embedded_entity({})
   end
 
+  def test_
+
+    data = JSON.parse %(
+      {
+        "@id": "http://purl.org/ontology/bibo/collections/f81a158f-3dac-463d-baed-1a09d50db5ae",
+        "@type": "Collection",
+        "https://libis.be/solis/metadata/db/locks/optimistic/_version": 1,
+        "hasPart": {
+          "@id": "http://purl.org/ontology/bibo/collections/a13e075a-3b7d-422d-a99c-a4bbf451166c",
+          "@type": "Collection",
+          "https://libis.be/solis/metadata/db/locks/optimistic/_version": 1,
+          "upc": "upc"
+        },
+        "@context": {
+          "@vocab": "http://purl.org/ontology/bibo/"
+        }
+      }
+    )
+    Solis::Utils::JSONLD.expand_type!(data, data['@context'])
+
+  end
+
 end
