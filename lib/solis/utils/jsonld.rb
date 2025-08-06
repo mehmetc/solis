@@ -275,6 +275,19 @@ module Solis
         end
       end
 
+      def self.expand_type!(obj, context)
+        obj['@type'] = expand_term(obj['@type'], context) if obj.key?('@type')
+        obj.each do |_name_attr, val_attr|
+          next if RESERVED_FIELDS.include?(_name_attr)
+          val_attr = [val_attr] unless val_attr.is_a?(Array)
+          val_attr.each do |e|
+            if is_object_an_embedded_entity(e)
+              expand_type!(e, context)
+            end
+          end
+        end
+      end
+
       def self.make_jsonld_hierarchy_context
         context = {
           # the following to allow easily adding inheritance triples
