@@ -18,11 +18,11 @@ module Solis
               end
             end
 
-            def validate(sheets)
+            def validate(sheets, prefixes = nil, metadata = nil)
               # raise "Please make sure the sheet contains '_PREFIXES', '_METADATA', '_ENTITIES' tabs" unless (%w[_PREFIXES _METADATA _ENTITIES] - sheets.keys).length == 0
 
-              prefixes = sheets['_PREFIXES']
-              metadata = sheets['_METADATA']
+              prefixes = sheets.key?('_PREFIXES') && prefixes.nil? ? sheets['_PREFIXES'] : prefixes
+              metadata = sheets.key?('_METADATA') && metadata.nil? ? sheets['_METADATA'] : metadata
 
               raise "_PREFIXES tab must have ['base', 'prefix', 'uri'] as a header at row 1" unless (%w[base prefix uri] - prefixes.header).length == 0
               raise '_PREFIXES.base can only have one base URI' if prefixes.map { |m| m['base'] }.grep(/\*/).count != 1
@@ -53,6 +53,8 @@ module Solis
 
             def read_sheets(key, spreadsheet_id, options)
               data = nil
+              prefixes = options[:prefixes] || nil
+              metadata = options[:metadata] || nil
 
               cache_dir = ConfigFile.include?(:cache) ? ConfigFile[:cache] : '/tmp'
 
@@ -70,7 +72,7 @@ module Solis
                   sheets[sheet.title] = sheet
                 end
 
-                validate(sheets)
+                validate(sheets, prefixes, metadata)
               end
               sheets
             end
@@ -151,6 +153,7 @@ module Solis
               if entity_data && !entity_data.nil? && (entity_data.count > 0)
                 entity_data.each do |p|
                   property_name = I18n.transliterate(p['name'].strip)
+                  next if property_name.empty?
                   min_max = {}
 
                   %w[min max].each do |n|
@@ -473,35 +476,75 @@ hide empty members
             end
 
             def build_json_schema(shacl_file)
-                graph = RDF::Graph.load(StringIO.new(shacl_file), format: :ttl)
-                json_schema = {
-                  "$schema" => "http://json-schema.org/draft-07/schema#",
-                  "type" => "object",
-                  "properties" => {},
-                  "required" => []
-                }
-
-                graph.query([nil, RDF.type, RDF::Vocab::SHACL.NodeShape]) do |shape|
-                  shape_subject = shape.subject
-
-                  graph.query([shape_subject, RDF::Vocab::SHACL.property, nil]) do |prop_stmt|
-                    prop_subject = prop_stmt.object
-                    prop_name = graph.query([prop_subject, RDF::Vocab::SHACL.path, nil]).first&.object.to_s
-                    datatype = graph.query([prop_subject, RDF::Vocab::SHACL.datatype, nil]).first&.object
-                    min_count = graph.query([prop_subject, RDF::Vocab::SHACL.minCount, nil]).first&.object&.to_i
-                    max_count = graph.query([prop_subject, RDF::Vocab::SHACL.maxCount, nil]).first&.object&.to_i
-                    pattern = graph.query([prop_subject, RDF::Vocab::SHACL.pattern, nil]).first&.object&.to_s
-
-                    json_schema["properties"][prop_name] = {}
-                    json_schema["properties"][prop_name]["type"] = datatype.to_s.split("#").last.downcase if datatype
-                    json_schema["properties"][prop_name]["pattern"] = pattern if pattern
-
-                    json_schema["required"] << prop_name if min_count && min_count > 0
-                    json_schema["properties"][prop_name]["maxItems"] = max_count if max_count
-                  end
+              def map_rdf_datatype_to_json_schema(datatype)
+                # NOTE: "format" not supported by every client.
+                case datatype
+                when /string$/
+                  { "type" => "string" }
+                when /integer$/
+                  { "type" => "integer" }
+                when /decimal$/, /double$/, /float$/
+                  { "type" => "number" }
+                when /boolean$/
+                  { "type" => "boolean" }
+                when /date$/, /dateTime$/
+                  { "type" => "string", "format" => "date-time" }
+                when /anyURI$/
+                  { "type" => "string", "format" => "uri" }
+                else
+                  { "type" => "string" }
                 end
+              end
 
-                JSON.pretty_generate(json_schema)
+              def self.default_value_for_type(type)
+                case type
+                when "string"
+                  ""
+                when "integer", "number"
+                  0
+                when "boolean"
+                  false
+                when "array"
+                  []
+                when "object"
+                  {}
+                else
+                  ""
+                end
+              end
+
+              graph = RDF::Graph.new
+              graph.from_ttl(shacl_file)
+
+              #graph = RDF::Graph.load(StringIO.new(shacl_file), format: :ttl, content_type: "text/turtle")
+              json_schema = {
+                "$schema" => "http://json-schema.org/draft-07/schema#",
+                "type" => "object",
+                "properties" => {},
+                "required" => []
+              }
+
+              graph.query([nil, RDF.type, RDF::Vocab::SHACL.NodeShape]) do |shape|
+                shape_subject = shape.subject
+
+                graph.query([shape_subject, RDF::Vocab::SHACL.property, nil]) do |prop_stmt|
+                  prop_subject = prop_stmt.object
+                  prop_name = graph.query([prop_subject, RDF::Vocab::SHACL.path, nil]).first&.object.to_s
+                  datatype = map_rdf_datatype_to_json_schema(graph.query([prop_subject, RDF::Vocab::SHACL.datatype, nil]).first&.object)
+                  min_count = graph.query([prop_subject, RDF::Vocab::SHACL.minCount, nil]).first&.object&.to_i
+                  max_count = graph.query([prop_subject, RDF::Vocab::SHACL.maxCount, nil]).first&.object&.to_i
+                  pattern = graph.query([prop_subject, RDF::Vocab::SHACL.pattern, nil]).first&.object&.to_s
+
+                  json_schema["properties"][prop_name] = {}
+                  json_schema["properties"][prop_name]["type"] = datatype["type"] if datatype
+                  json_schema["properties"][prop_name]["pattern"] = pattern if pattern
+
+                  json_schema["required"] << prop_name if min_count && min_count > 0
+                  json_schema["properties"][prop_name]["maxItems"] = max_count if max_count
+                end
+              end
+
+              JSON.pretty_generate(json_schema)
             end
 
             def every_entity(data)
@@ -652,6 +695,16 @@ hide empty members
           end
 
           sheet_data = read_sheets(key, spreadsheet_id, options)
+          prefixes = sheet_data['_PREFIXES']
+          metadata = sheet_data['_METADATA']
+
+          raise "_PREFIXES tab must have ['base', 'prefix', 'uri'] as a header at row 1" unless (%w[base prefix uri] - prefixes.header).length == 0
+          raise '_PREFIXES.base can only have one base URI' if prefixes.map { |m| m['base'] }.grep(/\*/).count != 1
+
+          raise "_METADATA tab must have ['key', 'value'] as a header at row 1" unless (%w[key value] - metadata.header).length == 0
+
+          options[:prefixes] = prefixes
+          options[:metadata] = metadata
           #TODO: cleanup
           if sheet_data.is_a?(Hash)
             raise "No _REFERENCES sheet found" unless sheet_data.key?("_REFERENCES")
@@ -670,10 +723,20 @@ hide empty members
           end
 
           datas = []
-          references.each do |v|
+          references.each_with_index do |v, i|
+            progress((100/(references.length+1))*(i+1), options[:progress] || {})
             sheet_id = spreadsheet_id_from_url(v[:sheet_url])
 
             sheet_data = read_sheets(key, sheet_id, options)
+
+            unless sheet_data.key?('_PREFIXES')
+              sheet_data['_PREFIXES'] = prefixes
+            end
+
+            unless sheet_data.key?('_METADATA')
+              sheet_data['_METADATA'] = metadata
+            end
+
             if sheet_data.key?("_PREFIXES")
               datas << process_sheet(key, sheet_id, sheet_data)
               sleep 30
