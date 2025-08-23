@@ -126,8 +126,14 @@ values ?s {<#{self.graph_id}>}
       )
       result = sparql.query(query)
 
+      if result.count > 0
+        if result.first.bound?(result.variable_names.first) && result.first[result.variable_names.first].value =~ /done$/
+          after_delete_proc&.call(self)
+        else
+          after_delete_proc&.call(result)
+        end
+      end
       #      result = sparql.delete_data(graph, graph: graph.name)
-      after_delete_proc&.call(result)
       result
     end
 
@@ -294,7 +300,7 @@ values ?s {<#{self.graph_id}>}
     end
 
     def is_referenced?(sparql)
-      sparql.query("ASK WHERE { ?s ?p <#{self.graph_id}>. filter (!contains(str(?p), '_audit'))}")
+      sparql.query("ASK WHERE { ?s ?p <#{self.graph_id}>. filter (!contains(str(?s), 'audit') && !contains(str(?p), 'audit'))}")
     end
 
     def exists?(sparql)
