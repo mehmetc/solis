@@ -108,4 +108,38 @@ class TestIntegration < Minitest::Test
     pp result
 
   end
+
+  def test_integration_bibo_existing_data
+
+    graph_name = "http://purl.org/ontology/bibo/"
+    config = {
+      store: Solis::Store::Memory.new(graph: graph_name),
+      model: {
+        prefix: 'bibo',
+        namespace: 'http://purl.org/ontology/bibo/',
+        uri: "file://test/resources/bibo_owl.xml",
+        content_type: 'application/rdf+xml'
+      }
+    }
+
+    # instantiate Solis with the configuration
+    @solis = Solis.new(config)
+
+    # @solis.model.logger.level = Logger::DEBUG
+    @solis.model.logger.level = Logger::INFO
+
+    data = JSON.parse(File.read('test/resources/bibo/book_99122040101471.jsonld'))
+    bibo_record = @solis.model.entity.new('Book', data)
+
+    puts bibo_record.to_pretty_pre_validate_jsonld
+
+    pp bibo_record.validate
+
+    data = JSON.parse(File.read('test/resources/bibo/book_99122040101471_with_context.jsonld'))
+    bibo_record = @solis.model.entity.new('Book', data)
+
+    puts bibo_record.to_pretty_pre_validate_jsonld
+
+  end
+
 end
