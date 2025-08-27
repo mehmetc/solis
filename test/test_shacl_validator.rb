@@ -2049,4 +2049,82 @@ class TestSHACLValidator < Minitest::Test
 
   end
 
+  def test_rdf_lists_and_containers
+
+    # NOTE:
+    # the validator seems to ignore rdf:List and containers (rdf:Seq).
+    # Check this: https://github.com/TopQuadrant/shacl/issues/196
+
+    str_shacl_ttl = %(
+      @prefix example: <https://example.com/> .
+      @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+      @prefix sh:     <http://www.w3.org/ns/shacl#> .
+      @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+      example:CarShape
+              a sh:NodeShape;
+              sh:description  "Abstract shape that describes a car entity" ;
+              sh:targetClass  example:Car;
+              sh:name         "Car";
+              sh:property     [ sh:path        example:color;
+                                sh:name        "color" ;
+                                sh:description "Color of the car" ;
+                                sh:class       rdf:List;
+                              ];
+      .
+
+    )
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/",
+          "color": {
+            "@id": "https://example.com/color",
+            "@container": "@list"
+          }
+        },
+        "@graph": [
+          {
+            "@id": "http://schema.org/my_car",
+            "@type": "Car",
+            "color": [1, "green"]
+          }
+        ]
+      }
+    )
+
+    g = RDF::Graph.new << JSON::LD::API.toRdf(hash_data_jsonld)
+    puts g.dump(:ttl)
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    pp messages
+
+    hash_data_jsonld = JSON.parse %(
+      {
+        "@context": {
+          "@vocab": "https://example.com/"
+        },
+        "@graph": [
+          {
+            "@id": "http://schema.org/my_car",
+            "@type": "Car",
+            "color": {
+              "@list": [1, "green"]
+            }
+          }
+        ]
+      }
+    )
+
+    g = RDF::Graph.new << JSON::LD::API.toRdf(hash_data_jsonld)
+    puts g.dump(:ttl)
+
+    validator = Solis::SHACLValidator.new(str_shacl_ttl, :ttl, @opts)
+    conform, messages = validator.execute(hash_data_jsonld, :jsonld)
+    pp messages
+
+  end
+
 end
