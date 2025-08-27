@@ -23,7 +23,7 @@ module Solis
                 references = sheet
               end
 
-              datas = process_references(key, references)
+              datas = process_references(key, references, sheet)
               raw_shacl = StringIO.new(to_shacl(datas))
 
               DataCollector::Input.new.from_uri(raw_shacl, content_type: 'text/turtle', raw: true)
@@ -94,14 +94,14 @@ module Solis
             end
           end
 
-          def process_references(key, references)
+          def process_references(key, references, main_sheet = nil)
             datas = []
             references.each do |ref|
               sheet_id = spreadsheet_id_from_url(ref[:sheet_url])
               sheet_data = fetch_sheet(key, sheet_id)
 
-              if sheet_data.key?("_PREFIXES")
-                datas << parse(sheet_data, follow: true)
+              if sheet_data.key?("_ENTITIES")
+                datas << parse(sheet_data, follow: true, main_sheet: main_sheet)
                 sleep 30 # Consider making this configurable or removing if unnecessary
               else
                 datas << sheet_data
@@ -116,8 +116,6 @@ module Solis
           end
 
           def validate(sheets)
-            validate_prefixes(sheets['_PREFIXES'])
-            validate_metadata(sheets['_METADATA'])
             validate_entities_or_references(sheets)
           end
 
@@ -172,10 +170,13 @@ module Solis
           end
 
           def parse(sheets, options = {})
+            main_sheet = options.delete(:main_sheet)
             validate(sheets)
+            validate_prefixes(main_sheet['_PREFIXES'])
+            validate_metadata(main_sheet['_METADATA'])
 
-            prefixes = extract_prefixes(sheets)
-            ontology_metadata = extract_metadata(sheets)
+            prefixes = extract_prefixes(main_sheet)
+            ontology_metadata = extract_metadata(main_sheet)
             entities = build_entities(sheets, prefixes, options)
 
             {
