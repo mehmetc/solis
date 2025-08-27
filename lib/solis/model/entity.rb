@@ -163,7 +163,7 @@ module Solis
         @model.logger.debug(JSON.pretty_generate(flattened_ordered_expanded))
 
         # add hierarchy triples
-        flattened_ordered_expanded['@context'].merge!(Solis::Utils::JSONLD.make_jsonld_hierarchy_context)
+        flattened_ordered_expanded['@context'].merge!(Solis::Utils::JSONLD.make_jsonld_hierarchy_context) if flattened_ordered_expanded['@context'].is_a?(Hash)
         flattened_ordered_expanded['@graph'].concat(Solis::Utils::JSONLD.make_jsonld_triples_from_hierarchy(@model))
         @model.logger.debug("=== flattened + deps sorted + expanded + cleaned + hierarchy JSON-LD:")
         @model.logger.debug(JSON.pretty_generate(flattened_ordered_expanded))
