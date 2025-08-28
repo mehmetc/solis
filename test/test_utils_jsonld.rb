@@ -505,7 +505,7 @@ class TestUtilsJSONLD < Minitest::Test
     assert Solis::Utils::JSONLD.is_object_an_embedded_entity({})
   end
 
-  def test_
+  def test_expand_type
 
     data = JSON.parse %(
       {
