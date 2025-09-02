@@ -94,7 +94,7 @@ module Solis
     def writer(content_type = 'text/turtle', options = {})
       options[:namespace] ||= @namespace
       options[:prefix] ||= @prefix
-      options[:model] ||= @graph
+      options[:graph] ||= @graph
       options[:title] ||= title
       options[:version] ||= version
       options[:description] ||= description

@@ -8,12 +8,12 @@ module Solis
   class Model
     class Writer
       def self.to_uri(params = {})
-        raise Solis::Error::MissingParameter, "One :prefix, :namespace, :uri, :model is missing " unless (params.keys & [:prefix, :namespace, :uri, :model]).size == 4
+        raise Solis::Error::MissingParameter, "One :prefix, :namespace, :uri, :graph is missing " unless (params.keys & [:prefix, :namespace, :uri, :graph]).size == 4
 
         content_type = RDF::Format.content_types[params[:content_type] || 'text/turtle'].first.to_sym
         namespace = params[:namespace]
         prefix = params[:prefix]
-        shacl_graph = params[:model]
+        shacl_graph = params[:graph]
         uri = params[:uri]
 
         all_prefixes = extract_prefixes(shacl_graph, prefix, namespace)
