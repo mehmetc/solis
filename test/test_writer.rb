@@ -24,7 +24,7 @@ class TestWriter < Minitest::Test
                                 content_type: 'text/turtle',
                                 prefix: @solis.model.prefix,
                                 namespace: @solis.model.namespace,
-                                model: @solis.model.graph)
+                                graph: @solis.model.graph)
 
     shacl.rewind
     assert_match('CarShape', shacl.read)
@@ -134,6 +134,9 @@ class TestWriter < Minitest::Test
     end
     File.open('./test/resources/bibo.puml', 'wb') do |f|
       f.puts s.model.writer('text/vnd.plantuml')
+    end
+    File.open('./test/resources/bibo_entities.json', 'wb') do |f|
+      f.puts JSON.pretty_generate JSON.parse(s.model.writer('application/entities+json'))
     end
   end
 

@@ -127,4 +127,27 @@ class TestReader < Minitest::Test
     end
   end
 
+
+  def test_convert_bibo_json_entities_to_shacl
+    graph = Solis::Model::Reader.from_uri({
+                                    uri: 'file://test/resources/bibo_entities.json',
+                                    content_type: 'application/json'
+                                   })
+    File.open('./test/resources/bibo_shapes_from_json.ttl', 'wb') do |f|
+      f.puts graph.dump(:ttl, prefixes: graph.extract_prefixes)
+    end
+  end
+
+  def test_read_from_bibo_json_entities
+    config = {
+      store: Solis::Store::Memory.new(),
+      model: {
+        prefix: 'ex',
+        namespace: 'http://example.org/',
+        uri: 'file://test/resources/bibo_entities.json',
+        content_type: 'application/json'}
+    }
+    solis = Solis.new(config)
+  end
+
 end
