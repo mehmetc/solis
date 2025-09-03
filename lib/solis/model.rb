@@ -48,9 +48,12 @@ module Solis
       @content_type = model[:content_type]
       @store = params[:store] || nil
 
-      @title= model[:title] || "No Title"
-      @version = model[:version] || "0.1"
-      @description = model[:description]
+      @title ||= model[:title] || "No Title"
+      @version ||= model[:version] || "0.1"
+      @version_counter ||= model[:version_counter] || 0
+      @description ||= model[:description] || "No description"
+
+      puts @graph.dump(:ttl)
 
       @plurals = model[:plurals] || {}
 
@@ -108,7 +111,7 @@ module Solis
         options[:uri] = "plantuml://#{@prefix}"
         Solis::Model::Writer.to_uri(options)
       when 'application/schema+json'
-        options[:entities] = writer('application/entities+json', raw: true)
+        options[:entities] = writer('application/entities+json', raw: true)[:entities]
         options[:uri] = "jsonschema://#{@prefix}"
         Solis::Model::Writer.to_uri(options)
       when 'application/entities+json'
@@ -132,7 +135,7 @@ module Solis
 
     #attr_accessor :title, :version, :description, :creator
     def title
-      _get_object_for_preficate(RDF::Vocab::DC.title) || Solis::Utils::Namespace.detect_primary_namespace(@graph, @namespace)
+      _get_object_for_preficate(RDF::Vocab::DC.title)# || Solis::Utils::Namespace.detect_primary_namespace(@graph, @namespace)
     end
 
     def title=(title)
@@ -140,7 +143,7 @@ module Solis
     end
 
     def description
-      _get_object_for_preficate(RDF::Vocab::DC.description) || ''
+      _get_object_for_preficate(RDF::Vocab::DC.description)
     end
 
     def description=(description)
@@ -148,11 +151,15 @@ module Solis
     end
 
     def version
-      _get_object_for_preficate(RDF::Vocab::OWL.versionInfo) || ''
+      _get_object_for_preficate(RDF::Vocab::OWL.versionInfo)# || ''
     end
 
-    def version=(version)
-      _set_object_for_preficate(RDF::Vocab::OWL.versionInfo, version)
+    def version_counter
+      _get_object_for_preficate(RDF::URI(Solis::Model::Entity::URI_DB_OPTIMISTIC_LOCK_VERSION))# || 0
+    end
+
+    def version_counter=(version_counter)
+      _set_object_for_preficate(RDF::URI(Solis::Model::Entity::URI_DB_OPTIMISTIC_LOCK_VERSION), version_counter)
     end
 
     def creator
@@ -423,7 +430,7 @@ module Solis
           end
         end
       end
-      entities = writer('application/entities+json', raw: true)
+      entities = writer('application/entities+json', raw: true)[:entities]
       entities.each do |name_entity, data_entity|
         @dependencies[name_entity] = []
         data_entity[:own_properties].each do |name_property|

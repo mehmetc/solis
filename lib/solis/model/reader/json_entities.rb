@@ -6,14 +6,33 @@ module Solis
     class Reader
       class JSONEntities
 
-        def self.read(entities_in)
-          if entities_in.is_a?(String)
-            entities = JSON.parse(entities_in)
+        def self.read(data_in)
+          if data_in.is_a?(String)
+            data = JSON.parse(data_in)
           else
-            entities = entities_in
+            data = data_in
           end
 
           shacl_graph = RDF::Repository.new
+
+          # Add metadata
+
+          graph_namespace = data['namespace']
+          graph_title = data['title']
+          graph_version = data['version']
+          graph_version_counter = data['version_counter']
+          graph_description = data['description']
+
+          metadata_node = RDF::URI(graph_namespace)
+
+          shacl_graph << [metadata_node, RDF::Vocab::DC.title, graph_title]
+          shacl_graph << [metadata_node, RDF::Vocab::OWL.versionInfo, graph_version]
+          shacl_graph << [metadata_node, RDF::URI(Solis::Model::Entity::URI_DB_OPTIMISTIC_LOCK_VERSION), graph_version_counter]
+          shacl_graph << [metadata_node, RDF::Vocab::DC.title, graph_description]
+
+          # Add entities
+
+          entities = data['entities']
 
           entities.each do |name_entity, data_entity|
 

@@ -126,7 +126,6 @@ class TestWriter < Minitest::Test
       uri: 'file://test/resources/bibo_owl.xml',
       content_type: 'application/rdf+xml'
     }})
-    puts JSON.pretty_generate(s.model.info_entities)
     puts JSON.pretty_generate(s.model.dependencies)
     puts JSON.pretty_generate(s.model.context)
     File.open('./test/resources/bibo_shapes.ttl', 'wb') do |f|

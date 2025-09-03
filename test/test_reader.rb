@@ -148,6 +148,9 @@ class TestReader < Minitest::Test
         content_type: 'application/json'}
     }
     solis = Solis.new(config)
+    puts solis.model.version
+    puts solis.model.version_counter
+    puts solis.model.description
   end
 
 end

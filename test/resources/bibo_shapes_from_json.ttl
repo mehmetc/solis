@@ -1,7 +1,8 @@
 @prefix bibo: <http://purl.org/ontology/bibo/> .
 @prefix dc: <http://purl.org/dc/terms/> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
-@prefix ns0: <http://purl.org/NET/c4dm/event.owl#> .
+@prefix ns0: <https://libis.be/solis/metadata/db/locks/optimistic/> .
+@prefix ns1: <http://purl.org/NET/c4dm/event.owl#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -13,6 +14,17 @@ dc:AgentShape a shacl:NodeShape;
   skos:altLabel "agents";
   shacl:name "Agent";
   shacl:targetClass dc:Agent .
+
+bibo: dc:title "The Bibliographic Ontology",
+    """The Bibliographic Ontology describes
+bibliographic things on the semantic Web in RDF.  This ontology can be
+used as a citation ontology, as a document classification ontology, or
+simply as a way to describe any kind of document in RDF. It has been
+inspired by many existing document description metadata formats, and
+can be used as a common ground for converting other bibliographic data
+sources.""";
+  owl:versionInfo "http://purl.org/ontology/bibo/1.3/";
+  ns0:_version 0 .
 
 bibo:AcademicArticleShape a shacl:NodeShape;
   skos:altLabel "academic_articles";
@@ -76,7 +88,7 @@ bibo:CodeShape a shacl:NodeShape;
 bibo:ConferenceShape a shacl:NodeShape;
   skos:altLabel "conferences";
   shacl:name "Conference";
-  shacl:node ns0:EventShape;
+  shacl:node ns1:EventShape;
   shacl:targetClass bibo:Conference .
 
 bibo:CourtReporterShape a shacl:NodeShape;
@@ -146,13 +158,13 @@ bibo:FilmShape a shacl:NodeShape;
 bibo:HearingShape a shacl:NodeShape;
   skos:altLabel "hearings";
   shacl:name "Hearing";
-  shacl:node ns0:EventShape;
+  shacl:node ns1:EventShape;
   shacl:targetClass bibo:Hearing .
 
 bibo:InterviewShape a shacl:NodeShape;
   skos:altLabel "interviews";
   shacl:name "Interview";
-  shacl:node ns0:EventShape;
+  shacl:node ns1:EventShape;
   shacl:targetClass bibo:Interview .
 
 bibo:IssueShape a shacl:NodeShape;
@@ -359,7 +371,7 @@ bibo:PatentShape a shacl:NodeShape;
 bibo:PerformanceShape a shacl:NodeShape;
   skos:altLabel "performances";
   shacl:name "Performance";
-  shacl:node ns0:EventShape;
+  shacl:node ns1:EventShape;
   shacl:property [
     shacl:class foaf:Agent;
     shacl:name "performer";
@@ -371,7 +383,7 @@ bibo:PerformanceShape a shacl:NodeShape;
 bibo:PersonalCommunicationShape a shacl:NodeShape;
   skos:altLabel "personal_communications";
   shacl:name "PersonalCommunication";
-  shacl:node ns0:EventShape;
+  shacl:node ns1:EventShape;
   shacl:targetClass bibo:PersonalCommunication .
 
 bibo:ProceedingsShape a shacl:NodeShape;
@@ -500,7 +512,7 @@ bibo:WebsiteShape a shacl:NodeShape;
 bibo:WorkshopShape a shacl:NodeShape;
   skos:altLabel "workshops";
   shacl:name "Workshop";
-  shacl:node ns0:EventShape;
+  shacl:node ns1:EventShape;
   shacl:targetClass bibo:Workshop .
 
 rdf:ListShape a shacl:NodeShape;
@@ -848,7 +860,7 @@ bibo:PeriodicalShape a shacl:NodeShape;
   ];
   shacl:targetClass bibo:Periodical .
 
-ns0:EventShape a shacl:NodeShape;
+ns1:EventShape a shacl:NodeShape;
   skos:altLabel "events";
   shacl:name "Event";
   shacl:property [
@@ -858,7 +870,7 @@ ns0:EventShape a shacl:NodeShape;
     shacl:nodeKind shacl:IRI;
     shacl:path bibo:organizer
   ];
-  shacl:targetClass ns0:Event .
+  shacl:targetClass ns1:Event .
 
 bibo:DocumentShape a shacl:NodeShape;
   skos:altLabel "documents";
