@@ -173,6 +173,8 @@ module Shapes
   def self.get_all_classes(shapes)
     classes = []
     shapes.each_value do |v|
+      #What is target class is not defined
+      next if v[:target_class].nil?
       classes << v[:target_class]
     end
     classes

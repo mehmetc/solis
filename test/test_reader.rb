@@ -112,6 +112,22 @@ class TestReader < Minitest::Test
     # end
   end
 
+  def test_load_from_google_sheet_my_library
+    Solis.config.name = 'my_library.yml'
+
+    config = Solis.config.to_h
+    config[:store] = Solis::Store::Memory.new()
+
+    solis = Solis.new(config)
+    all_entities = solis.model.entity.all
+
+    puts JSON.pretty_generate(all_entities)
+    File.open('./test/resources/my_library.ttl', 'wb') do |f|
+       f.puts solis.model.writer
+    end
+  end
+
+
   def test_convert_bibo_json_entities_to_shacl
     graph = Solis::Model::Reader.from_uri({
                                     uri: 'file://test/resources/bibo_entities.json',
