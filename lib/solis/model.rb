@@ -18,7 +18,6 @@ module Solis
     attr_reader :store, :graph, :namespace, :prefix, :uri, :content_type, :logger
     attr_reader :shapes, :validator, :hash_validator_literals, :namespace, :context, :context_inv
     attr_reader :hierarchy_ext, :hierarchy, :hierarchy_full
-    attr_reader :info_entities
     attr_reader :dependencies, :sorted_dependencies
     attr_reader :plurals
 
