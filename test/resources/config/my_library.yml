@@ -1,0 +1,7 @@
+---
+:cache: "./test/cache"
+:model:
+  :namespace: https://solis.libis.be/libis/my_library
+  :prefix: l
+  :uri: google+sheet://1zrX_EcsllegrMb_hptXESkmKVloqHnzZSQgjspnsRYk
+  :key: "${GOOGLE_KEY}"
