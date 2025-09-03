@@ -92,6 +92,7 @@ module Solis
 
     ## Export model as a shacl, mermaid, plantuml diagram
     def writer(content_type = 'text/turtle', options = {})
+      options[:model] = self
       options[:namespace] ||= @namespace
       options[:prefix] ||= @prefix
       options[:graph] ||= @graph
@@ -112,6 +113,9 @@ module Solis
         Solis::Model::Writer.to_uri(options)
       when 'application/schema+json'
         options[:uri] = "jsonschema://#{@prefix}"
+        Solis::Model::Writer.to_uri(options)
+      when 'application/entities+json'
+        options[:uri] = "jsonentities://#{@prefix}"
         Solis::Model::Writer.to_uri(options)
       when 'application/form'
         options[:uri] = "form://#{@prefix}"

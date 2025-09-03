@@ -135,6 +135,9 @@ class TestWriter < Minitest::Test
     File.open('./test/resources/bibo.puml', 'wb') do |f|
       f.puts s.model.writer('text/vnd.plantuml')
     end
+    File.open('./test/resources/bibo_entities.json', 'wb') do |f|
+      f.puts JSON.pretty_generate JSON.parse(s.model.writer('application/entities+json'))
+    end
   end
 
 end

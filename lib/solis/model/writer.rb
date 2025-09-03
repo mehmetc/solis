@@ -1,6 +1,7 @@
 require_relative 'writer/mermaid'
 require_relative 'writer/plantuml'
 require_relative 'writer/json_schema'
+require_relative 'writer/json_entities'
 require_relative 'writer/form'
 require_relative 'writer/open_api'
 
@@ -53,6 +54,8 @@ module Solis
             PlantUMLWriter.write(shacl_graph, params)
           when 'jsonschema'
             JSONSchemaWriter.write(shacl_graph, params)
+          when 'jsonentities'
+            JSONEntitiesWriter.write(shacl_graph, params)
           when 'form'
             FormWriter.write(shacl_graph, params)
           when 'openapi'

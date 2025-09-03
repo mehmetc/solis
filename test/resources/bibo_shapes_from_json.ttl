@@ -1,0 +1,1107 @@
+@prefix bibo: <http://purl.org/ontology/bibo/> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix ns0: <http://purl.org/NET/c4dm/event.owl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix shacl: <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+dc:AgentShape a shacl:NodeShape;
+  skos:altLabel "agents";
+  shacl:name "Agent";
+  shacl:targetClass dc:Agent .
+
+bibo:AcademicArticleShape a shacl:NodeShape;
+  skos:altLabel "academic_articles";
+  shacl:name "AcademicArticle";
+  shacl:node bibo:ArticleShape;
+  shacl:targetClass bibo:AcademicArticle .
+
+bibo:AudioDocumentShape a shacl:NodeShape;
+  skos:altLabel "audio_documents";
+  shacl:name "AudioDocument";
+  shacl:node bibo:DocumentShape;
+  shacl:targetClass bibo:AudioDocument .
+
+bibo:BillShape a shacl:NodeShape;
+  skos:altLabel "bills";
+  shacl:name "Bill";
+  shacl:node bibo:LegislationShape;
+  shacl:targetClass bibo:Bill .
+
+bibo:BriefShape a shacl:NodeShape;
+  skos:altLabel "briefs";
+  shacl:name "Brief";
+  shacl:node bibo:LegalCaseDocumentShape;
+  shacl:targetClass bibo:Brief .
+
+bibo:ChapterShape a shacl:NodeShape;
+  skos:altLabel "chapters";
+  shacl:name "Chapter";
+  shacl:node bibo:BookSectionShape;
+  shacl:targetClass bibo:Chapter .
+
+bibo:CodeShape a shacl:NodeShape;
+  skos:altLabel "codes";
+  shacl:name "Code";
+  shacl:node bibo:PeriodicalShape;
+  shacl:property [
+    shacl:class bibo:Legislation;
+    shacl:minCount 1;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ], [
+    shacl:class bibo:Issue;
+    shacl:minCount 1;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ], [
+    shacl:name "hasPart";
+    shacl:or ([
+        shacl:class bibo:Collection;
+        shacl:nodeKind shacl:IRI
+      ] [
+        shacl:class bibo:Document;
+        shacl:nodeKind shacl:IRI
+      ]);
+    shacl:path dc:hasPart
+  ];
+  shacl:targetClass bibo:Code .
+
+bibo:ConferenceShape a shacl:NodeShape;
+  skos:altLabel "conferences";
+  shacl:name "Conference";
+  shacl:node ns0:EventShape;
+  shacl:targetClass bibo:Conference .
+
+bibo:CourtReporterShape a shacl:NodeShape;
+  skos:altLabel "court_reporters";
+  shacl:name "CourtReporter";
+  shacl:node bibo:PeriodicalShape;
+  shacl:property [
+    shacl:class bibo:LegalDocument;
+    shacl:minCount 1;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ], [
+    shacl:class bibo:Issue;
+    shacl:minCount 1;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ], [
+    shacl:name "hasPart";
+    shacl:or ([
+        shacl:class bibo:Collection;
+        shacl:nodeKind shacl:IRI
+      ] [
+        shacl:class bibo:Document;
+        shacl:nodeKind shacl:IRI
+      ]);
+    shacl:path dc:hasPart
+  ];
+  shacl:targetClass bibo:CourtReporter .
+
+bibo:DocumentStatusShape a shacl:NodeShape;
+  skos:altLabel "document_statuses";
+  shacl:name "DocumentStatus";
+  shacl:targetClass bibo:DocumentStatus .
+
+bibo:EditedBookShape a shacl:NodeShape;
+  skos:altLabel "edited_books";
+  shacl:name "EditedBook";
+  shacl:node bibo:CollectedDocumentShape;
+  shacl:targetClass bibo:EditedBook .
+
+bibo:EmailShape a shacl:NodeShape;
+  skos:altLabel "emails";
+  shacl:name "Email";
+  shacl:node bibo:PersonalCommunicationDocumentShape;
+  shacl:targetClass bibo:Email .
+
+bibo:EventShape a shacl:NodeShape;
+  skos:altLabel "events";
+  shacl:name "Event";
+  shacl:property [
+    shacl:class bibo:Document;
+    shacl:description "Relates an event to associated documents; for example, conference to a paper.";
+    shacl:name "presents";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:presents
+  ];
+  shacl:targetClass bibo:Event .
+
+bibo:FilmShape a shacl:NodeShape;
+  skos:altLabel "films";
+  shacl:name "Film";
+  shacl:node bibo:AudioVisualDocumentShape;
+  shacl:targetClass bibo:Film .
+
+bibo:HearingShape a shacl:NodeShape;
+  skos:altLabel "hearings";
+  shacl:name "Hearing";
+  shacl:node ns0:EventShape;
+  shacl:targetClass bibo:Hearing .
+
+bibo:InterviewShape a shacl:NodeShape;
+  skos:altLabel "interviews";
+  shacl:name "Interview";
+  shacl:node ns0:EventShape;
+  shacl:targetClass bibo:Interview .
+
+bibo:IssueShape a shacl:NodeShape;
+  skos:altLabel "issues";
+  shacl:name "Issue";
+  shacl:node bibo:CollectedDocumentShape;
+  shacl:property [
+    shacl:datatype xsd:string;
+    shacl:description "An issue number";
+    shacl:name "issue";
+    shacl:path bibo:issue
+  ], [
+    shacl:class bibo:Article;
+    shacl:minCount 1;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ], [
+    shacl:class bibo:Document;
+    shacl:minCount 1;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ];
+  shacl:targetClass bibo:Issue .
+
+bibo:JournalShape a shacl:NodeShape;
+  skos:altLabel "journals";
+  shacl:name "Journal";
+  shacl:node bibo:PeriodicalShape;
+  shacl:property [
+    shacl:class bibo:Issue;
+    shacl:minCount 1;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ], [
+    shacl:class bibo:Issue;
+    shacl:minCount 1;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ], [
+    shacl:name "hasPart";
+    shacl:or ([
+        shacl:class bibo:Collection;
+        shacl:nodeKind shacl:IRI
+      ] [
+        shacl:class bibo:Document;
+        shacl:nodeKind shacl:IRI
+      ]);
+    shacl:path dc:hasPart
+  ];
+  shacl:targetClass bibo:Journal .
+
+bibo:LegalDecisionShape a shacl:NodeShape;
+  skos:altLabel "legal_decisions";
+  shacl:name "LegalDecision";
+  shacl:node bibo:LegalCaseDocumentShape;
+  shacl:property [
+    shacl:class bibo:LegalDecision;
+    shacl:description "A legal decision that affirms a ruling.";
+    shacl:name "affirmedBy";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:affirmedBy
+  ], [
+    shacl:class bibo:LegalDecision;
+    shacl:description "A legal decision that reverses a ruling.";
+    shacl:name "reversedBy";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:reversedBy
+  ], [
+    shacl:class bibo:LegalDecision;
+    shacl:description "A legal decision on appeal that takes action on a case (affirming it, reversing it, etc.).";
+    shacl:name "subsequentLegalDecision";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:subsequentLegalDecision
+  ];
+  shacl:targetClass bibo:LegalDecision .
+
+bibo:LetterShape a shacl:NodeShape;
+  skos:altLabel "letters";
+  shacl:name "Letter";
+  shacl:node bibo:PersonalCommunicationDocumentShape;
+  shacl:targetClass bibo:Letter .
+
+bibo:MagazineShape a shacl:NodeShape;
+  skos:altLabel "magazines";
+  shacl:name "Magazine";
+  shacl:node bibo:PeriodicalShape;
+  shacl:property [
+    shacl:class bibo:Issue;
+    shacl:minCount 1;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ], [
+    shacl:class bibo:Issue;
+    shacl:minCount 1;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ], [
+    shacl:name "hasPart";
+    shacl:or ([
+        shacl:class bibo:Collection;
+        shacl:nodeKind shacl:IRI
+      ] [
+        shacl:class bibo:Document;
+        shacl:nodeKind shacl:IRI
+      ]);
+    shacl:path dc:hasPart
+  ];
+  shacl:targetClass bibo:Magazine .
+
+bibo:ManualShape a shacl:NodeShape;
+  skos:altLabel "manuals";
+  shacl:name "Manual";
+  shacl:node bibo:DocumentShape;
+  shacl:targetClass bibo:Manual .
+
+bibo:ManuscriptShape a shacl:NodeShape;
+  skos:altLabel "manuscripts";
+  shacl:name "Manuscript";
+  shacl:node bibo:DocumentShape;
+  shacl:targetClass bibo:Manuscript .
+
+bibo:MapShape a shacl:NodeShape;
+  skos:altLabel "maps";
+  shacl:name "Map";
+  shacl:node bibo:ImageShape;
+  shacl:targetClass bibo:Map .
+
+bibo:MultiVolumeBookShape a shacl:NodeShape;
+  skos:altLabel "multi_volume_books";
+  shacl:name "MultiVolumeBook";
+  shacl:node bibo:CollectionShape;
+  shacl:property [
+    shacl:class bibo:Book;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ], [
+    shacl:name "hasPart";
+    shacl:or ([
+        shacl:class bibo:Collection;
+        shacl:nodeKind shacl:IRI
+      ] [
+        shacl:class bibo:Document;
+        shacl:nodeKind shacl:IRI
+      ]);
+    shacl:path dc:hasPart
+  ];
+  shacl:targetClass bibo:MultiVolumeBook .
+
+bibo:NewspaperShape a shacl:NodeShape;
+  skos:altLabel "newspapers";
+  shacl:name "Newspaper";
+  shacl:node bibo:PeriodicalShape;
+  shacl:property [
+    shacl:class bibo:Issue;
+    shacl:minCount 1;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ], [
+    shacl:class bibo:Issue;
+    shacl:minCount 1;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ], [
+    shacl:name "hasPart";
+    shacl:or ([
+        shacl:class bibo:Collection;
+        shacl:nodeKind shacl:IRI
+      ] [
+        shacl:class bibo:Document;
+        shacl:nodeKind shacl:IRI
+      ]);
+    shacl:path dc:hasPart
+  ];
+  shacl:targetClass bibo:Newspaper .
+
+bibo:NoteShape a shacl:NodeShape;
+  skos:altLabel "notes";
+  shacl:name "Note";
+  shacl:node bibo:DocumentShape;
+  shacl:property [
+    shacl:class rdfs:Resource;
+    shacl:description "Critical or explanatory note for a Document.";
+    shacl:name "annotates";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:annotates
+  ];
+  shacl:targetClass bibo:Note .
+
+bibo:PatentShape a shacl:NodeShape;
+  skos:altLabel "patents";
+  shacl:name "Patent";
+  shacl:node bibo:DocumentShape;
+  shacl:targetClass bibo:Patent .
+
+bibo:PerformanceShape a shacl:NodeShape;
+  skos:altLabel "performances";
+  shacl:name "Performance";
+  shacl:node ns0:EventShape;
+  shacl:property [
+    shacl:class foaf:Agent;
+    shacl:name "performer";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:performer
+  ];
+  shacl:targetClass bibo:Performance .
+
+bibo:PersonalCommunicationShape a shacl:NodeShape;
+  skos:altLabel "personal_communications";
+  shacl:name "PersonalCommunication";
+  shacl:node ns0:EventShape;
+  shacl:targetClass bibo:PersonalCommunication .
+
+bibo:ProceedingsShape a shacl:NodeShape;
+  skos:altLabel "proceedings";
+  shacl:name "Proceedings";
+  shacl:node bibo:BookShape;
+  shacl:targetClass bibo:Proceedings .
+
+bibo:QuoteShape a shacl:NodeShape;
+  skos:altLabel "quotes";
+  shacl:name "Quote";
+  shacl:node bibo:ExcerptShape;
+  shacl:targetClass bibo:Quote .
+
+bibo:ReferenceSourceShape a shacl:NodeShape;
+  skos:altLabel "reference_sources";
+  shacl:name "ReferenceSource";
+  shacl:node bibo:DocumentShape;
+  shacl:targetClass bibo:ReferenceSource .
+
+bibo:ReportShape a shacl:NodeShape;
+  skos:altLabel "reports";
+  shacl:name "Report";
+  shacl:node bibo:DocumentShape;
+  shacl:targetClass bibo:Report .
+
+bibo:SeriesShape a shacl:NodeShape;
+  skos:altLabel "series";
+  shacl:name "Series";
+  shacl:node bibo:CollectionShape;
+  shacl:property [
+    shacl:class bibo:Document;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ], [
+    shacl:name "hasPart";
+    shacl:or ([
+        shacl:class bibo:Collection;
+        shacl:nodeKind shacl:IRI
+      ] [
+        shacl:class bibo:Document;
+        shacl:nodeKind shacl:IRI
+      ]);
+    shacl:path dc:hasPart
+  ];
+  shacl:targetClass bibo:Series .
+
+bibo:SlideShape a shacl:NodeShape;
+  skos:altLabel "slides";
+  shacl:name "Slide";
+  shacl:node bibo:DocumentPartShape;
+  shacl:targetClass bibo:Slide .
+
+bibo:SlideshowShape a shacl:NodeShape;
+  skos:altLabel "slideshows";
+  shacl:name "Slideshow";
+  shacl:node bibo:DocumentShape;
+  shacl:property [
+    shacl:class bibo:Slide;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ];
+  shacl:targetClass bibo:Slideshow .
+
+bibo:StandardShape a shacl:NodeShape;
+  skos:altLabel "standards";
+  shacl:name "Standard";
+  shacl:node bibo:SpecificationShape;
+  shacl:targetClass bibo:Standard .
+
+bibo:StatuteShape a shacl:NodeShape;
+  skos:altLabel "statutes";
+  shacl:name "Statute";
+  shacl:node bibo:LegislationShape;
+  shacl:targetClass bibo:Statute .
+
+bibo:ThesisDegreeShape a shacl:NodeShape;
+  skos:altLabel "thesis_degrees";
+  shacl:name "ThesisDegree";
+  shacl:targetClass bibo:ThesisDegree .
+
+bibo:ThesisShape a shacl:NodeShape;
+  skos:altLabel "theses";
+  shacl:name "Thesis";
+  shacl:node bibo:DocumentShape;
+  shacl:property [
+    shacl:class bibo:ThesisDegree;
+    shacl:description "The thesis degree.";
+    shacl:name "degree";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:degree
+  ];
+  shacl:targetClass bibo:Thesis .
+
+bibo:WebpageShape a shacl:NodeShape;
+  skos:altLabel "webpages";
+  shacl:name "Webpage";
+  shacl:node bibo:DocumentShape;
+  shacl:targetClass bibo:Webpage .
+
+bibo:WebsiteShape a shacl:NodeShape;
+  skos:altLabel "websites";
+  shacl:name "Website";
+  shacl:node bibo:CollectionShape;
+  shacl:property [
+    shacl:class bibo:Webpage;
+    shacl:minCount 1;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ], [
+    shacl:name "hasPart";
+    shacl:or ([
+        shacl:class bibo:Collection;
+        shacl:nodeKind shacl:IRI
+      ] [
+        shacl:class bibo:Document;
+        shacl:nodeKind shacl:IRI
+      ]);
+    shacl:path dc:hasPart
+  ];
+  shacl:targetClass bibo:Website .
+
+bibo:WorkshopShape a shacl:NodeShape;
+  skos:altLabel "workshops";
+  shacl:name "Workshop";
+  shacl:node ns0:EventShape;
+  shacl:targetClass bibo:Workshop .
+
+rdf:ListShape a shacl:NodeShape;
+  skos:altLabel "lists";
+  shacl:name "List";
+  shacl:targetClass rdf:List .
+
+rdf:SeqShape a shacl:NodeShape;
+  skos:altLabel "seqs";
+  shacl:name "Seq";
+  shacl:targetClass rdf:Seq .
+
+rdfs:ResourceShape a shacl:NodeShape;
+  skos:altLabel "resources";
+  shacl:name "Resource";
+  shacl:property [
+    shacl:datatype xsd:string;
+    shacl:description "A summary of the resource.";
+    shacl:name "abstract";
+    shacl:path bibo:abstract
+  ];
+  shacl:targetClass rdfs:Resource .
+
+owl:ThingShape a shacl:NodeShape;
+  skos:altLabel "things";
+  shacl:name "Thing";
+  shacl:targetClass owl:Thing .
+
+foaf:AgentShape a shacl:NodeShape;
+  skos:altLabel "agents";
+  shacl:name "Agent";
+  shacl:property [
+    shacl:class foaf:Agent;
+    shacl:description "An agent that is interviewed by another agent.";
+    shacl:name "interviewee";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:interviewee
+  ], [
+    shacl:class foaf:Agent;
+    shacl:description "An agent that interview another agent.";
+    shacl:name "interviewer";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:interviewer
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "The prefix of a name";
+    shacl:name "prefixName";
+    shacl:path bibo:prefixName
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "The suffix of a name";
+    shacl:name "suffixName";
+    shacl:path bibo:suffixName
+  ];
+  shacl:targetClass foaf:Agent .
+
+foaf:DocumentShape a shacl:NodeShape;
+  skos:altLabel "documents";
+  shacl:name "Document";
+  shacl:targetClass foaf:Document .
+
+foaf:ImageShape a shacl:NodeShape;
+  skos:altLabel "images";
+  shacl:name "Image";
+  shacl:targetClass foaf:Image .
+
+foaf:OrganizationShape a shacl:NodeShape;
+  skos:altLabel "organizations";
+  shacl:name "Organization";
+  shacl:targetClass foaf:Organization .
+
+foaf:PersonShape a shacl:NodeShape;
+  skos:altLabel "people";
+  shacl:name "Person";
+  shacl:targetClass foaf:Person .
+
+bibo:ArticleShape a shacl:NodeShape;
+  skos:altLabel "articles";
+  shacl:name "Article";
+  shacl:node bibo:DocumentShape;
+  shacl:targetClass bibo:Article .
+
+bibo:AudioVisualDocumentShape a shacl:NodeShape;
+  skos:altLabel "audio_visual_documents";
+  shacl:name "AudioVisualDocument";
+  shacl:node bibo:DocumentShape;
+  shacl:property [
+    shacl:class foaf:Agent;
+    shacl:description "A Film director.";
+    shacl:name "director";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:director
+  ];
+  shacl:targetClass bibo:AudioVisualDocument .
+
+bibo:BookSectionShape a shacl:NodeShape;
+  skos:altLabel "book_sections";
+  shacl:name "BookSection";
+  shacl:node bibo:DocumentPartShape;
+  shacl:property [
+    shacl:datatype xsd:string;
+    shacl:description "An chapter number";
+    shacl:name "chapter";
+    shacl:path bibo:chapter
+  ];
+  shacl:targetClass bibo:BookSection .
+
+bibo:BookShape a shacl:NodeShape;
+  skos:altLabel "books";
+  shacl:name "Book";
+  shacl:node bibo:DocumentShape;
+  shacl:targetClass bibo:Book .
+
+bibo:ExcerptShape a shacl:NodeShape;
+  skos:altLabel "excerpts";
+  shacl:name "Excerpt";
+  shacl:node bibo:DocumentPartShape;
+  shacl:targetClass bibo:Excerpt .
+
+bibo:ImageShape a shacl:NodeShape;
+  skos:altLabel "images";
+  shacl:name "Image";
+  shacl:node bibo:DocumentShape;
+  shacl:targetClass bibo:Image .
+
+bibo:SpecificationShape a shacl:NodeShape;
+  skos:altLabel "specifications";
+  shacl:name "Specification";
+  shacl:node bibo:DocumentShape;
+  shacl:targetClass bibo:Specification .
+
+bibo:CollectedDocumentShape a shacl:NodeShape;
+  skos:altLabel "collected_documents";
+  shacl:name "CollectedDocument";
+  shacl:node bibo:DocumentShape;
+  shacl:property [
+    shacl:class bibo:Document;
+    shacl:minCount 1;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ];
+  shacl:targetClass bibo:CollectedDocument .
+
+bibo:LegalCaseDocumentShape a shacl:NodeShape;
+  skos:altLabel "legal_case_documents";
+  shacl:name "LegalCaseDocument";
+  shacl:node bibo:LegalDocumentShape;
+  shacl:targetClass bibo:LegalCaseDocument .
+
+bibo:LegalDocumentShape a shacl:NodeShape;
+  skos:altLabel "legal_documents";
+  shacl:name "LegalDocument";
+  shacl:node bibo:DocumentShape;
+  shacl:property [
+    shacl:class foaf:Organization;
+    shacl:description "A court associated with a legal document; for example, that which issues a decision.";
+    shacl:name "court";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:court
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "The date on which a legal case is argued before a court. Date is of format xsd:date";
+    shacl:name "argued";
+    shacl:path bibo:argued
+  ];
+  shacl:targetClass bibo:LegalDocument .
+
+bibo:LegislationShape a shacl:NodeShape;
+  skos:altLabel "legislations";
+  shacl:name "Legislation";
+  shacl:node bibo:LegalDocumentShape;
+  shacl:targetClass bibo:Legislation .
+
+bibo:PersonalCommunicationDocumentShape a shacl:NodeShape;
+  skos:altLabel "personal_communication_documents";
+  shacl:name "PersonalCommunicationDocument";
+  shacl:node bibo:DocumentShape;
+  shacl:property [
+    shacl:class foaf:Agent;
+    shacl:description "An agent that receives a communication document.";
+    shacl:name "recipient";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:recipient
+  ];
+  shacl:targetClass bibo:PersonalCommunicationDocument .
+
+bibo:DocumentPartShape a shacl:NodeShape;
+  skos:altLabel "document_parts";
+  shacl:name "DocumentPart";
+  shacl:node bibo:DocumentShape;
+  shacl:property [
+    shacl:maxCount 1;
+    shacl:name "isPartOf";
+    shacl:path dc:isPartOf
+  ];
+  shacl:targetClass bibo:DocumentPart .
+
+bibo:CollectionShape a shacl:NodeShape;
+  skos:altLabel "collections";
+  shacl:name "Collection";
+  shacl:property [
+    shacl:datatype xsd:string;
+    shacl:name "eissn";
+    shacl:path bibo:eissn
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "issn";
+    shacl:path bibo:issn
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "The number of volumes contained in a collection of documents (usually a series, periodical, etc.).";
+    shacl:name "numVolumes";
+    shacl:path bibo:numVolumes
+  ], [
+    shacl:class foaf:Agent;
+    shacl:description "Distributor of a document or a collection of documents.";
+    shacl:name "distributor";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:distributor
+  ], [
+    shacl:class foaf:Agent;
+    shacl:description "A person having managerial and sometimes policy-making responsibility for the editorial part of a publishing firm or of a newspaper, magazine, or other publication.";
+    shacl:name "editor";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:editor
+  ], [
+    shacl:class foaf:Agent;
+    shacl:description "An entity responsible for issuing often informally published documents such as press releases, reports, etc.";
+    shacl:name "issuer";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:issuer
+  ], [
+    shacl:class foaf:Agent;
+    shacl:description "Owner of a document or a collection of documents.";
+    shacl:name "owner";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:owner
+  ], [
+    shacl:class foaf:Agent;
+    shacl:description "Producer of a document or a collection of documents.";
+    shacl:name "producer";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:producer
+  ], [
+    shacl:class foaf:Agent;
+    shacl:description "A person who translates written document from one language to another.";
+    shacl:name "translator";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:translator
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "asin";
+    shacl:path bibo:asin
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "coden";
+    shacl:path bibo:coden
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "doi";
+    shacl:path bibo:doi
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "eanucc13";
+    shacl:path bibo:eanucc13
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "gtin14";
+    shacl:path bibo:gtin14
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "handle";
+    shacl:path bibo:handle
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "identifier";
+    shacl:path bibo:identifier
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "isbn10";
+    shacl:path bibo:isbn10
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "isbn13";
+    shacl:path bibo:isbn13
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "lccn";
+    shacl:path bibo:lccn
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "oclcnum";
+    shacl:path bibo:oclcnum
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "pmid";
+    shacl:path bibo:pmid
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "sici";
+    shacl:path bibo:sici
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "upc";
+    shacl:path bibo:upc
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "Universal Resource Identifier of a document";
+    shacl:name "uri";
+    shacl:path bibo:uri
+  ], [
+    shacl:name "hasPart";
+    shacl:or ([
+        shacl:class bibo:Collection;
+        shacl:nodeKind shacl:IRI
+      ] [
+        shacl:class bibo:Document;
+        shacl:nodeKind shacl:IRI
+      ]);
+    shacl:path dc:hasPart
+  ];
+  shacl:targetClass bibo:Collection .
+
+bibo:PeriodicalShape a shacl:NodeShape;
+  skos:altLabel "periodicals";
+  shacl:name "Periodical";
+  shacl:node bibo:CollectionShape;
+  shacl:property [
+    shacl:class bibo:Issue;
+    shacl:minCount 1;
+    shacl:name "hasPart";
+    shacl:nodeKind shacl:IRI;
+    shacl:path dc:hasPart
+  ], [
+    shacl:name "hasPart";
+    shacl:or ([
+        shacl:class bibo:Collection;
+        shacl:nodeKind shacl:IRI
+      ] [
+        shacl:class bibo:Document;
+        shacl:nodeKind shacl:IRI
+      ]);
+    shacl:path dc:hasPart
+  ];
+  shacl:targetClass bibo:Periodical .
+
+ns0:EventShape a shacl:NodeShape;
+  skos:altLabel "events";
+  shacl:name "Event";
+  shacl:property [
+    shacl:class foaf:Agent;
+    shacl:description "The organizer of an event; includes conference organizers, but also government agencies or other bodies that are responsible for conducting hearings.";
+    shacl:name "organizer";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:organizer
+  ];
+  shacl:targetClass ns0:Event .
+
+bibo:DocumentShape a shacl:NodeShape;
+  skos:altLabel "documents";
+  shacl:name "Document";
+  shacl:property [
+    shacl:description "An ordered list of authors. Normally, this list is seen as a priority list that order authors by importance.";
+    shacl:name "authorList";
+    shacl:or ([
+        shacl:class rdf:List;
+        shacl:nodeKind shacl:IRI
+      ] [
+        shacl:class rdf:Seq;
+        shacl:nodeKind shacl:IRI
+      ]);
+    shacl:path bibo:authorList
+  ], [
+    shacl:class bibo:Document;
+    shacl:description """Relates a document to another document that cites the
+first document.""";
+    shacl:name "citedBy";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:citedBy
+  ], [
+    shacl:class bibo:Document;
+    shacl:description """Relates a document to another document that is cited
+by the first document as reference, comment, review, quotation or for
+another purpose.""";
+    shacl:name "cites";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:cites
+  ], [
+    shacl:description "An ordered list of contributors. Normally, this list is seen as a priority list that order contributors by importance.";
+    shacl:name "contributorList";
+    shacl:or ([
+        shacl:class rdf:List;
+        shacl:nodeKind shacl:IRI
+      ] [
+        shacl:class rdf:Seq;
+        shacl:nodeKind shacl:IRI
+      ]);
+    shacl:path bibo:contributorList
+  ], [
+    shacl:description "An ordered list of editors. Normally, this list is seen as a priority list that order editors by importance.";
+    shacl:name "editorList";
+    shacl:or ([
+        shacl:class rdf:List;
+        shacl:nodeKind shacl:IRI
+      ] [
+        shacl:class rdf:Seq;
+        shacl:nodeKind shacl:IRI
+      ]);
+    shacl:path bibo:editorList
+  ], [
+    shacl:class bibo:Event;
+    shacl:description "Relates a document to an event; for example, a paper to a conference.";
+    shacl:name "presentedAt";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:presentedAt
+  ], [
+    shacl:class bibo:Document;
+    shacl:description "The resource in which another resource is reproduced.";
+    shacl:name "reproducedIn";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:reproducedIn
+  ], [
+    shacl:class rdfs:Resource;
+    shacl:description "Relates a review document to a reviewed thing (resource, item, etc.).";
+    shacl:name "reviewOf";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:reviewOf
+  ], [
+    shacl:class bibo:DocumentStatus;
+    shacl:description "The publication status of (typically academic) content.";
+    shacl:name "status";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:status
+  ], [
+    shacl:class rdfs:Resource;
+    shacl:description "Relates a document to some transcribed original.";
+    shacl:name "transcriptOf";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:transcriptOf
+  ], [
+    shacl:class bibo:Document;
+    shacl:description "Relates a translated document to the original document.";
+    shacl:name "translationOf";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:translationOf
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "This property is for a plain-text rendering of the content of a Document. While the plain-text content of an entire document could be described by this property.";
+    shacl:name "content";
+    shacl:path bibo:content
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "The name defining a special edition of a document. Normally its a literal value composed of a version number and words.";
+    shacl:name "edition";
+    shacl:path bibo:edition
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "A description (often numeric) that locates an item within a containing document or collection.";
+    shacl:name "locator";
+    shacl:path bibo:locator
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "The number of pages contained in a document";
+    shacl:name "numPages";
+    shacl:path bibo:numPages
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "A generic item or document number. Not to be confused with issue number.";
+    shacl:name "number";
+    shacl:path bibo:number
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "Ending page number within a continuous page range.";
+    shacl:name "pageEnd";
+    shacl:path bibo:pageEnd
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "Starting page number within a continuous page range.";
+    shacl:name "pageStart";
+    shacl:path bibo:pageStart
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "A string of non-contiguous page spans that locate a Document within a Collection. Example: 23-25, 34, 54-56. For continuous page ranges, use the pageStart and pageEnd properties.";
+    shacl:name "pages";
+    shacl:path bibo:pages
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "A section number";
+    shacl:name "section";
+    shacl:path bibo:section
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "shortDescription";
+    shacl:path bibo:shortDescription
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "The abbreviation of a title.";
+    shacl:name "shortTitle";
+    shacl:path bibo:shortTitle
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "A volume number";
+    shacl:name "volume";
+    shacl:path bibo:volume
+  ], [
+    shacl:class foaf:Agent;
+    shacl:description "Distributor of a document or a collection of documents.";
+    shacl:name "distributor";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:distributor
+  ], [
+    shacl:class foaf:Agent;
+    shacl:description "A person having managerial and sometimes policy-making responsibility for the editorial part of a publishing firm or of a newspaper, magazine, or other publication.";
+    shacl:name "editor";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:editor
+  ], [
+    shacl:class foaf:Agent;
+    shacl:description "An entity responsible for issuing often informally published documents such as press releases, reports, etc.";
+    shacl:name "issuer";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:issuer
+  ], [
+    shacl:class foaf:Agent;
+    shacl:description "Owner of a document or a collection of documents.";
+    shacl:name "owner";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:owner
+  ], [
+    shacl:class foaf:Agent;
+    shacl:description "Producer of a document or a collection of documents.";
+    shacl:name "producer";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:producer
+  ], [
+    shacl:class foaf:Agent;
+    shacl:description "A person who translates written document from one language to another.";
+    shacl:name "translator";
+    shacl:nodeKind shacl:IRI;
+    shacl:path bibo:translator
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "asin";
+    shacl:path bibo:asin
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "coden";
+    shacl:path bibo:coden
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "doi";
+    shacl:path bibo:doi
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "eanucc13";
+    shacl:path bibo:eanucc13
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "gtin14";
+    shacl:path bibo:gtin14
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "handle";
+    shacl:path bibo:handle
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "identifier";
+    shacl:path bibo:identifier
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "isbn10";
+    shacl:path bibo:isbn10
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "isbn13";
+    shacl:path bibo:isbn13
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "lccn";
+    shacl:path bibo:lccn
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "oclcnum";
+    shacl:path bibo:oclcnum
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "pmid";
+    shacl:path bibo:pmid
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "sici";
+    shacl:path bibo:sici
+  ], [
+    shacl:datatype xsd:string;
+    shacl:name "upc";
+    shacl:path bibo:upc
+  ], [
+    shacl:datatype xsd:string;
+    shacl:description "Universal Resource Identifier of a document";
+    shacl:name "uri";
+    shacl:path bibo:uri
+  ];
+  shacl:targetClass bibo:Document .
