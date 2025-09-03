@@ -3,6 +3,7 @@ require 'solis/config'
 require_relative 'reader/sheet'
 require_relative 'reader/rdf'
 require_relative 'reader/shacl'
+require_relative 'reader/json_entities'
 require 'data_collector'
 require 'uri'
 
@@ -29,13 +30,18 @@ module Solis
           else
             raise Solis::Error::MissingParameter, 'Missing content_type parameter' unless params.key?(:content_type)
             data = DataCollector::Input.new.from_uri(params[:uri], content_type: params[:content_type], raw: true)
-            raise Solis::Error::General, "Unable to load Graph" unless data.is_a?(RDF::Graph)
-            if Rdf.is_rdf?(data)
-              data = Rdf.read(data)
-            elsif Shacl.is_shacl?(data)
-              data = Shacl.read(data)
+            case params[:content_type]
+            when 'application/json'
+              data = JSONEntities.read(data)
             else
-              raise Solis::Error::General, "Unable to load Shacl graph. No entities found."
+              raise Solis::Error::General, "Unable to load Graph" unless data.is_a?(RDF::Graph)
+              if Rdf.is_rdf?(data)
+                data = Rdf.read(data)
+              elsif Shacl.is_shacl?(data)
+                data = Shacl.read(data)
+              else
+                raise Solis::Error::General, "Unable to load Shacl graph. No entities found."
+              end
             end
           end
         else

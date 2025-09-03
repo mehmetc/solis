@@ -2,6 +2,7 @@
 
 require_relative "solis/utils/rdf"
 require_relative "solis/utils/sparql"
+require_relative "solis/utils/graph"
 
 require_relative "solis/version"
 require_relative 'solis/config'

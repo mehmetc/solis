@@ -1,6 +1,7 @@
 require_relative 'writer/mermaid'
 require_relative 'writer/plantuml'
 require_relative 'writer/json_schema'
+require_relative 'writer/json_entities'
 require_relative 'writer/form'
 require_relative 'writer/open_api'
 
@@ -8,12 +9,12 @@ module Solis
   class Model
     class Writer
       def self.to_uri(params = {})
-        raise Solis::Error::MissingParameter, "One :prefix, :namespace, :uri, :model is missing " unless (params.keys & [:prefix, :namespace, :uri, :model]).size == 4
+        raise Solis::Error::MissingParameter, "One :prefix, :namespace, :uri, :graph is missing " unless (params.keys & [:prefix, :namespace, :uri, :graph]).size == 4
 
         content_type = RDF::Format.content_types[params[:content_type] || 'text/turtle'].first.to_sym
         namespace = params[:namespace]
         prefix = params[:prefix]
-        shacl_graph = params[:model]
+        shacl_graph = params[:graph]
         uri = params[:uri]
 
         all_prefixes = extract_prefixes(shacl_graph, prefix, namespace)
@@ -53,6 +54,8 @@ module Solis
             PlantUMLWriter.write(shacl_graph, params)
           when 'jsonschema'
             JSONSchemaWriter.write(shacl_graph, params)
+          when 'jsonentities'
+            JSONEntitiesWriter.write(shacl_graph, params)
           when 'form'
             FormWriter.write(shacl_graph, params)
           when 'openapi'
