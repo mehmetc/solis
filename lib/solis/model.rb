@@ -66,8 +66,6 @@ module Solis
       @hierarchy = {}
       @hierarchy_full = {}
       make_hierarchy
-      @info_entities = {}
-      make_info_entities
       @dependencies = {}
       make_dependencies
       @sorted_dependencies = []
@@ -100,7 +98,6 @@ module Solis
       options[:version] ||= version
       options[:description] ||= description
       options[:shapes] ||= @shapes
-      options[:entities] ||= @info_entities
       options[:dependencies] ||= @dependencies
       options[:sorted_dependencies] ||= @sorted_dependencies
 
@@ -112,6 +109,7 @@ module Solis
         options[:uri] = "plantuml://#{@prefix}"
         Solis::Model::Writer.to_uri(options)
       when 'application/schema+json'
+        options[:entities] = writer('application/entities+json', raw: true)
         options[:uri] = "jsonschema://#{@prefix}"
         Solis::Model::Writer.to_uri(options)
       when 'application/entities+json'
@@ -411,35 +409,6 @@ module Solis
       end
     end
 
-    def make_info_entities
-      names_entities = Shapes.get_all_classes(@shapes)
-      names_entities.each do |name_entity|
-        # NOTE: infer CLASS property from SHAPE property.
-        # If multiple shapes have the same target class (rare but can happen ...), just take one value.
-        names_shapes = Shapes.get_shapes_for_class(@shapes, name_entity)
-        names = names_shapes.collect { |s| @shapes[s][:name] }
-        name = names[0]
-        descriptions = names_shapes.collect { |s| @shapes[s][:description] }
-        description = descriptions[0]
-        plurals = names_shapes.collect { |s| @shapes[s][:plural] }
-        plural = plurals[0]
-        snake_case_name = Solis::Utils::String.camel_to_snake(Solis::Utils::String.extract_name_from_uri(name_entity))
-        namespace_entity = Solis::Utils::String.extract_namespace_from_uri(name_entity)
-        prefix_entity = @context_inv[namespace_entity]
-        @info_entities[name_entity] = {
-          direct_parents: get_parent_entities_for_entity(name_entity),
-          all_parents: get_all_parent_entities_for_entity(name_entity),
-          properties: get_properties_info_for_entity(name_entity),
-          own_properties: get_own_properties_list_for_entity(name_entity),
-          name: name,
-          prefix: prefix_entity,
-          description: description,
-          plural: plural,
-          snake_case_name: snake_case_name
-        }
-      end
-    end
-
     def make_dependencies
       @dependencies = {}
       append_to_deps = lambda do |name_entity, data_property, dependencies|
@@ -455,7 +424,8 @@ module Solis
           end
         end
       end
-      @info_entities.each do |name_entity, data_entity|
+      entities = writer('application/entities+json', raw: true)
+      entities.each do |name_entity, data_entity|
         @dependencies[name_entity] = []
         data_entity[:own_properties].each do |name_property|
           data_property = data_entity[:properties][name_property]

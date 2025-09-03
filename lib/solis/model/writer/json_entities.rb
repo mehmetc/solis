@@ -3,8 +3,21 @@ require_relative "../parser/shacl"
 
 class JSONEntitiesWriter < Solis::Model::Writer::Generic
   def self.write(repository, options = {})
+
+    # NOTE:
+    # ideally, options[:model] should not be here, but only:
+    # - shapes
+    # - context
+    # - context_inv
+    # But also don't want to remove those methods from model and put them here,
+    # because they can be useful for model instance too.
+    # Solution: in Model, make public class methods, e.g. get_parent_entities_for_entity(name_entity, shapes)
+    # Then you can use this both in model instance, than here.
+
     return "No repository provided" if repository.nil?
     return "options[:model] missing" unless options.key?(:model)
+
+    raw = options[:raw] || false
 
     model = options[:model]
     shapes = model.shapes
@@ -39,6 +52,7 @@ class JSONEntitiesWriter < Solis::Model::Writer::Generic
       }
     end
 
+    return entities if raw
     entities.to_json
   end
 

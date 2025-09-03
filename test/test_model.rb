@@ -118,7 +118,7 @@ class TestModel < Minitest::Test
       r = model.get_properties_info_for_entity('https://example.com/ElectricCar')
       assert_equal(r.key?('https://example.com/color'), true)
 
-      r = model.info_entities
+      r = model.writer('application/entities+json', raw: true)
       assert_equal(r.key?('https://example.com/ElectricCar'), true)
       assert_equal(r['https://example.com/ElectricCar'][:properties].key?('https://example.com/color'), true)
 
