@@ -20,8 +20,8 @@ module Solis
 
       @global_resource_stack = []
       @graph = graph
-      @graph_name = cloned_options.delete(:graph_name) || '/'
-      @graph_prefix = cloned_options.delete(:graph_prefix) || 'pf0'
+      @graph_name = cloned_options.key?(:graph_name) ? cloned_options.delete(:graph_name) : cloned_options.key?(:graphs) ? cloned_options[:graphs].select{|s| s['type'].eql?(:main)}&.first['name'] || '/' : '/'
+      @graph_prefix = cloned_options.key?(:graph_prefix) ? cloned_options.delete(:graph_prefix) : cloned_options.key?(:graphs) ? cloned_options[:graphs].select{|s| s['type'].eql?(:main)}&.first['prefix'] || 'pf0' : 'pf0'
       @sparql_endpoint = cloned_options.delete(:sparql_endpoint) || nil
 
       if cloned_options&.key?(:hooks) && cloned_options[:hooks].is_a?(Hash)
