@@ -36,7 +36,7 @@ module Solis
         ids = [ids] unless ids.is_a?(Array)
         ids = ids.map do |m|
           if URI(m).class.eql?(URI::Generic)
-            "<#{Solis::Options.instance.get[:graph_name]}#{entity.tableize}/#{m}>"
+            "<#{graph_name}#{entity.tableize}/#{m}>"
           else
             "<#{m}>"
           end
@@ -52,6 +52,10 @@ module Solis
     rescue StandardError => e
       puts e.message
       raise e
+    end
+
+    def self.graph_name
+      Solis::Options.instance.get.key?(:graphs) ? Solis::Options.instance.get[:graphs].select{|s| s['type'].eql?(:main)}&.first['name'] : ''
     end
 
     def initialize(model)
@@ -365,5 +369,6 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
       # result << solution_model.new(data) unless data.empty?
       result
     end
+
   end
 end

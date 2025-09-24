@@ -7,7 +7,7 @@ class Solis::Query::Runner
       context = JSON.parse %(
 {
     "@context": {
-        "@vocab": "#{Solis::Options.instance.get[:graph_name]}",
+        "@vocab": "#{graph_name}",
         "id": "@id"
     },
     "@type": "#{entity}",
@@ -15,7 +15,7 @@ class Solis::Query::Runner
 }
    )
 
-      c = Solis::Store::Sparql::Client.new(Solis::Options.instance.get[:sparql_endpoint], Solis::Options.instance.get[:graph_name])
+      c = Solis::Store::Sparql::Client.new(Solis::Options.instance.get[:sparql_endpoint], graph_name)
       r = c.query(query, options)
       if r.is_a?(SPARQL::Client)
         g = RDF::Graph.new
@@ -106,5 +106,9 @@ class Solis::Query::Runner
     rescue StandardError => e
       Solis::LOGGER.error(e.message)
       data
+    end
+
+    def self.graph_name
+      Solis::Options.instance.get.key?(:graphs) ? Solis::Options.instance.get[:graphs].select{|s| s['type'].eql?(:main)}&.first['name'] : ''
     end
 end
