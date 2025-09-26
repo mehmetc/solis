@@ -6,7 +6,8 @@ module Solis
       def initialize(model)
         @model = model
         @sparql_endpoint = @model.class.sparql_endpoint
-        @sparql_client = SPARQL::Client.new(@sparql_endpoint, graph: @model.class.graph_name, read_timeout: 120)
+        #@sparql_client = SPARQL::Client.new(@sparql_endpoint, graph: @model.class.graph_name, read_timeout: 120)
+        @sparql_client = Solis::Store::Sparql::Client.new(@sparql_endpoint, graph: @model.class.graph_name, read_timeout: 120)
         @construct_cache = File.absolute_path(Solis::Options.instance.get[:cache])
         @moneta = Moneta.new(:File, dir: "#{@construct_cache}/construct", expires: Solis::Options.instance.get[:cache_expire])
       end
@@ -38,7 +39,7 @@ module Solis
           if @moneta.key?(file_path_hash) && from_cache.eql?('1')
             sparql_repository = @moneta[file_path_hash]
           else
-            @sparql_client = SPARQL::Client.new(@sparql_endpoint, read_timeout: 120)
+            #@sparql_client = SPARQL::Client.new(@sparql_endpoint, read_timeout: 120)
             result = @sparql_client.query(construct_query)
             repository=RDF::Repository.new
             result.each {|s| repository << [s[:s], s[:p], s[:o]]}

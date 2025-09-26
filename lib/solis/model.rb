@@ -109,7 +109,7 @@ module Solis
 
     def destroy
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
-      sparql = SPARQL::Client.new(self.class.sparql_endpoint)
+      sparql = Solis::Store::Sparql::Client.new(self.class.sparql_endpoint)
 
       raise Solis::Error::QueryError, "#{self.id} is still referenced, refusing to delete" if is_referenced?(sparql)
       # sparql.query('delete{}')
@@ -309,7 +309,7 @@ values ?s {<#{self.graph_id}>}
 
     def self.make_id_for(model)
       raise "I need a SPARQL endpoint" if self.sparql_endpoint.nil?
-      sparql = SPARQL::Client.new(self.sparql_endpoint)
+      sparql = Solis::Store::Sparql::Client.new(self.sparql_endpoint)
       id = model.instance_variable_get("@id")
       if id.nil? || (id.is_a?(String) && id&.empty?)
         id_retries = 0

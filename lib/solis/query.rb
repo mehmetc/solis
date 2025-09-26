@@ -65,11 +65,10 @@ module Solis
       @metadata = @model.class.metadata
       @sparql_endpoint = @model.class.sparql_endpoint
       if Solis::Options.instance.get.key?(:graphs) && Solis::Options.instance.get[:graphs].size > 0
-        @sparql_client = SPARQL::Client.new(@sparql_endpoint)
+        @sparql_client = Solis::Store::Sparql::Client.new(@sparql_endpoint)
       else
-        @sparql_client = SPARQL::Client.new(@sparql_endpoint, graph: @model.class.graph_name)
+        @sparql_client = Solis::Store::Sparql::Client.new(@sparql_endpoint, graph: @model.class.graph_name)
       end
-
       @filter = {values: ["VALUES ?type {#{target_class}}"], concepts: ['?concept a ?type .'] }
       @sort = 'ORDER BY ?s'
       @sort_select = ''
@@ -166,7 +165,6 @@ module Solis
       offset = @offset || 0
 
       sparql_client = model_construct? ? Solis::Query::Construct.new(@model).run : @sparql_client
-      #sparql_client = model_construct? ? SPARQL::Client.new(run_construct) : @sparql_client
 
       relationship = ''
       if options.key?(:relationship)

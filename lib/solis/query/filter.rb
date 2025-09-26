@@ -114,13 +114,11 @@ module Solis
                   v=normalize_string(v)
                   filter = "?concept <#{metadata[:path]}> ?__search#{i} FILTER(?__search#{i} #{not_operator}#{value[:operator]} \"#{v}\"#{datatype}) .\n"
                 end
-
-
               end
             else # if "~" contains
               if metadata[:datatype_rdf].eql?( 'http://www.w3.org/2001/XMLSchema#anyURI') || !metadata[:node].nil?
                 model_graph_name = Solis::Options.instance.get.key?(:graphs) ? Solis::Options.instance.get[:graphs].select{|s| s['type'].eql?(:data)}&.first['name'] : @model.class.graph_name
-                filter = "?CONCEPT <#{metadata[:path]}> ?__search#{i} . ?__search#{i} <#{model_graph_name}id> ?__search#{i}_#{i} FILTER(?__search#{i}_#{i} = \"#{value[:value].first}\")."
+                filter = "?concept <#{metadata[:path]}> ?__search#{i} . ?__search#{i} <#{model_graph_name}id> ?__search#{i}_#{i} filter(?__search#{i}_#{i} = \"#{value[:value].first}\")."
               else
                 filter = "?concept <#{metadata[:path]}> ?__search#{i} FILTER(#{contains.empty? ? '""' : contains}) .\n"
               end

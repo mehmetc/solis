@@ -29,7 +29,7 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency 'activesupport', '~> 8.0'
   spec.add_runtime_dependency 'http', '~> 5.2'
-  spec.add_runtime_dependency 'graphiti', '~> 1.7'
+  spec.add_runtime_dependency 'graphiti', '~> 1.8'
   spec.add_runtime_dependency 'moneta', '~> 1.6'
   spec.add_runtime_dependency 'linkeddata', '~> 3.3'
   spec.add_runtime_dependency 'google_drive', '~> 3.0'

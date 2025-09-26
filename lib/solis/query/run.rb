@@ -15,7 +15,7 @@ class Solis::Query::Runner
 }
    )
 
-      c = Solis::Store::Sparql::Client.new(Solis::Options.instance.get[:sparql_endpoint], graph_name)
+      c = Solis::Store::Sparql::Client.new(Solis::Options.instance.get[:sparql_endpoint], graph_name: graph_name)
       r = c.query(query, options)
       if r.is_a?(SPARQL::Client)
         g = RDF::Graph.new

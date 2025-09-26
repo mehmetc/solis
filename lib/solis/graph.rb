@@ -367,7 +367,7 @@ module Solis
     def flush_all(graph_name=nil, force = false)
       raise Solis::Error::NotFoundError, "Supplied graph_name '#{graph_name}' does not equal graph name defined in config file '#{@graph_name}', set force to true" unless graph_name.eql?(@graph_name) && !force
 
-      @sparql_client = SPARQL::Client.new(@sparql_endpoint)
+      @sparql_client = Solis::Store::Sparql::Client.new(@sparql_endpoint)
       result = @sparql_client.query("with <#{graph_name}> delete {?s ?p ?o} where{?s ?p ?o}")
       LOGGER.info(result)
       true

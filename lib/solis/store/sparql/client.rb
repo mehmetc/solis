@@ -7,13 +7,22 @@ module Solis
   module Store
     module Sparql
       class Client
-        def initialize(endpoint, graph_name)
+        def initialize(endpoint, options = {})
           @endpoint = endpoint
-          @graph_name = graph_name
+          @graph_name = options[:graph_name] || ''
+          @read_timeout = options[:read_timeout] || 120
+          @logger = options[:logger] || Solis::LOGGER
 
             @pool = ConnectionPool.new(size:5, timeout: 160) do
-            SPARQL::Client.new(@endpoint, graph: @graph_name)
-            #SPARQL::Client.new(@endpoint)
+              Solis::LOGGER.level = Logger::DEBUG if ConfigFile[:debug]
+
+              if @graph_name
+                client = SPARQL::Client.new(@endpoint, graph: @graph_name, read_timeout: @read_timeout, logger: @logger)
+              else
+                client = SPARQL::Client.new(@endpoint, read_timeout: @read_timeout, logger: @logger)
+              end
+
+              client
           end
         end
 
