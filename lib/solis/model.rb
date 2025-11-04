@@ -52,16 +52,14 @@ module Solis
       end
 
       self.class.make_id_for(self)
-      # id = instance_variable_get("@id")
-      # if id.nil? || (id.is_a?(String) && id&.empty?)
-      #   instance_variable_set("@id", SecureRandom.uuid)
-      # end
     rescue StandardError => e
       Solis::LOGGER.error(e.message)
       raise Solis::Error::GeneralError, "Unable to create entity #{@model_name}"
     end
 
-    def name(plural = false)
+    # Removed the 'name' instance method to avoid conflicts with 'name' attributes
+    # Use model_class_name instead, or access @model_name directly
+    def model_class_name(plural = false)
       if plural
         @model_plural_name
       else
@@ -112,10 +110,8 @@ module Solis
       sparql = Solis::Store::Sparql::Client.new(self.class.sparql_endpoint)
 
       raise Solis::Error::QueryError, "#{self.id} is still referenced, refusing to delete" if is_referenced?(sparql)
-      # sparql.query('delete{}')
+
       before_delete_proc&.call(self)
-      #      graph = as_graph(self, false)
-      #      Solis::LOGGER.info graph.dump(:ttl) if ConfigFile[:debug]
 
       query = %(
 with <#{self.class.graph_name}>
@@ -133,7 +129,7 @@ values ?s {<#{self.graph_id}>}
           after_delete_proc&.call(result)
         end
       end
-      #      result = sparql.delete_data(graph, graph: graph.name)
+
       result
     end
 
@@ -145,13 +141,12 @@ values ?s {<#{self.graph_id}>}
 
       if self.exists?(sparql)
         data = properties_to_hash(self)
-
         result = update(data)
       else
         data = properties_to_hash(self)
         attributes = data.include?('attributes') ? data['attributes'] : data
-        attributes.each_pair do |key, value| # check each key. if it is an entity process it
-          unless self.class.metadata[:attributes][key][:node].nil? #is it an entity
+        attributes.each_pair do |key, value|
+          unless self.class.metadata[:attributes][key][:node].nil?
             value = [value] unless value.is_a?(Array)
             value.each do |sub_value|
               embedded = self.class.graph.shape_as_model(self.class.metadata[:attributes][key][:datatype].to_s).new(sub_value)
@@ -173,9 +168,6 @@ values ?s {<#{self.graph_id}>}
 
         graph = as_graph(self, validate_dependencies)
 
-        # File.open('/Users/mehmetc/Dropbox/AllSources/LP/graphiti-api/save.ttl', 'wb') do |file|
-        #   file.puts graph.dump(:ttl)
-        # end
         Solis::LOGGER.info SPARQL::Client::Update::InsertData.new(graph, graph: graph.name).to_s if ConfigFile[:debug]
 
         result = sparql.insert_data(graph, graph: graph.name)
@@ -184,7 +176,6 @@ values ?s {<#{self.graph_id}>}
       after_create_proc&.call(self)
       self
     rescue StandardError => e
-      Solis::LOGGER.error e.message
       Solis::LOGGER.error e.message
       raise e
     end
@@ -196,19 +187,34 @@ values ?s {<#{self.graph_id}>}
       raise "id is mandatory when updating" unless attributes.keys.include?('id')
 
       id = attributes.delete('id')
-
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
-      #sparql = Solis::Store::Sparql::Client.new(self.class.sparql_endpoint, self.class.graph_name)
 
       original_klass = self.query.filter({ language: nil, filters: { id: [id] } }).find_all.map { |m| m }&.first
       raise Solis::Error::NotFoundError if original_klass.nil?
       updated_klass = original_klass.deep_dup
 
-      attributes.each_pair do |key, value| # check each key. if it is an entity process it
-        unless original_klass.class.metadata[:attributes][key][:node].nil? #it is an entity
+      # Track entities to potentially delete
+      entities_to_check_for_deletion = {}
+
+      attributes.each_pair do |key, value|
+        unless original_klass.class.metadata[:attributes][key][:node].nil?
           value = [value] unless value.is_a?(Array)
+
+          # Get original embedded entities for this attribute
+          original_embedded = original_klass.instance_variable_get("@#{key}")
+          original_embedded = [original_embedded] unless original_embedded.nil? || original_embedded.is_a?(Array)
+          original_embedded ||= []
+
+          # Track original IDs
+          original_ids = original_embedded.map { |e| solis_model?(e) ? e.id : nil }.compact
+
+          # Build new array of embedded entities
+          new_embedded_values = []
+          new_ids = []
+
           value.each do |sub_value|
             embedded = self.class.graph.shape_as_model(original_klass.class.metadata[:attributes][key][:datatype].to_s).new(sub_value)
+            new_ids << embedded.id if embedded.id
 
             embedded_readonly_entities = Solis::Options.instance.get[:embedded_readonly].map{|s| s.to_s} || []
 
@@ -216,87 +222,84 @@ values ?s {<#{self.graph_id}>}
               if embedded.exists?(sparql)
                 embedded_data = properties_to_hash(embedded)
                 embedded.update(embedded_data, validate_dependencies, false)
+                new_embedded_values << embedded
               else
                 embedded_value = embedded.save(validate_dependencies, false)
-                value = updated_klass.instance_variable_get("@#{key}").deep_dup
-                if value.is_a?(Array)
-                  value << embedded_value
-                else
-                  value = embedded_value
-                end
+                new_embedded_values << embedded_value
               end
             else
               Solis::LOGGER.info("#{embedded.class.name} is embedded not allowed to change. Skipping")
+              new_embedded_values << embedded
             end
           end
-        end
 
-        maxcount = original_klass.class.metadata[:attributes][key][:maxcount]
-        value = value.first if maxcount && maxcount == 1 && value.is_a?(Array)
+          # Identify orphaned entities (in original but not in new)
+          orphaned_ids = original_ids - new_ids
+          unless orphaned_ids.empty?
+            orphaned_entities = original_embedded.select { |e| solis_model?(e) && orphaned_ids.include?(e.id) }
+            entities_to_check_for_deletion[key] = orphaned_entities
+          end
+
+          # Replace entire array with new values
+          maxcount = original_klass.class.metadata[:attributes][key][:maxcount]
+          value = maxcount && maxcount == 1 ? new_embedded_values.first : new_embedded_values
+        end
 
         updated_klass.instance_variable_set("@#{key}", value)
       end
 
       before_update_proc&.call(original_klass, updated_klass)
 
-      properties_orignal_klass = properties_to_hash(original_klass)
+      properties_original_klass = properties_to_hash(original_klass)
       properties_updated_klass = properties_to_hash(updated_klass)
 
-      if Hashdiff.best_diff(properties_orignal_klass, properties_updated_klass).empty?
+      if Hashdiff.best_diff(properties_original_klass, properties_updated_klass).empty?
         Solis::LOGGER.info("#{original_klass.class.name} unchanged, skipping")
         data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
       else
-
         delete_graph = as_graph(original_klass, false)
-
-        where_graph = RDF::Graph.new(graph_name: RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{id}"), data: RDF::Repository.new)
+        where_graph = RDF::Graph.new(graph_name: RDF::URI("#{self.class.graph_name}#{tableized_class_name(self)}/#{id}"), data: RDF::Repository.new)
 
         if id.is_a?(Array)
           id.each do |i|
-            where_graph << [RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{i}"), :p, :o]
+            where_graph << [RDF::URI("#{self.class.graph_name}#{tableized_class_name(self)}/#{i}"), :p, :o]
           end
         else
-          where_graph << [RDF::URI("#{self.class.graph_name}#{self.name.tableize}/#{id}"), :p, :o]
+          where_graph << [RDF::URI("#{self.class.graph_name}#{tableized_class_name(self)}/#{id}"), :p, :o]
         end
 
         insert_graph = as_graph(updated_klass, true)
 
-        # puts delete_graph.dump(:ttl) if ConfigFile[:debug]
-        # puts insert_graph.dump(:ttl) if ConfigFile[:debug]
-        # puts where_graph.dump(:ttl) if ConfigFile[:debug]
-
-        # if ConfigFile[:debug]
         delete_insert_query = SPARQL::Client::Update::DeleteInsert.new(delete_graph, insert_graph, where_graph, graph: insert_graph.name).to_s
         delete_insert_query.gsub!('_:p', '?p')
-        # puts delete_insert_query
-        data = sparql.query(delete_insert_query)
-        # pp data
-        # end
 
-        #      sparql.delete_insert(delete_graph, insert_graph, where_graph, graph: insert_graph.name)
+        data = sparql.query(delete_insert_query)
 
         data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
         if data.nil?
           sparql.insert_data(insert_graph, graph: insert_graph.name)
           data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
         end
+
+        # Delete orphaned entities after successful update
+        delete_orphaned_entities(entities_to_check_for_deletion, sparql)
       end
+
       after_update_proc&.call(updated_klass, data)
 
       data
-      #rescue EOFError => e
     rescue StandardError => e
       original_graph = as_graph(original_klass, false)
       Solis::LOGGER.error(e.message)
       Solis::LOGGER.error original_graph.dump(:ttl)
-      Solis::LOGGER.error delete_insert_query
+      Solis::LOGGER.error delete_insert_query if defined?(delete_insert_query)
       sparql.insert_data(original_graph, graph: original_graph.name)
 
       raise e
     end
 
     def graph_id
-      "#{self.class.graph_name}#{self.name.tableize}/#{self.id}"
+      "#{self.class.graph_name}#{tableized_class_name(self)}/#{self.id}"
     end
 
     def is_referenced?(sparql)
@@ -316,7 +319,7 @@ values ?s {<#{self.graph_id}>}
 
         while id.nil? || sparql.query("ASK WHERE { ?s <#{self.graph_name}id>  \"#{id}\" }")
           id = SecureRandom.uuid
-          id_retries+=1
+          id_retries += 1
         end
         LOGGER.info("ID(#{id}) generated for #{self.name} in #{id_retries} retries") if ConfigFile[:debug]
         model.instance_variable_set("@id", id)
@@ -328,7 +331,7 @@ values ?s {<#{self.graph_id}>}
       model
     rescue StandardError => e
       Solis::LOGGER.error(e.message)
-      raise Solis::Error::GeneralError, "Error generating id for #{@model_name}"
+      raise Solis::Error::GeneralError, "Error generating id for #{self.name}"
     end
 
     def self.metadata
@@ -391,11 +394,13 @@ values ?s {<#{self.graph_id}>}
       m = { type: self.name.tableize, attributes: {} }
       self.metadata[:attributes].each do |attribute, attribute_metadata|
 
+        is_array = (attribute_metadata[:maxcount].nil? || (attribute_metadata[:maxcount].to_i > 1))
+        attribute_name = is_array ? "#{attribute}[]" : attribute
         if attribute_metadata.key?(:class) && !attribute_metadata[:class].nil? && attribute_metadata[:class].value =~ /#{self.graph_name}/ && level == 0
           cm = self.graph.shape_as_model(self.metadata[:attributes][attribute][:datatype].to_s).model(level + 1)
-          m[:attributes][attribute.to_sym] = cm[:attributes]
+          m[:attributes][attribute_name.to_sym] = cm[:attributes]
         else
-          m[:attributes][attribute.to_sym] = { description: attribute_metadata[:comment]&.value,
+          m[:attributes][attribute_name.to_sym] = { description: attribute_metadata[:comment]&.value,
                                                mandatory: (attribute_metadata[:mincount].to_i > 0),
                                                data_type: attribute_metadata[:datatype] }
         end
@@ -420,7 +425,7 @@ values ?s {<#{self.graph_id}>}
     end
 
     def self.construct(level = 0)
-      raise 'to bo implemented'
+      raise 'to be implemented'
     end
 
     def self.model_before_read(&blk)
@@ -457,16 +462,69 @@ values ?s {<#{self.graph_id}>}
 
     private
 
+    # Helper method to check if an object is a Solis model
+    def solis_model?(obj)
+      obj.class.ancestors.include?(Solis::Model)
+    end
+
+    # Helper method to get tableized class name
+    def tableized_class_name(obj)
+      obj.class.name.tableize
+    end
+
+    # Helper method to build entity URI
+    def build_entity_uri(entity_or_class, entity_id = nil)
+      if entity_or_class.is_a?(Class)
+        class_name = entity_or_class.name
+        id = entity_id
+      else
+        class_name = entity_or_class.class.name
+        id = entity_id || entity_or_class.id
+      end
+      RDF::URI("#{self.class.graph_name}#{class_name.tableize}/#{id}")
+    end
+
+    # Delete orphaned entities that are no longer referenced
+    def delete_orphaned_entities(entities_to_check, sparql)
+      embedded_readonly_entities = Solis::Options.instance.get[:embedded_readonly].map{|s| s.to_s} || []
+
+      entities_to_check.each do |key, orphaned_entities|
+        orphaned_entities.each do |orphaned_entity|
+          next unless solis_model?(orphaned_entity)
+
+          # Skip if it's a readonly entity (like code tables)
+          if (orphaned_entity.class.ancestors.map{|s| s.to_s} & embedded_readonly_entities).any?
+            Solis::LOGGER.info("#{orphaned_entity.class.name} (id: #{orphaned_entity.id}) is in embedded_readonly list. Skipping deletion.")
+            next
+          end
+
+          # Check if the entity is still referenced elsewhere
+          if orphaned_entity.is_referenced?(sparql)
+            Solis::LOGGER.info("#{orphaned_entity.class.name} (id: #{orphaned_entity.id}) is still referenced elsewhere. Skipping deletion.")
+            next
+          end
+
+          # Safe to delete the orphan
+          begin
+            Solis::LOGGER.info("Deleting orphaned entity: #{orphaned_entity.class.name} (id: #{orphaned_entity.id})")
+            orphaned_entity.destroy
+          rescue StandardError => e
+            Solis::LOGGER.error("Failed to delete orphaned entity #{orphaned_entity.class.name} (id: #{orphaned_entity.id}): #{e.message}")
+          end
+        end
+      end
+    end
+
     def as_graph(klass = self, resolve_all = true)
       graph = RDF::Graph.new
       graph.name = RDF::URI(self.class.graph_name)
-      id = build_ttl_objekt2(graph, klass, [], resolve_all)
+      id = build_ttl_objekt(graph, klass, [], resolve_all)
 
       graph
     end
 
-    def build_ttl_objekt2(graph, klass, hierarchy = [], resolve_all = true)
-      hierarchy.push("#{klass.name}(#{klass.instance_variables.include?(:@id) ? klass.instance_variable_get("@id") : ''})")
+    def build_ttl_objekt(graph, klass, hierarchy = [], resolve_all = true)
+      hierarchy.push("#{klass.class.name}(#{klass.instance_variables.include?(:@id) ? klass.instance_variable_get("@id") : ''})")
 
       graph_name = self.class.graph_name
       klass_name = klass.class.name
@@ -484,10 +542,9 @@ values ?s {<#{self.graph_id}>}
       else
         resolve_all = false
         klass.instance_variables.map { |m| m.to_s.gsub(/^@/, '') }
-             .select { |s| !["model_name", "model_plural_name"]
-                              .include?(s) }.each do |attribute, value|
+             .select { |s| !["model_name", "model_plural_name"].include?(s) }.each do |attribute|
           data = klass.instance_variable_get("@#{attribute}")
-          original_data = original_klass.instance_variable_get("@#{attribute.to_s}")
+          original_data = original_klass.instance_variable_get("@#{attribute}")
           original_klass.instance_variable_set("@#{attribute}", data) unless original_data.eql?(data)
         end
       end
@@ -507,21 +564,21 @@ values ?s {<#{self.graph_id}>}
       klass_metadata[:attributes].each do |attribute, metadata|
         data = klass.instance_variable_get("@#{attribute}")
 
-        if data.nil? && metadata.key?(:mincount) && ( metadata[:mincount].nil? || metadata[:mincount] > 0) && graph.query(RDF::Query.new({ attribute.to_sym => { RDF.type => metadata[:node] } })).size == 0
+        if data.nil? && metadata.key?(:mincount) && (metadata[:mincount].nil? || metadata[:mincount] > 0) && graph.query(RDF::Query.new({ attribute.to_sym => { RDF.type => metadata[:node] } })).size == 0
           if data.nil?
             uuid = id.value.split('/').last
-            original_klass = klass.query.filter({ filters: { id: [ uuid ] } }).find_all { |f| f.id == uuid }.first || nil
+            original_klass = klass.query.filter({ filters: { id: [uuid] } }).find_all { |f| f.id == uuid }.first || nil
             unless original_klass.nil?
               klass = original_klass
               data = klass.instance_variable_get("@#{attribute}")
             end
           end
-          #if data is still nil
-          raise Solis::Error::InvalidAttributeError, "#{hierarchy.join('.')}~#{klass.name}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}" if data.nil?
+          # if data is still nil
+          raise Solis::Error::InvalidAttributeError, "#{hierarchy.join('.')}~#{klass.class.name}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}" if data.nil?
         end
 
-        if data && metadata.key?(:maxcount) && ( metadata[:maxcount] && metadata[:maxcount] > 0) && graph.query(SPARQL.parse("select (count(?s) as ?max_subject) where { ?s #{self.class.graph_prefix}:#{attribute} ?p}")).first.max_subject > metadata[:maxcount].to_i
-          raise Solis::Error::InvalidAttributeError, "#{hierarchy.join('.')}~#{klass.name}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}" if data.nil?
+        if data && metadata.key?(:maxcount) && (metadata[:maxcount] && metadata[:maxcount] > 0) && graph.query(SPARQL.parse("select (count(?s) as ?max_subject) where { ?s #{self.class.graph_prefix}:#{attribute} ?p}")).first.max_subject > metadata[:maxcount].to_i
+          raise Solis::Error::InvalidAttributeError, "#{hierarchy.join('.')}~#{klass.class.name}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}" if data.nil?
         end
 
         # skip if nil or an object that is empty
@@ -547,20 +604,19 @@ values ?s {<#{self.graph_id}>}
         data = [data] unless data.is_a?(Array)
 
         data.each do |d|
-          if defined?(d.name) && self.class.graph.shape?(d.name) && resolve_all
-            if self.class.graph.shape_as_model(d.name.to_s).metadata[:attributes].select { |_, v| v[:node_kind].is_a?(RDF::URI) }.size > 0 &&
-              hierarchy.select { |s| s =~ /^#{d.name.to_s}/ }.size == 0
+          if solis_model?(d) && self.class.graph.shape?(d.class.name) && resolve_all
+            if self.class.graph.shape_as_model(d.class.name).metadata[:attributes].select { |_, v| v[:node_kind].is_a?(RDF::URI) }.size > 0 &&
+              hierarchy.select { |s| s =~ /^#{d.class.name}/ }.size == 0
               internal_resolve = false
-              d = build_ttl_objekt2(graph, d, hierarchy, internal_resolve)
-            elsif self.class.graph.shape_as_model(d.name.to_s) && hierarchy.select { |s| s =~ /^#{d.name.to_s}/ }.size == 0
+              d = build_ttl_objekt(graph, d, hierarchy, internal_resolve)
+            elsif self.class.graph.shape_as_model(d.class.name) && hierarchy.select { |s| s =~ /^#{d.class.name}/ }.size == 0
               internal_resolve = false
-              d = build_ttl_objekt2(graph, d, hierarchy, internal_resolve)
+              d = build_ttl_objekt(graph, d, hierarchy, internal_resolve)
             else
-              # d = "#{klass.class.graph_name}#{attribute.tableize}/#{d.id}"
-              d = "#{klass.class.graph_name}#{d.name.tableize}/#{d.id}"
+              d = "#{klass.class.graph_name}#{d.class.name.tableize}/#{d.id}"
             end
-          elsif defined?(d.name) && self.class.graph.shape?(d.name)
-            d = "#{klass.class.graph_name}#{d.name.tableize}/#{d.id}"
+          elsif solis_model?(d) && self.class.graph.shape?(d.class.name)
+            d = "#{klass.class.graph_name}#{d.class.name.tableize}/#{d.id}"
           end
 
           if d.is_a?(Array) && d.length == 1
@@ -615,8 +671,8 @@ values ?s {<#{self.graph_id}>}
       raise e
     end
 
-    def build_ttl_objekt(graph, klass, hierarchy = [], resolve_all = true)
-      hierarchy.push("#{klass.name}(#{klass.instance_variables.include?(:@id) ? klass.instance_variable_get("@id") : ''})")
+    def build_ttl_objekt_old(graph, klass, hierarchy = [], resolve_all = true)
+      hierarchy.push("#{klass.class.name}(#{klass.instance_variables.include?(:@id) ? klass.instance_variable_get("@id") : ''})")
       sparql_endpoint = self.class.sparql_endpoint
       if klass.instance_variables.include?(:@id) && hierarchy.length > 1
         unless sparql_endpoint.nil?
@@ -661,14 +717,6 @@ values ?s {<#{self.graph_id}>}
           end
 
           if model && d.is_a?(Hash)
-            # TODO: figure out in what use case we need the parent_model
-            # model_instance = if parent_model
-            #                     parent_model.new(d)
-            #                  else
-            #                     model.new(d)
-            #                  end
-
-            # model_instance = model.new(d)
             model_instance = model.descendants.map { |m| m&.new(d) rescue nil }.compact.first || nil
             model_instance = model.new(d) if model_instance.nil?
 
@@ -676,7 +724,7 @@ values ?s {<#{self.graph_id}>}
               d = build_ttl_objekt(graph, model_instance, hierarchy, false)
             else
               real_model = model_instance.query.filter({ filters: { id: model_instance.id } }).find_all { |f| f.id == model_instance.id }&.first
-              d = RDF::URI("#{self.class.graph_name}#{real_model ? real_model.name.tableize : model_instance.name.tableize}/#{model_instance.id}")
+              d = RDF::URI("#{self.class.graph_name}#{real_model ? real_model.class.name.tableize : model_instance.class.name.tableize}/#{model_instance.id}")
             end
           elsif model && d.is_a?(model)
             if resolve_all
@@ -688,7 +736,7 @@ values ?s {<#{self.graph_id}>}
               end
             else
               real_model = model.new.query.filter({ filters: { id: d.id } }).find_all { |f| f.id == d.id }&.first
-              d = RDF::URI("#{self.class.graph_name}#{real_model ? real_model.name.tableize : model.name.tableize}/#{d.id}")
+              d = RDF::URI("#{self.class.graph_name}#{real_model ? real_model.class.name.tableize : model.name.tableize}/#{d.id}")
             end
           else
             datatype = RDF::Vocabulary.find_term(metadata[:datatype_rdf] || metadata[:node])

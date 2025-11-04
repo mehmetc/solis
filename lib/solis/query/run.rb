@@ -109,6 +109,7 @@ class Solis::Query::Runner
     end
 
     def self.graph_name
+      raise Solis::Error::NotFoundError, 'No graph name found' if Solis::Options.instance.get.key?(:graphs).nil?
       Solis::Options.instance.get.key?(:graphs) ? Solis::Options.instance.get[:graphs].select{|s| s['type'].eql?(:main)}&.first['name'] : ''
     end
 end

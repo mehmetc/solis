@@ -11,8 +11,8 @@ module Solis
     include Enumerable
     include Solis::QueryFilter
 
-    def self.run(entity, query)
-      Solis::Query::Runner.run(entity, query)
+    def self.run(entity, query, options = {})
+      Solis::Query::Runner.run(entity, query, options)
     end
 
     def self.run_construct_with_file(filename, id_name, entity, ids, from_cache = '1')
@@ -194,7 +194,7 @@ order by ?s
 
       Solis::LOGGER.info(query) if ConfigFile[:debug]
 
-      query_key = "#{@model.name}-#{Digest::MD5.hexdigest(query)}"
+      query_key = "#{@model.model_class_name}-#{Digest::MD5.hexdigest(query)}"
 
       result = nil
 
@@ -275,7 +275,7 @@ PREFIX #{@model.class.graph_prefix}: <#{@model.class.graph_name}>"
               attribute = statement.p.value.split('/').last.underscore
 
               unless solution_model.metadata[:attributes].key?(attribute)
-                Solis::LOGGER.error "Attribute found in data that is not part of the model model #{solution_model.name}(#{record_uri.split('/').last}).#{attribute}"
+                Solis::LOGGER.error "Attribute found in data that is not part of the model model #{solution_model.model_class_name}(#{record_uri.split('/').last}).#{attribute}"
                 next
               end
 

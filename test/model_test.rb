@@ -15,7 +15,7 @@ class ModelTest < Minitest::Test
 
   def test_model_plural_name
     course = Course.new
-    assert_equal('Courses', course.name(true))
+    assert_equal('Courses', course.model_class_name(true))
   end
 
   def test_model_datatype
