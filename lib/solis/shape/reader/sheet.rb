@@ -117,6 +117,7 @@ module Solis
                 end
 
                 entities.store(e['name'].to_sym, { description: e['description'],
+                                                   order: e['order'],
                                                    plural: e['nameplural'],
                                                    label: e['name'].to_s.strip,
                                                    sub_class_of: e['subclassof'].nil? || e['subclassof'].empty? ? [] : [e['subclassof']],
@@ -178,6 +179,7 @@ module Solis
                       path: "#{graph_prefix}:#{property_name.to_s.classify}",
                       cardinality: { min: min_max['min'], max: min_max['max'] },
                       same_as: p['sameas'],
+                      order: p['order'],
                       description: p['description']
                     }
 
@@ -308,7 +310,7 @@ hide empty members
                     unless node.nil? || node.empty?
                       "\n    #{shacl_prefix}:node         #{node} ;"
                     end}
-                #{shacl_prefix}:name         "#{label}" ;
+    #{shacl_prefix}:name         "#{label}" ;
 )
                   metadata[:properties].each do |property, property_metadata|
                     attribute = property.to_s.strip
@@ -319,28 +321,36 @@ hide empty members
                     datatype = property_metadata[:datatype].strip
                     min_count = property_metadata[:cardinality][:min].strip
                     max_count = property_metadata[:cardinality][:max].strip
+                    order = property_metadata.key?(:order) && property_metadata[:order] ? property_metadata[:order]&.strip : nil
 
                     if datatype =~ /^#{graph_prefix}:/ || datatype =~ /^<#{graph_name}/
                       out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
                  #{shacl_prefix}:name "#{attribute}" ;
-                 #{shacl_prefix}:description "#{description}" ;
+                 #{shacl_prefix}:description "#{description}" ;#{order.nil? ? '' : "\n                 #{shacl_prefix}:order #{order} ;"}
                  #{shacl_prefix}:nodeKind #{shacl_prefix}:IRI ;
                  #{shacl_prefix}:class    #{datatype} ;#{min_count =~ /\d+/ ? "\n                 #{shacl_prefix}:minCount #{min_count} ;" : ''}#{max_count =~ /\d+/ ? "\n                 #{shacl_prefix}:maxCount #{max_count} ;" : ''}
     ] ;
 )
                     else
-                      if datatype.eql?('rdf:langString')
+                      if datatype.eql?('rdf:langString') && max_count.eql?('1')
                         out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
                  #{shacl_prefix}:name "#{attribute}";
-                 #{shacl_prefix}:description "#{description}" ;
+                 #{shacl_prefix}:description "#{description}" ;#{order.nil? ? '' : "\n                 #{shacl_prefix}:order #{order} ;"}
                  #{shacl_prefix}:uniqueLang true ;
                  #{shacl_prefix}:datatype #{datatype} ;#{min_count =~ /\d+/ ? "\n                 #{shacl_prefix}:minCount #{min_count} ;" : ''}
+    ] ;
+)
+                      elsif datatype.eql?('rdf:langString')
+                        out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
+                 #{shacl_prefix}:name "#{attribute}";
+                 #{shacl_prefix}:description "#{description}" ;#{order.nil? ? '' : "\n                 #{shacl_prefix}:order #{order} ;"}
+                 #{shacl_prefix}:datatype #{datatype} ;#{min_count =~ /\d+/ ? "\n                 #{shacl_prefix}:minCount #{min_count} ;" : ''}#{max_count =~ /\d+/ ? "\n                 #{shacl_prefix}:maxCount #{max_count} ;" : ''}
     ] ;
 )
                       else
                         out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
                  #{shacl_prefix}:name "#{attribute}";
-                 #{shacl_prefix}:description "#{description}" ;
+                 #{shacl_prefix}:description "#{description}" ;#{order.nil? ? '' : "\n                 #{shacl_prefix}:order #{order} ;"}
                  #{shacl_prefix}:datatype #{datatype} ;#{min_count =~ /\d+/ ? "\n                 #{shacl_prefix}:minCount #{min_count} ;" : ''}#{max_count =~ /\d+/ ? "\n                 #{shacl_prefix}:maxCount #{max_count} ;" : ''}
     ] ;
 )

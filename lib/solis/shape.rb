@@ -100,6 +100,7 @@ module Solis
           attribute_node = solution.attributeNode if solution.bound?(:attributeNode)
           attribute_class = solution.attributeClass if solution.bound?(:attributeClass)
           attribute_comment = solution.attributeComment if solution.bound?(:attributeComment)
+          attribute_order = solution.attributeOrder if solution.bound?(:attributeOrder)
           # if solution.bound?(:attributeOr)
           #   pp solution
           # end
@@ -117,6 +118,7 @@ module Solis
             datatype: lookup_datatype(attribute_datatype_rdf, attribute_node),
             mincount: attribute_min_count,
             maxcount: attribute_max_count,
+            order: attribute_order,
             node: attribute_node,
             node_kind: attribute_node_kind,
             class: attribute_class,
@@ -134,7 +136,7 @@ PREFIX rdfv: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
 SELECT ?targetClass ?targetNode ?comment ?className ?attributePath ?attributeName ?attributeDatatype
        ?attributeMinCount ?attributeMaxCount ?attributeOr ?attributeClass
-       ?attributeNode ?attributeNodeKind ?attributeComment ?o
+       ?attributeNode ?attributeNodeKind ?attributeComment ?attributeOrder ?o
 WHERE {
 
   ?s a sh:NodeShape;
@@ -153,6 +155,7 @@ WHERE {
                            OPTIONAL{ ?attributes sh:nodeKind ?attributeNodeKind } .
                            OPTIONAL{ ?attributes sh:node     ?attributeNode } .
                            OPTIONAL{ ?attributes sh:description ?attributeComment } .
+                           OPTIONAL{ ?attributes sh:order ?attributeOrder } .
      }.
 }
 )
@@ -171,6 +174,7 @@ WHERE {
                     "datatype": "string",
                     "mincount": 1,
                     "maxcount": 1,
+                    "order": nil,
                     "node": nil,
                     "node_kind": nil,
                     "class": nil,
