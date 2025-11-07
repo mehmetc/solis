@@ -101,6 +101,9 @@ module Solis
           attribute_class = solution.attributeClass if solution.bound?(:attributeClass)
           attribute_comment = solution.attributeComment if solution.bound?(:attributeComment)
           attribute_order = solution.attributeOrder if solution.bound?(:attributeOrder)
+
+          attribute_max_count =  1 if solution.bound?(:attributeUniqueLang) && solution.attributeUniqueLang.value.eql?('true')
+
           # if solution.bound?(:attributeOr)
           #   pp solution
           # end
@@ -136,7 +139,7 @@ PREFIX rdfv: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
 SELECT ?targetClass ?targetNode ?comment ?className ?attributePath ?attributeName ?attributeDatatype
        ?attributeMinCount ?attributeMaxCount ?attributeOr ?attributeClass
-       ?attributeNode ?attributeNodeKind ?attributeComment ?attributeOrder ?o
+       ?attributeNode ?attributeNodeKind ?attributeComment ?attributeOrder ?attributeUniqueLang ?o
 WHERE {
 
   ?s a sh:NodeShape;
@@ -156,6 +159,7 @@ WHERE {
                            OPTIONAL{ ?attributes sh:node     ?attributeNode } .
                            OPTIONAL{ ?attributes sh:description ?attributeComment } .
                            OPTIONAL{ ?attributes sh:order ?attributeOrder } .
+                           OPTIONAL{ ?attributes sh:uniqueLang ?attributeUniqueLang } .
      }.
 }
 )
