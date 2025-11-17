@@ -189,7 +189,7 @@ values ?s {<#{self.graph_id}>}
       id = attributes.delete('id')
       sparql = SPARQL::Client.new(self.class.sparql_endpoint)
 
-      original_klass = self.query.filter({ language: nil, filters: { id: [id] } }).find_all.map { |m| m }&.first
+      original_klass = self.query.filter({ language: self.class.language, filters: { id: [id] } }).find_all.map { |m| m }&.first
       raise Solis::Error::NotFoundError if original_klass.nil?
       updated_klass = original_klass.deep_dup
 
