@@ -37,6 +37,42 @@ class DatatypeTest < Minitest::Test
     assert_nil(a.lang_string_dt)
   end
 
+  def test_lang_string_with_same_value_in_different_languages
+    @solis.flush_all('http://solis.template/')
+    context = OpenStruct.new(query_user: 'unknown', language: 'en')
+    Graphiti::with_context(context) do
+      e = EveryDataType.new({id: '1', lang_string_dt: 'illustrator'})
+      e.save
+
+      r = EveryDataTypeResource.all({filter: {id: '1'}})
+      a = r.data.first.lang_string_dt
+      assert_equal('illustrator', a)
+    end
+
+    context = OpenStruct.new(query_user: 'unknown', language: 'nl')
+    Graphiti::with_context(context) do
+      e = EveryDataType.new({id: '1', lang_string_dt: 'illustrator'})
+      e.save
+
+      r = EveryDataTypeResource.all({filter: {id: '1'}})
+      a = r.data.first.lang_string_dt
+      assert_equal('illustrator', a)
+    end
+    graph_name = Solis::Options.instance.get.key?(:graphs) ? Solis::Options.instance.get[:graphs].select{|s| s['type'].eql?(:main)}&.first['name'] : ''
+    sparql_endpoint = Solis::Options.instance.get[:sparql_endpoint]
+    result = Solis::Store::Sparql::Client.new(sparql_endpoint, graph_name: graph_name).query("select ?o WHERE {?s <http://solis.template/lang_string_dt> ?o}")
+
+    data = []
+    result.each do |s|
+      data << {value: s.o.value, language: s.o.language}
+    end
+    assert_equal(2, data.size)
+    assert_equal(data[0][:value], 'illustrator')
+    assert_includes(data.map{|s| s[:language].to_s}, 'en')
+    assert_includes(data.map{|s| s[:language].to_s}, 'nl')
+
+  end
+
   def test_lang_string_array_dt
     @solis.flush_all('http://solis.template/')
     e = EveryDataType.new({id: '1', lang_string_array_dt: ['one', 'two', 'three']})
