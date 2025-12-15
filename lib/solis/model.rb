@@ -145,22 +145,28 @@ values ?s {<#{self.graph_id}>}
       else
         data = properties_to_hash(self)
         attributes = data.include?('attributes') ? data['attributes'] : data
+        readonly_list = (Solis::Options.instance.get[:embedded_readonly] || []).map(&:to_s)
+
         attributes.each_pair do |key, value|
           unless self.class.metadata[:attributes][key][:node].nil?
             value = [value] unless value.is_a?(Array)
             value.each do |sub_value|
               embedded = self.class.graph.shape_as_model(self.class.metadata[:attributes][key][:datatype].to_s).new(sub_value)
-              embedded_readonly_entities = Solis::Options.instance.get[:embedded_readonly].map{|s| s.to_s} || []
 
-              if (embedded.class.ancestors.map{|s| s.to_s} & embedded_readonly_entities).empty? || top_level
+              if readonly_entity?(embedded, readonly_list)
+                # Readonly entities (code tables) should never be modified
+                # Only verify they exist, do not create or update them
+                unless embedded.exists?(sparql)
+                  Solis::LOGGER.warn("#{embedded.class.name} (id: #{embedded.id}) is readonly but does not exist in database. Skipping.")
+                end
+              else
+                # Non-readonly entities can be created or updated
                 if embedded.exists?(sparql)
                   embedded_data = properties_to_hash(embedded)
                   embedded.update(embedded_data, validate_dependencies, false)
                 else
                   embedded.save(validate_dependencies, false)
                 end
-              else
-                Solis::LOGGER.info("#{embedded.class.name} is embedded not allowed to change. Skipping")
               end
             end
           end
@@ -193,6 +199,9 @@ values ?s {<#{self.graph_id}>}
       raise Solis::Error::NotFoundError if original_klass.nil?
       updated_klass = original_klass.deep_dup
 
+      # Cache readonly entities list once
+      readonly_list = (Solis::Options.instance.get[:embedded_readonly] || []).map(&:to_s)
+
       # Track entities to potentially delete
       entities_to_check_for_deletion = {}
 
@@ -216,9 +225,16 @@ values ?s {<#{self.graph_id}>}
             embedded = self.class.graph.shape_as_model(original_klass.class.metadata[:attributes][key][:datatype].to_s).new(sub_value)
             new_ids << embedded.id if embedded.id
 
-            embedded_readonly_entities = Solis::Options.instance.get[:embedded_readonly].map{|s| s.to_s} || []
-
-            if (embedded.class.ancestors.map{|s| s.to_s} & embedded_readonly_entities).empty? || top_level
+            if readonly_entity?(embedded, readonly_list)
+              # Readonly entities (code tables) should never be modified
+              # Only verify they exist, do not create or update them
+              if embedded.exists?(sparql)
+                new_embedded_values << embedded
+              else
+                Solis::LOGGER.warn("#{embedded.class.name} (id: #{embedded.id}) is readonly but does not exist in database. Skipping.")
+              end
+            else
+              # Non-readonly entities can be created or updated
               if embedded.exists?(sparql)
                 embedded_data = properties_to_hash(embedded)
                 embedded.update(embedded_data, validate_dependencies, false)
@@ -227,13 +243,11 @@ values ?s {<#{self.graph_id}>}
                 embedded_value = embedded.save(validate_dependencies, false)
                 new_embedded_values << embedded_value
               end
-            else
-              Solis::LOGGER.info("#{embedded.class.name} is embedded not allowed to change. Skipping")
-              new_embedded_values << embedded
             end
           end
 
           # Identify orphaned entities (in original but not in new)
+          # Note: Readonly entities will be filtered out in delete_orphaned_entities
           orphaned_ids = original_ids - new_ids
           unless orphaned_ids.empty?
             orphaned_entities = original_embedded.select { |e| solis_model?(e) && orphaned_ids.include?(e.id) }
@@ -289,11 +303,11 @@ values ?s {<#{self.graph_id}>}
 
       data
     rescue StandardError => e
-      original_graph = as_graph(original_klass, false)
+      original_graph = as_graph(original_klass, false) if defined?(original_klass) && original_klass
       Solis::LOGGER.error(e.message)
-      Solis::LOGGER.error original_graph.dump(:ttl)
+      Solis::LOGGER.error original_graph.dump(:ttl) if defined?(original_graph) && original_graph
       Solis::LOGGER.error delete_insert_query if defined?(delete_insert_query)
-      sparql.insert_data(original_graph, graph: original_graph.name)
+      sparql.insert_data(original_graph, graph: original_graph.name) if defined?(original_graph) && original_graph && defined?(sparql) && sparql
 
       raise e
     end
@@ -467,6 +481,12 @@ values ?s {<#{self.graph_id}>}
       obj.class.ancestors.include?(Solis::Model)
     end
 
+    # Helper method to check if an entity is readonly (code table)
+    def readonly_entity?(entity, readonly_list = nil)
+      readonly_list ||= (Solis::Options.instance.get[:embedded_readonly] || []).map(&:to_s)
+      (entity.class.ancestors.map(&:to_s) & readonly_list).any?
+    end
+
     # Helper method to get tableized class name
     def tableized_class_name(obj)
       obj.class.name.tableize
@@ -486,14 +506,18 @@ values ?s {<#{self.graph_id}>}
 
     # Delete orphaned entities that are no longer referenced
     def delete_orphaned_entities(entities_to_check, sparql)
-      embedded_readonly_entities = Solis::Options.instance.get[:embedded_readonly].map{|s| s.to_s} || []
+      return if entities_to_check.nil? || entities_to_check.empty?
+
+      readonly_list = (Solis::Options.instance.get[:embedded_readonly] || []).map(&:to_s)
 
       entities_to_check.each do |key, orphaned_entities|
+        next if orphaned_entities.nil?
+
         orphaned_entities.each do |orphaned_entity|
           next unless solis_model?(orphaned_entity)
 
           # Skip if it's a readonly entity (like code tables)
-          if (orphaned_entity.class.ancestors.map{|s| s.to_s} & embedded_readonly_entities).any?
+          if readonly_entity?(orphaned_entity, readonly_list)
             Solis::LOGGER.info("#{orphaned_entity.class.name} (id: #{orphaned_entity.id}) is in embedded_readonly list. Skipping deletion.")
             next
           end

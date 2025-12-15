@@ -289,7 +289,7 @@ hide empty members
                   graph_prefix = data[:ontologies][:base][:prefix]
                   graph_name = data[:ontologies][:base][:uri]
 
-                  description = metadata[:comment]
+                  description = metadata[:description]
                   label = metadata[:label]
                   target_class = "#{graph_prefix}:#{entity_name}"
                   node = metadata[:sub_class_of]
@@ -454,9 +454,19 @@ hide empty members
 
               datas.each do |data|
                 data[:entities].select { |_k, v| !v[:same_as].empty? }.each do |k, v|
-                  prefix, verb = v[:same_as].split(':')
-                  rdf_vocabulary = RDF::Vocabulary.from_sym(prefix.upcase)
-                  rdf_verb = rdf_vocabulary[verb.to_sym]
+                  same_as_value = v[:same_as].strip
+
+                  if same_as_value.start_with?('<') && same_as_value.end_with?('>')
+                    # Full URI format: <http://xmlns.com/foaf/0.1/Person>
+                    uri_string = same_as_value[1...-1]
+                    rdf_verb = RDF::URI(uri_string)
+                  else
+                    # Prefixed name format: foaf:Person
+                    prefix, verb = same_as_value.split(':')
+                    rdf_vocabulary = RDF::Vocabulary.from_sym(prefix.upcase)
+                    rdf_verb = rdf_vocabulary[verb.to_sym]
+                  end
+
                   graph << RDF::Statement.new(rdf_verb, RDF::RDFV.type, RDF::OWL.Class)
                   graph << RDF::Statement.new(rdf_verb, RDF::Vocab::OWL.sameAs, o[k.to_sym])
                 rescue StandardError => e
