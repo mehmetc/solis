@@ -16,7 +16,7 @@ module Solis
       raise "Please provide a graph_name, graph_prefix and sparql_endpoint option" if options.nil? || options.empty?
       cloned_options = options.clone
 
-      Solis::Options.instance.set = options
+      Solis::Options.instance.set = options.merge(solis: self)
 
       @global_resource_stack = []
       @graph = graph

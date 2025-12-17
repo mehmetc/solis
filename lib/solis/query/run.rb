@@ -149,7 +149,14 @@ class Solis::Query::Runner
       next if key.start_with?('@')  # Skip internal markers
       next if key == '_id' || key == 'id'  # Already added
 
-      result[key] = resolve_value(value, objects_index, max_depth, visited, current_depth)
+      if obj.key?('@type') &&Solis::Options.instance.get[:solis].shape?(obj['@type'])
+        entity = Solis::Options.instance.get[:solis].shape_as_model(obj['@type'])
+        entity_maxcount = entity.metadata[:attributes][key][:maxcount]
+      end
+      resolved_value = resolve_value(value, objects_index, max_depth, visited, current_depth)
+      resolved_value = [resolved_value] if (entity_maxcount.nil? || entity_maxcount > 1) && !resolved_value.is_a?(Array)
+
+      result[key] = resolved_value
     end
 
     result
