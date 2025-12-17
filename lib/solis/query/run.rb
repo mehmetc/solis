@@ -62,7 +62,7 @@ class Solis::Query::Runner
         object = triple[:object]
 
         # Handle rdf:type
-        if predicate.to_s =~ /type$/i || predicate == RDF::RDFV.type
+        if (predicate.to_s !~/#{graph_name}/ && predicate.to_s =~ /type$/i) || predicate == RDF::RDFV.type
           obj['@type'] = object.to_s.split('/').last
           next
         end
