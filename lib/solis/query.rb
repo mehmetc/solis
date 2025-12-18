@@ -44,7 +44,7 @@ module Solis
         ids = ids.join(" ")
 
         language = Graphiti.context[:object]&.language || Solis::Options.instance.get[:language] || 'en'
-        q = query.gsub(/{ ?{ ?VALUES ?} ?}/, "VALUES ?#{id_name} { #{ids} }").gsub(/{ ?{ ?LANGUAGE ?} ?}/, "bind(\"#{language}\" as ?filter_language).")
+        q = query.gsub(/{ ?{ ?VALUES ?} ?}/, "VALUES ?#{id_name} { #{ids} }").gsub(/{ ?{ ?LANGUAGE ?} ?}/, "bind(\"#{language}\" as ?filter_language).").gsub(/{ ?{ ?ENTITY ?} ?}/, "<#{graph_name}#{entity.classify}>")
 
         result = Solis::Query.run(entity, q)
       end
