@@ -223,6 +223,199 @@ When query returns not found
 #### Solis::Shape::Reader::File
 #### Solis::Shape::Reader::Sheet
 
+## Supported Data Types
+
+### Extended Date/Time Format (EDTF)
+
+Solis supports the [Extended Date/Time Format (EDTF)](https://www.loc.gov/standards/datetime/) specification from the Library of Congress. EDTF extends ISO 8601 to represent uncertain, approximate, and imprecise dates commonly found in cultural heritage and archival materials.
+
+#### Using EDTF in SHACL
+
+Define EDTF fields in your SHACL shapes using the Library of Congress namespace:
+
+```turtle
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix edtf: <http://id.loc.gov/datatypes/edtf> .
+@prefix ex: <http://example.org/> .
+
+ex:ArtworkShape
+    a sh:NodeShape ;
+    sh:targetClass ex:Artwork ;
+    sh:property [
+        sh:path ex:creationDate ;
+        sh:name "creationDate" ;
+        sh:description "Date or date range when artwork was created" ;
+        sh:datatype edtf: ;
+        sh:minCount 0 ;
+        sh:maxCount 1 ;
+    ] .
+```
+
+#### EDTF Features Supported
+
+**Basic Dates (Level 0):**
+```ruby
+# Year precision
+artwork.creation_date = "1984"
+
+# Month precision
+artwork.creation_date = "1984-05"
+
+# Day precision
+artwork.creation_date = "1984-05-26"
+```
+
+**Uncertainty and Approximation (Level 1):**
+```ruby
+# Uncertain date (?)
+artwork.creation_date = "1984?"           # Possibly 1984
+
+# Approximate date (~)
+artwork.creation_date = "1984~"           # Approximately 1984
+
+# Both uncertain and approximate
+artwork.creation_date = "1984?~"          # Possibly around 1984
+
+# Uncertain at different precisions
+artwork.creation_date = "1984-05?"        # Possibly May 1984
+artwork.creation_date = "1984-05-26?"     # Possibly May 26, 1984
+```
+
+**Date Intervals (Level 1):**
+```ruby
+# Date range
+artwork.creation_date = "1984/2004"       # Between 1984 and 2004
+
+# Uncertain intervals
+artwork.creation_date = "1984-06?/2004-08?"  # Between possibly June 1984 and possibly August 2004
+```
+
+**Seasons (Level 1):**
+```ruby
+artwork.creation_date = "2001-21"         # Spring 2001
+artwork.creation_date = "2001-22"         # Summer 2001
+artwork.creation_date = "2001-23"         # Autumn 2001
+artwork.creation_date = "2001-24"         # Winter 2001
+```
+
+**Extended Features (Level 2):**
+```ruby
+# Masked precision (decades/centuries)
+artwork.creation_date = "198X"            # Some year in the 1980s
+artwork.creation_date = "19XX"            # Some year in the 1900s
+
+# Sets of dates
+artwork.creation_date = "[1667,1668,1670..1672]"  # Multiple possible dates
+```
+
+#### Working with EDTF Values
+
+**Creating records with EDTF:**
+```ruby
+# Using EDTF strings
+artwork = Artwork.new({
+  id: '1',
+  title: 'Unknown Masterpiece',
+  creation_date: '1984?'  # Uncertain year
+})
+artwork.save
+```
+
+**Querying EDTF fields:**
+```ruby
+# Retrieve records
+result = ArtworkResource.all({filter: {id: '1'}})
+artwork = result.data.first
+
+# EDTF values are returned as strings
+puts artwork.creation_date  # => "1984?"
+```
+
+**Working with EDTF objects directly:**
+```ruby
+# Parse EDTF string
+date = Date.edtf('1984?')
+
+# Check properties
+date.uncertain?      # => true
+date.approximate?    # => false
+date.edtf           # => "1984?"
+
+# Intervals
+interval = Date.edtf('1984/2004')
+interval.length     # => Duration in days
+interval.from       # => Start date
+interval.to         # => End date
+
+# Seasons
+season = Date.edtf('2001-21')
+season.spring?      # => true
+season.year         # => 2001
+```
+
+**RDF Storage:**
+
+EDTF values are stored in RDF as typed literals with the correct datatype URI:
+
+```turtle
+<http://example.org/artworks/1>
+    <http://example.org/creationDate>
+    "1984?"^^<http://id.loc.gov/datatypes/edtf> .
+```
+
+#### Common Use Cases
+
+**Archival Records:**
+```ruby
+# Uncertain historical date
+document.date = "1776-07-04?"
+
+# Approximate date range
+manuscript.date = "1450~/1475~"
+```
+
+**Museum Collections:**
+```ruby
+# Decade precision for artwork
+painting.creation_date = "186X"
+
+# Season when photograph was taken
+photo.date = "1965-22"  # Summer 1965
+```
+
+**Publication Dates:**
+```ruby
+# Uncertain publication year
+book.publication_date = "1923?"
+
+# Date range for serial publications
+journal.coverage = "1990/1995"
+```
+
+#### Additional Resources
+
+- [EDTF Specification](https://www.loc.gov/standards/datetime/)
+- [Library of Congress EDTF Datatypes](https://id.loc.gov/datatypes/edtf.html)
+- [EDTF Ruby Gem Documentation](https://github.com/inukshuk/edtf-ruby)
+
+### Other Supported Datatypes
+
+Solis also supports standard XSD and RDF datatypes:
+
+- **xsd:string** - Text strings
+- **xsd:integer** - Whole numbers
+- **xsd:boolean** - True/false values
+- **xsd:date** - Standard dates (YYYY-MM-DD)
+- **xsd:dateTime** - Date with time
+- **xsd:float**, **xsd:double** - Decimal numbers
+- **xsd:gYear** - Year only
+- **xsd:duration** - ISO 8601 durations
+- **xsd:anyURI** - URI/URL values
+- **rdf:langString** - Language-tagged strings
+- **rdf:JSON** - JSON objects
+- **time:DateTimeInterval** - Time intervals
+- **schema:temporalCoverage** - Temporal coverage periods
+
 ### Setup Solis
 ``` ruby
 Solis::ConfigFile.path = './'

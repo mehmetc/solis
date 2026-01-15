@@ -278,3 +278,90 @@ Graphiti::Types[:array_of_temporal_coverages] = {
   kind: "array",
   description: "contains a list of temporal coverage"
 }
+
+uri_definition = Dry::Types['strict.string']
+read_uri_type = uri_definition.constructor do |i|
+  if i.is_a?(RDF::URI)
+    i.to_s
+  elsif i.is_a?(String)
+    i
+  else
+    i.to_s
+  end
+rescue StandardError => e
+  Solis::LOGGER.error(e.message)
+  raise Solis::Error::InvalidDatatypeError, e.message
+end
+
+write_uri_type = uri_definition.constructor do |i|
+  i.to_s
+rescue StandardError => e
+  Solis::LOGGER.error(e.message)
+  raise Solis::Error::InvalidDatatypeError, e.message
+end
+
+Graphiti::Types[:anyuri] = {
+  canonical_name: :anyuri,
+  params: read_uri_type,
+  read: read_uri_type,
+  write: write_uri_type,
+  kind: "scalar",
+  description: "contains a URI"
+}
+
+Graphiti::Types[:array_of_anyuris] = {
+  canonical_name: :anyuri,
+  params: Dry::Types["strict.array"].of(Graphiti::Types[:anyuri][:params]),
+  read: Dry::Types["strict.array"].of(Graphiti::Types[:anyuri][:read]),
+  write: Dry::Types["strict.array"].of(Graphiti::Types[:anyuri][:write]),
+  kind: "array",
+  description: "contains a list of URIs"
+}
+
+edtf_definition = Dry::Types['strict.string']
+read_edtf_type = edtf_definition.constructor do |i|
+  if i.respond_to?(:edtf)
+    # EDTF object - convert to string representation
+    i.edtf
+  elsif i.is_a?(RDF::Literal::EDTF)
+    # RDF EDTF Literal - get the lexical value
+    i.value
+  elsif i.is_a?(String)
+    # Validate and return as-is
+    parsed = Date.edtf(i)
+    parsed ? parsed.edtf : i
+  else
+    i.to_s
+  end
+rescue StandardError => e
+  Solis::LOGGER.error("EDTF read error: #{e.message}")
+  raise Solis::Error::InvalidDatatypeError, e.message
+end
+
+write_edtf_type = edtf_definition.constructor do |i|
+  # Validate by parsing
+  parsed = Date.edtf(i.to_s)
+  raise "Invalid EDTF format" unless parsed && parsed.valid?
+  parsed.edtf
+rescue StandardError => e
+  Solis::LOGGER.error("EDTF write error: #{e.message}")
+  raise Solis::Error::InvalidDatatypeError, "Invalid EDTF format: #{e.message}"
+end
+
+Graphiti::Types[:edtf] = {
+  canonical_name: :edtf,
+  params: read_edtf_type,
+  read: read_edtf_type,
+  write: write_edtf_type,
+  kind: "scalar",
+  description: "Extended Date/Time Format (EDTF) - supports uncertain, approximate, and interval dates"
+}
+
+Graphiti::Types[:array_of_edtfs] = {
+  canonical_name: :edtf,
+  params: Dry::Types["strict.array"].of(Graphiti::Types[:edtf][:params]),
+  read: Dry::Types["strict.array"].of(Graphiti::Types[:edtf][:read]),
+  write: Dry::Types["strict.array"].of(Graphiti::Types[:edtf][:write]),
+  kind: "array",
+  description: "contains a list of EDTF dates"
+}

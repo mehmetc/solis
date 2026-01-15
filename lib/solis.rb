@@ -6,6 +6,7 @@ require 'logger'
 require "solis/version"
 require 'solis/config_file'
 require "solis/error"
+require 'solis/rdf_edtf_literal'
 require 'solis/graph'
 require 'solis/shape'
 

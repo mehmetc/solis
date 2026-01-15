@@ -207,6 +207,9 @@ class Solis::Query::Runner
       ISO8601::TimeInterval.parse(literal.value).to_s
     when "http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON"
       JSON.parse(literal.value) rescue literal.value
+    when /datatypes\/edtf/, /edtf$/i
+      # Return EDTF string representation
+      literal.value.to_s
     else
       # Handle language-tagged strings
       if literal.respond_to?(:language) && literal.language

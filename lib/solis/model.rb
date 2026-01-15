@@ -663,6 +663,13 @@ values ?s {<#{self.graph_id}>}
                 end
               elsif metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#anyURI') || metadata[:node].is_a?(RDF::URI)
                 RDF::URI(d)
+              elsif metadata[:datatype_rdf] =~ /datatypes\/edtf/ || metadata[:datatype_rdf] =~ /edtf$/i
+                # Handle EDTF dates
+                begin
+                  RDF::Literal::EDTF.new(d)
+                rescue StandardError => e
+                  raise Solis::Error::InvalidDatatypeError, "#{hierarchy.join('.')}.#{attribute}: #{e.message}"
+                end
               elsif metadata[:datatype_rdf].eql?('http://www.w3.org/2006/time#DateTimeInterval')
                 begin
                   datatype = metadata[:datatype_rdf]

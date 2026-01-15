@@ -154,4 +154,89 @@ class DatatypeTest < Minitest::Test
     assert_includes(dt, data.datetimeinterval_array_dt.first)
   end
 
+  def test_anyuri_with_string
+    @solis.flush_all('http://solis.template/')
+    uri = 'https://example.com/resource/123'
+
+    e = EveryDataType.new({id: '1', uri_dt: uri})
+    e.save
+
+    r = EveryDataTypeResource.all({filter: {id: '1'}})
+    data = r.data.first
+
+    assert_equal(uri, data.uri_dt)
+  end
+
+  def test_anyuri_with_rdf_uri
+    @solis.flush_all('http://solis.template/')
+    uri_string = 'https://example.com/resource/456'
+
+    e = EveryDataType.new({id: '2', uri_dt: RDF::URI(uri_string)})
+    e.save
+
+    r = EveryDataTypeResource.all({filter: {id: '2'}})
+    data = r.data.first
+
+    assert_equal(uri_string, data.uri_dt)
+  end
+
+  def test_anyuri_with_various_uri_formats
+    @solis.flush_all('http://solis.template/')
+
+    test_cases = [
+      {id: '3', uri: 'http://www.example.org/test'},
+      {id: '4', uri: 'https://example.com/path/to/resource'},
+      {id: '5', uri: 'ftp://ftp.example.com/file.txt'},
+      {id: '6', uri: 'urn:isbn:0-486-27557-4'}
+    ]
+
+    test_cases.each do |test_case|
+      e = EveryDataType.new({id: test_case[:id], uri_dt: test_case[:uri]})
+      e.save
+
+      r = EveryDataTypeResource.all({filter: {id: test_case[:id]}})
+      data = r.data.first
+
+      assert_equal(test_case[:uri], data.uri_dt, "Failed for URI: #{test_case[:uri]}")
+    end
+  end
+
+  def test_anyuri_update
+    @solis.flush_all('http://solis.template/')
+    original_uri = 'https://example.com/original'
+    updated_uri = 'https://example.com/updated'
+
+    e = EveryDataType.new({id: '7', uri_dt: original_uri})
+    e.save
+
+    r = EveryDataTypeResource.all({filter: {id: '7'}})
+    data = r.data.first
+    assert_equal(original_uri, data.uri_dt)
+
+    e = EveryDataType.new.update({id: '7', uri_dt: updated_uri}.with_indifferent_access)
+
+    r = EveryDataTypeResource.all({filter: {id: '7'}})
+    data = r.data.first
+    assert_equal(updated_uri, data.uri_dt)
+  end
+
+  def test_anyuri_stored_as_rdf_uri
+    @solis.flush_all('http://solis.template/')
+    uri = 'https://example.com/resource/789'
+
+    e = EveryDataType.new({id: '8', uri_dt: uri})
+    e.save
+
+    # Query the triple store directly to verify it's stored as RDF::URI
+    graph_name = Solis::Options.instance.get.key?(:graphs) ? Solis::Options.instance.get[:graphs].select{|s| s['type'].eql?(:main)}&.first['name'] : ''
+    sparql_endpoint = Solis::Options.instance.get[:sparql_endpoint]
+    result = Solis::Store::Sparql::Client.new(sparql_endpoint, graph_name: graph_name).query("select ?o WHERE {?s <http://solis.template/uri_dt> ?o}")
+
+    assert_equal(1, result.count)
+    result.each do |s|
+      assert_kind_of(RDF::URI, s.o)
+      assert_equal(uri, s.o.to_s)
+    end
+  end
+
 end

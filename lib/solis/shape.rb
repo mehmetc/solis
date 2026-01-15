@@ -24,7 +24,7 @@ module Solis
           if datatype =~ /^http:\/\/www.w3.org\/2001\/XMLSchema#/
             case datatype
             when /^http:\/\/www.w3.org\/2001\/XMLSchema#anyURI/
-              :string
+              :anyuri
             when /http:\/\/www.w3.org\/2001\/XMLSchema#duration/
               :duration
             when /http:\/\/www.w3.org\/2001\/XMLSchema#integer/
@@ -72,6 +72,9 @@ module Solis
             # normalize ex."https://data.q.odis.be/person#Name" to Name
             #node.value.split('/').last.gsub(/Shape$/, '').split('#').last.to_sym
             #node.value.split('/').last.gsub(/Shape$/, '').gsub('#','').camelize.to_sym
+          elsif datatype =~ /datatypes\/edtf/ || datatype =~ /edtf$/i
+            # Library of Congress EDTF datatype
+            :edtf
           elsif datatype =~ /^http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns/
             case datatype
             when /http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns#langString/

@@ -511,6 +511,8 @@ hide empty members
                   { "type" => "string", "format" => "date-time" }
                 when /anyURI$/
                   { "type" => "string", "format" => "uri" }
+                when /datatypes\/edtf/, /edtf$/i
+                  { "type" => "string", "format" => "edtf" }
                 else
                   { "type" => "string" }
                 end
