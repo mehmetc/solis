@@ -47,6 +47,7 @@ module Solis
         uuid: [:eq, :not_eq],
         enum: [:eq],
         datetime: [:eq, :not_eq, :gt, :lt],
+        anyuri: [:eq, :not_eq],
       }
     end
 
@@ -67,6 +68,7 @@ module Solis
     alias :filter_enum_eq :filter
     alias :filter_datetime_eq :filter
     alias :filter_lang_string_eq :filter
+    alias :filter_anyuri_eq :filter
 
     def filter_not_eq(scope, attribute, value)
       filter_eq(scope, attribute, value, true, '=')
@@ -82,6 +84,7 @@ module Solis
     alias :filter_enum_not_eq :filter_not_eq
     alias :filter_datetime_not_eq :filter_not_eq
     alias :filter_lang_string_not_eq :filter_not_eq
+    alias :filter_anyuri_not_eq :filter_not_eq
 
     def filter_contains(scope, attribute, value)
       filter_eq(scope, attribute, value, false, '~')
