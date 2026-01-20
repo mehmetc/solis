@@ -75,15 +75,15 @@ module Solis
           contains = value[:value].map { |m| m.is_a?(String) ? "CONTAINS(LCASE(str(?__search#{i})), LCASE(\"#{m}\"))" : next }.join(' || ')
         end
 
+        # Ensure value[:value] is always an array for consistent handling below
+        value[:value] = [value[:value]] unless value[:value].is_a?(Array)
+        value[:value].flatten!
+
         metadata = @metadata[:attributes][key.to_s]
         if metadata
           if metadata[:path] =~ %r{/id$}
-            if value[:value].is_a?(String)
-              contains = value[:value].split(',').map { |m| "\"#{m}\"" }.join(',')
-            else
-              value[:value].flatten!
-              contains = value[:value].map { |m| "\"#{m}\"" }.join(',')
-            end
+            # value[:value] is guaranteed to be an array at this point
+            contains = value[:value].map { |m| "\"#{m}\"" }.join(',')
             if value[:is_not]
               value[:value].each do |v|
                 v=normalize_string(v)
@@ -94,9 +94,22 @@ module Solis
             end
           else
             datatype = ''
-            datatype = "^^<http://www.w3.org/2001/XMLSchema#boolean>" if metadata[:datatype].eql?(:boolean)
+            case metadata[:datatype]
+            when :boolean
+              datatype = "^^<http://www.w3.org/2001/XMLSchema#boolean>"
+            when :integer
+              datatype = "^^<http://www.w3.org/2001/XMLSchema#integer>"
+            when :float, :double
+              datatype = "^^<http://www.w3.org/2001/XMLSchema#double>"
+            when :date
+              datatype = "^^<http://www.w3.org/2001/XMLSchema#date>"
+            when :datetime, :time
+              datatype = "^^<http://www.w3.org/2001/XMLSchema#dateTime>"
+            when :anyuri
+              datatype = "^^<http://www.w3.org/2001/XMLSchema#anyURI>"
+            end
 
-            if ["=", "<", ">"].include?(value[:operator])
+            if ["=", "<", ">", ">=", "<="].include?(value[:operator])
               not_operator = value[:is_not] ? '!' : ''
               value[:value].each do |v|
                 if metadata[:datatype_rdf].eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString')
@@ -110,6 +123,16 @@ module Solis
 
                     search_for = normalize_string(search_for)
                     filter += "FILTER(str(?__search#{i}) #{not_operator}#{value[:operator]} \"#{search_for}\"#{datatype}) .\n"
+                elsif (metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#anyURI') || !metadata[:node].nil?) && ["=", "!="].include?(value[:operator])
+                  # Special handling for anyURI references to other entities (only for equality/inequality)
+                  model_graph_name = Solis::Options.instance.get.key?(:graphs) ? Solis::Options.instance.get[:graphs].select{|s| s['type'].eql?(:main)}&.first['name'] : @model.class.graph_name
+                  if value[:is_not]
+                    #filter = "filter( !exists {?concept <#{metadata[:path]}> ?__search#{i} . ?__search#{i} <#{model_graph_name}id> \"#{v}\"})"
+                    filter = "filter( !exists {?concept <#{metadata[:path]}> <#{v}>})"
+                  else
+                    #filter = "?concept <#{metadata[:path]}> ?__search#{i} . ?__search#{i} <#{model_graph_name}id> ?__search#{i}_#{i} filter(?__search#{i}_#{i} = \"#{v}\")."
+                    filter = "?concept <#{metadata[:path]}> <#{v}>."
+                  end
                 else
                   v=normalize_string(v)
                   filter = "?concept <#{metadata[:path]}> ?__search#{i} FILTER(?__search#{i} #{not_operator}#{value[:operator]} \"#{v}\"#{datatype}) .\n"

@@ -42,7 +42,7 @@ module Solis
         integer: [:eq, :not_eq, :gt, :lt],
         float: [:eq, :not_eq, :gt, :lt],
         big_decimal: [:eq, :not_eq, :gt, :lt],
-        date: [:eq, :not_eq, :gt, :lt],
+        date: [:eq, :not_eq, :gt, :gte, :lt, :lte],
         boolean: [:eq, :not_eq],
         uuid: [:eq, :not_eq],
         enum: [:eq],
@@ -148,6 +148,30 @@ module Solis
     alias :filter_uuid_not_lt :filter_not_lt
     alias :filter_enum_not_lt :filter_not_lt
     alias :filter_datetime_not_lt :filter_not_lt
+
+    def filter_gte(scope, attribute, value)
+      filter_eq(scope, attribute, value, false, '>=')
+    end
+
+    alias :filter_date_gte :filter_gte
+
+    def filter_not_gte(scope, attribute, value)
+      filter_eq(scope, attribute, value, true, '>=')
+    end
+
+    alias :filter_date_not_gte :filter_not_gte
+
+    def filter_lte(scope, attribute, value)
+      filter_eq(scope, attribute, value, false, '<=')
+    end
+
+    alias :filter_date_lte :filter_lte
+
+    def filter_not_lte(scope, attribute, value)
+      filter_eq(scope, attribute, value, true, '<=')
+    end
+
+    alias :filter_date_not_lte :filter_not_lte
 
     def transaction(*)
       yield
