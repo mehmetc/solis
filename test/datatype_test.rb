@@ -220,22 +220,62 @@ class DatatypeTest < Minitest::Test
     assert_equal(updated_uri, data.uri_dt)
   end
 
-  def test_anyuri_stored_as_rdf_uri
+  def test_anyuri_stored_as_xsd_anyuri_literal
     @solis.flush_all('http://solis.template/')
     uri = 'https://example.com/resource/789'
 
     e = EveryDataType.new({id: '8', uri_dt: uri})
     e.save
 
-    # Query the triple store directly to verify it's stored as RDF::URI
+    # Query the triple store directly to verify it's stored as RDF::Literal with xsd:anyURI datatype
     graph_name = Solis::Options.instance.get.key?(:graphs) ? Solis::Options.instance.get[:graphs].select{|s| s['type'].eql?(:main)}&.first['name'] : ''
     sparql_endpoint = Solis::Options.instance.get[:sparql_endpoint]
     result = Solis::Store::Sparql::Client.new(sparql_endpoint, graph_name: graph_name).query("select ?o WHERE {?s <http://solis.template/uri_dt> ?o}")
 
     assert_equal(1, result.count)
     result.each do |s|
-      assert_kind_of(RDF::URI, s.o)
+      assert_kind_of(RDF::Literal, s.o, "Expected RDF::Literal but got #{s.o.class}")
+      assert_equal(RDF::XSD.anyURI, s.o.datatype, "Expected xsd:anyURI datatype")
       assert_equal(uri, s.o.to_s)
+    end
+  end
+
+  def test_anyuri_literal_is_valid
+    @solis.flush_all('http://solis.template/')
+    uri = 'https://example.com/test/validity'
+
+    e = EveryDataType.new({id: '9', uri_dt: uri})
+    e.save
+
+    # Query and verify the literal is valid
+    graph_name = Solis::Options.instance.get.key?(:graphs) ? Solis::Options.instance.get[:graphs].select{|s| s['type'].eql?(:main)}&.first['name'] : ''
+    sparql_endpoint = Solis::Options.instance.get[:sparql_endpoint]
+    result = Solis::Store::Sparql::Client.new(sparql_endpoint, graph_name: graph_name).query("select ?o WHERE {?s <http://solis.template/uri_dt> ?o}")
+
+    result.each do |s|
+      assert s.o.valid?, "xsd:anyURI literal should be valid"
+    end
+  end
+
+  def test_anyuri_roundtrip_preserves_value
+    @solis.flush_all('http://solis.template/')
+    test_uris = [
+      'http://example.org/simple',
+      'https://example.com/path/with/segments',
+      'urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6',
+      'mailto:user@example.com',
+      'ftp://ftp.example.org/file.txt'
+    ]
+
+    test_uris.each_with_index do |uri, idx|
+      id = "roundtrip_#{idx}"
+      e = EveryDataType.new({id: id, uri_dt: uri})
+      e.save
+
+      r = EveryDataTypeResource.all({filter: {id: id}})
+      data = r.data.first
+
+      assert_equal(uri, data.uri_dt, "Roundtrip failed for URI: #{uri}")
     end
   end
 

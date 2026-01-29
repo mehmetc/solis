@@ -409,6 +409,7 @@ values ?s {<#{self.graph_id}>}
       self.metadata[:attributes].each do |attribute, attribute_metadata|
         is_array = ((attribute_metadata[:maxcount].nil? || (attribute_metadata[:maxcount].to_i > 1)) && !attribute_metadata[:datatype].eql?(:lang_string))
         attribute_name = is_array  ? "#{attribute}[]" : attribute
+        attribute_name = attribute_metadata[:mincount].to_i > 0 ? "#{attribute_name}*" : attribute_name
         if attribute_metadata.key?(:class) && !attribute_metadata[:class].nil? && attribute_metadata[:class].value =~ /#{self.graph_name}/ && level == 0
           cm = self.graph.shape_as_model(self.metadata[:attributes][attribute][:datatype].to_s).model(level + 1)
           m[:attributes][attribute_name.to_sym] = cm[:attributes]
@@ -661,7 +662,9 @@ values ?s {<#{self.graph_id}>}
                 else
                   RDF::Literal.new(d, language: @language)
                 end
-              elsif metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#anyURI') || metadata[:node].is_a?(RDF::URI)
+              elsif metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#anyURI')
+                RDF::Literal.new(d.to_s, datatype: RDF::XSD.anyURI)
+              elsif metadata[:node].is_a?(RDF::URI)
                 RDF::URI(d)
               elsif metadata[:datatype_rdf] =~ /datatypes\/edtf/ || metadata[:datatype_rdf] =~ /edtf$/i
                 # Handle EDTF dates
@@ -776,7 +779,7 @@ values ?s {<#{self.graph_id}>}
                     RDF::Literal.new(d, language: self.class.language)
                   else
                     if metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#anyURI')
-                      RDF::URI(d)
+                      RDF::Literal.new(d.to_s, datatype: RDF::XSD.anyURI)
                     else
                       RDF::Literal.new(d, datatype: datatype)
                     end

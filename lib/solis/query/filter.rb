@@ -123,8 +123,9 @@ module Solis
 
                     search_for = normalize_string(search_for)
                     filter += "FILTER(str(?__search#{i}) #{not_operator}#{value[:operator]} \"#{search_for}\"#{datatype}) .\n"
-                elsif (metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#anyURI') || !metadata[:node].nil?) && ["=", "!="].include?(value[:operator])
-                  # Special handling for anyURI references to other entities (only for equality/inequality)
+                elsif !metadata[:node].nil? && !metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#anyURI') && ["=", "!="].include?(value[:operator])
+                  # Special handling for URI references to other entities (object properties, only for equality/inequality)
+                  # Note: xsd:anyURI literals are handled below with standard literal matching
                   model_graph_name = Solis::Options.instance.get.key?(:graphs) ? Solis::Options.instance.get[:graphs].select{|s| s['type'].eql?(:main)}&.first['name'] : @model.class.graph_name
                   if value[:is_not]
                     #filter = "filter( !exists {?concept <#{metadata[:path]}> ?__search#{i} . ?__search#{i} <#{model_graph_name}id> \"#{v}\"})"
@@ -139,7 +140,8 @@ module Solis
                 end
               end
             else # if "~" contains
-              if metadata[:datatype_rdf].eql?( 'http://www.w3.org/2001/XMLSchema#anyURI') || !metadata[:node].nil?
+              if !metadata[:node].nil? && !metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#anyURI')
+                # Special handling for URI references to other entities (object properties)
                 model_graph_name = Solis::Options.instance.get.key?(:graphs) ? Solis::Options.instance.get[:graphs].select{|s| s['type'].eql?(:data)}&.first['name'] : @model.class.graph_name
                 filter = "?concept <#{metadata[:path]}> ?__search#{i} . ?__search#{i} <#{model_graph_name}id> ?__search#{i}_#{i} filter(?__search#{i}_#{i} = \"#{value[:value].first}\")."
               else
