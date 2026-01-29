@@ -1,3 +1,3 @@
 module Solis
-  VERSION = "0.109.0"
+  VERSION = "0.110.0"
 end

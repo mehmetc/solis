@@ -108,7 +108,7 @@ class Solis::Query::Runner
   def self.find_root_subjects(grouped, entity)
     # Find subjects that match the requested entity type
     grouped.select do |subject, triples|
-      type_triple = triples.find { |t| t[:predicate].to_s =~ /type$/i || t[:predicate] == RDF::RDFV.type }
+      type_triple = triples.find { |t| t[:predicate] == RDF::RDFV.type }
       next false unless type_triple
 
       type_name = type_triple[:object].to_s.split('/').last
