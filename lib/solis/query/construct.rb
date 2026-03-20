@@ -23,7 +23,7 @@ module Solis
       end
 
       def file_path
-        "#{ConfigFile.path}/constructs/#{@model.name.tableize.singularize}.sparql"
+        "#{ConfigFile.path}/constructs/#{@model.model_class_name.tableize.singularize}.sparql"
       end
 
       def file_path_hash
@@ -66,7 +66,7 @@ module Solis
       end
 
       def construct_graph_name
-        "#{parsed_graph_name.scheme}://#{@model.name.underscore}.#{parsed_graph_name.host}/"
+        "#{parsed_graph_name.scheme}://#{@model.model_class_name.underscore}.#{parsed_graph_name.host}/"
       end
 
       def created_at
