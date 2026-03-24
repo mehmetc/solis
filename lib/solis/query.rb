@@ -112,7 +112,7 @@ module Solis
       per_page = params[:per_page] || 10
 
       @offset = 0
-      @offset = current_page * per_page if current_page > 1
+      @offset = (current_page - 1) * per_page if current_page > 1
       @limit = per_page
       self
     end
@@ -177,7 +177,7 @@ module Solis
       if core_query =~ /IN\((.*?)\)/
         #limit = $1.gsub('"','').split(',').length
       else
-        core_query += " LIMIT #{limit} OFFSET #{offset}"
+        core_query += "ORDER BY ?concept LIMIT #{limit} OFFSET #{offset}"
       end
 
       query = %(
