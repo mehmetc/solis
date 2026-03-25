@@ -106,15 +106,28 @@ class Solis::Query::Runner
   end
 
   def self.find_root_subjects(grouped, entity)
-    # Find subjects that match the requested entity type
-    grouped.select do |subject, triples|
+    # Build set of acceptable type names (entity + all subtypes via hierarchy)
+    acceptable_types = Set.new([entity, entity.downcase, entity.tableize])
+
+    begin
+      model = Solis::Options.instance.get[:solis].shape_as_model(entity)
+      ObjectSpace.each_object(Class)
+        .select { |klass| klass < model }
+        .reject { |m| m.metadata.nil? }
+        .each do |desc|
+          name = desc.name.demodulize
+          acceptable_types.merge([name, name.downcase, name.tableize])
+        end
+    rescue; end
+
+    grouped.select do |_subject, triples|
       type_triple = triples.find { |t| t[:predicate] == RDF::RDFV.type }
       next false unless type_triple
 
       type_name = type_triple[:object].to_s.split('/').last
-      type_name.downcase == entity.downcase ||
-        type_name.tableize == entity.tableize ||
-        type_name == entity
+      acceptable_types.include?(type_name) ||
+        acceptable_types.include?(type_name.downcase) ||
+        acceptable_types.include?(type_name.tableize)
     end.keys
   end
 
@@ -149,9 +162,13 @@ class Solis::Query::Runner
       next if key.start_with?('@')  # Skip internal markers
       next if key == '_id' || key == 'id'  # Already added
 
-      if obj.key?('@type') &&Solis::Options.instance.get[:solis].shape?(obj['@type'])
-        entity = Solis::Options.instance.get[:solis].shape_as_model(obj['@type'])
-        entity_maxcount = entity.metadata[:attributes][key][:maxcount]
+      begin
+        if obj.key?('@type') && Solis::Options.instance.get[:solis].shape?(obj['@type'])
+          entity = Solis::Options.instance.get[:solis].shape_as_model(obj['@type'])
+          entity_maxcount = entity.metadata[:attributes][key][:maxcount]
+        end
+      rescue
+        entity_maxcount = nil
       end
       resolved_value = resolve_value(value, objects_index, max_depth, visited, current_depth)
       resolved_value = [resolved_value] if (entity_maxcount.nil? || entity_maxcount > 1) && !resolved_value.is_a?(Array)
