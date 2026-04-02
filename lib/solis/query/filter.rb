@@ -89,6 +89,9 @@ module Solis
                 v=normalize_string(v)
                 filter = "filter( !exists {?concept <#{@model.class.graph_name}id> \"#{v}\"})"
               end
+            elsif ['>', '<', '>=', '<='].include?(value[:operator])
+              v = normalize_string(value[:value].first)
+              filter = "?concept <#{@model.class.graph_name}id> ?__search FILTER (?__search #{value[:operator]} \"#{v}\") .\n"
             else
               filter = "?concept <#{@model.class.graph_name}id> ?__search FILTER (?__search IN(#{contains})) .\n"
             end

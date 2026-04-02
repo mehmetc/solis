@@ -44,10 +44,10 @@ module Solis
         big_decimal: [:eq, :not_eq, :gt, :lt],
         date: [:eq, :not_eq, :gt, :gte, :lt, :lte],
         boolean: [:eq, :not_eq],
-        uuid: [:eq, :not_eq],
+        uuid: [:eq, :not_eq, :gt, :lt],
         enum: [:eq],
         datetime: [:eq, :not_eq, :gt, :lt],
-        anyuri: [:eq, :not_eq],
+        anyuri: [:eq, :not_eq, :gt, :lt],
       }
     end
 
@@ -106,6 +106,7 @@ module Solis
     alias :filter_uuid_gt :filter_gt
     alias :filter_enum_gt :filter_gt
     alias :filter_datetime_gt :filter_gt
+    alias :filter_anyuri_gt :filter_gt
 
     def filter_not_gt(scope, attribute, value)
       filter_eq(scope, attribute, value, true, '>')
@@ -134,6 +135,7 @@ module Solis
     alias :filter_uuid_lt :filter_lt
     alias :filter_enum_lt :filter_lt
     alias :filter_datetime_lt :filter_lt
+    alias :filter_anyuri_lt :filter_lt
 
     def filter_not_lt(scope, attribute, value)
       filter_eq(scope, attribute, value, true, '<')

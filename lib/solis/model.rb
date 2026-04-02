@@ -22,7 +22,16 @@ module Solis
           end
 
           if self.class.metadata[:attributes][attribute.to_s][:node_kind].is_a?(RDF::URI) && value.is_a?(Hash)
-            inner_model = self.class.graph.shape_as_model(self.class.metadata[:attributes][attribute.to_s][:datatype].to_s)
+            inner_class = self.class.metadata[:attributes][attribute.to_s][:datatype].to_s
+            inner_model = self.class.graph.shape_as_model(inner_class)
+
+            if value.key?('id') && value['id'].match?(self.class.graph_name)
+              inner_class = value['id'].gsub(self.class.graph_name, '').split('/').first.classify.to_s
+              if inner_model.descendants.map(&:to_s).include?(inner_class)
+                inner_model = self.class.graph.shape_as_model(inner_class)
+              end
+            end
+
             value = inner_model.new(value)
           elsif self.class.metadata[:attributes][attribute.to_s][:node_kind].is_a?(RDF::URI) && value.is_a?(Array)
             new_value = []
