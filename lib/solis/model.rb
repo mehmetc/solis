@@ -471,20 +471,22 @@ values ?s {<#{self.graph_id}>}
     end
 
     def self.model(level = 0)
-      m = { type: self.name.tableize, attributes: {} }
+      m = { type: self.name.tableize, attributes: [] }
       self.metadata[:attributes].each do |attribute, attribute_metadata|
-        is_array = ((attribute_metadata[:maxcount].nil? || (attribute_metadata[:maxcount].to_i > 1)) && !attribute_metadata[:datatype].eql?(:lang_string))
-        attribute_name = is_array  ? "#{attribute}[]" : attribute
-        attribute_name = attribute_metadata[:mincount].to_i > 0 ? "#{attribute_name}*" : attribute_name
         if attribute_metadata.key?(:class) && !attribute_metadata[:class].nil? && attribute_metadata[:class].value =~ /#{self.graph_name}/ && level == 0
           cm = self.graph.shape_as_model(self.metadata[:attributes][attribute][:datatype].to_s).model(level + 1)
-          m[:attributes][attribute_name.to_sym] = cm[:attributes]
-        else
-          m[:attributes][attribute_name.to_sym] = { description: attribute_metadata[:comment]&.value,
-                                               mandatory: (attribute_metadata[:mincount].to_i > 0),
-                                               data_type: attribute_metadata[:datatype] }
-          m[:attributes][attribute_name.to_sym][:order] = attribute_metadata[:order]&.value.to_i if attribute_metadata.key?(:order) && !attribute_metadata[:order].nil?
         end
+
+        attribute_data = { name: attribute,
+                           data_type: attribute_metadata[:datatype],
+                           mandatory: (attribute_metadata[:mincount].to_i > 0),
+                           description: attribute_metadata[:comment]&.value
+        }
+        attribute_data[:order] = attribute_metadata[:order]&.value.to_i if attribute_metadata.key?(:order) && !attribute_metadata[:order].nil?
+        attribute_data[:category] = attribute_metadata[:category]&.value if attribute_metadata.key?(:category) && !attribute_metadata[:category].nil?
+        attribute_data[:attributes] = cm[:attributes] if cm && cm[:attributes]
+
+        m[:attributes] << attribute_data
       end
 
       m
