@@ -27,12 +27,18 @@ module Solis
         end
 
         def up?
-          result = nil
-          @pool.with do |c|
-            result = c.query("ASK WHERE { ?s ?p ?o }")
+          now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          if @up_checked_at && (now - @up_checked_at) < 30
+            return @up_result
           end
-          result
+          @up_result = nil
+          @pool.with do |c|
+            @up_result = c.query("ASK WHERE { ?s ?p ?o }")
+          end
+          @up_checked_at = now
+          @up_result
         rescue HTTP::Error => e
+          @up_checked_at = nil
           return false
         end
 

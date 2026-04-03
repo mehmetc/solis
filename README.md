@@ -4,7 +4,7 @@ Solis means 'the sun' in Latin or just Silos spelled backwards.
 A simple idea to use SHACL to describe models and API on top of a data store.
 
 # Status
-Although I'm using it in production I must shamefully acknowledge that it actually needs refactoring. Solis is currently still grown organically driven by my needs and understanding of problem domain(RDF, triples, ...).
+Although I'm using it in production I must shamefully acknowledge that it actually needs refactoring. Solis is currently still grown organically driven by my needs and understanding of the problem domain(RDF, triples, ...).
 When my current project is live I'll start to refactor the code and release it as 1.0.
 
 # From Google Sheets to RDF, Shacl, ... to API
@@ -422,6 +422,88 @@ Solis::ConfigFile.path = './'
 solis = Solis::Graph.new(Solis::Shape::Reader::File.read(Solis::ConfigFile[:solis][:shacl]), Solis::ConfigFile[:solis][:env])
 ```
 
+## Performance Optimizations
+
+Entity create/update operations have been optimized to reduce SPARQL round-trips from ~25+ down to ~5-7 for a typical update with embedded entities.
+
+### What changed
+
+| Optimization | Impact |
+|---|---|
+| **Cached `up?` health check** (30s TTL) | Eliminates ~10 redundant ASK queries per operation |
+| **Removed UUID collision check** | Saves 2 round-trips per new entity (UUID v4 collision is ~1 in 2^122) |
+| **Eliminated redundant re-fetches in `update()`** | Saves 1-3 SELECT queries by returning in-memory data |
+| **`known_entities` cache in graph building** | Avoids re-fetching entities from store during `build_ttl_objekt` recursion |
+| **Batched existence checks** (`batch_exists?`) | Replaces N individual ASK queries with 1 SELECT for embedded entities |
+| **Batched orphan reference checks** (`batch_referenced?`) | Replaces N individual ASK queries with 1 SELECT for orphan detection |
+| **SPARQL client reuse** | `save()` passes its client to `update()` when delegating |
+
+## PATCH vs PUT Updates
+
+The `update()` method supports both PUT (full replace) and PATCH (partial merge) semantics via the `patch:` keyword argument.
+
+```ruby
+# PUT (default) — replaces embedded arrays entirely, orphans removed entities
+entity.update({ 'id' => '1', 'students' => [{ 'id' => 's1' }] })
+
+# PATCH — merges into existing arrays, no orphan deletion
+entity.update({ 'id' => '1', 'students' => [{ 'id' => 's3' }] }, true, true, nil, patch: true)
+```
+
+### PUT mode (default, `patch: false`)
+- Embedded entity arrays are **fully replaced** by the provided data
+- Entities removed from the array are detected as orphans and may be deleted
+- Omitted attributes keep their original values
+
+### PATCH mode (`patch: true`)
+- Embedded entity arrays are **merged**: new IDs are added, existing IDs are updated, unmentioned IDs are kept
+- **No orphan detection or deletion** — removing an entity requires an explicit PUT or destroy
+- Omitted embedded attributes are left completely untouched
+
+## Orphan Protection (Embedded Entity Lifecycle)
+
+When updating an entity with PUT semantics and removing a reference to an embedded entity, Solis decides whether to delete the orphaned entity using this decision chain:
+
+| # | Check | Result |
+|---|-------|--------|
+| 1 | Entity in `embedded_readonly`? | **Never delete** (code tables, lookup values) |
+| 2 | Top-level entity + NOT in `embedded_delete`? | **Unlink only** (safe default) |
+| 3 | Top-level entity + in `embedded_delete`? | **Delete** (opt-in cascade) |
+| 4 | Still referenced by other entities? | **Never delete** (safety net) |
+
+A **top-level entity** is one that has its own `sh:NodeShape` + `sh:targetClass` in the SHACL schema — it is independently addressable with its own CRUD endpoint.
+
+### Configuration
+
+```yaml
+:solis:
+  # Code tables / lookup values: never modified, never deleted
+  :embedded_readonly:
+    - :Codetable
+
+  # Child/join entities that should cascade-delete when orphaned
+  :embedded_delete:
+    - :About
+    - :Contributor
+    - :Comment
+    - :Link
+    - :ImageObject
+    - :Identifier
+    - :Provider
+```
+
+### Example
+
+Given an Item with 5 About entities (join between Item and Tag+Role):
+
+```ruby
+# PUT: reduce from 5 Abouts to 1 — the other 4 are deleted (About is in embedded_delete)
+item.update({ 'id' => '1', 'about' => [{ 'id' => 'a1' }] })
+
+# But if Item references a Tag directly, removing it just unlinks — Tag is top-level, not in embedded_delete
+```
+
+Entities like `Tag`, `Agens`, `Person`, `Organization`, `Owner`, `Book` are protected automatically because they are top-level entities not listed in `embedded_delete`.
 
 TODO:
  - extract sparql layer into its own gem
