@@ -140,6 +140,9 @@ values ?s {<#{self.graph_id}>}
         end
       end
 
+      # Invalidate cached queries for this entity type
+      Solis::Query.invalidate_cache_for(self.class.name)
+
       result
     end
 
@@ -172,6 +175,10 @@ values ?s {<#{self.graph_id}>}
         # Batch check existence of all embedded entities in one query
         existing_ids = self.class.batch_exists?(sparql, all_embedded)
 
+        # Separate embedded entities into creates and updates
+        to_create_embedded = []
+        to_update_embedded = []
+
         all_embedded.each do |embedded|
           entity_exists = existing_ids.include?(embedded.graph_id)
 
@@ -179,22 +186,38 @@ values ?s {<#{self.graph_id}>}
             unless entity_exists
               Solis::LOGGER.warn("#{embedded.class.name} (id: #{embedded.id}) is readonly but does not exist in database. Skipping.")
             end
+          elsif entity_exists
+            to_update_embedded << embedded
           else
-            if entity_exists
-              embedded_data = properties_to_hash(embedded)
-              embedded.update(embedded_data, validate_dependencies, false)
-            else
-              embedded.save(validate_dependencies, false)
-            end
+            to_create_embedded << embedded
           end
         end
 
-        graph = as_graph(self, validate_dependencies)
+        # Batch insert all new embedded entities in one SPARQL INSERT
+        unless to_create_embedded.empty?
+          embedded_graph = RDF::Graph.new
+          embedded_graph.name = RDF::URI(self.class.graph_name)
+          known = {}
+          to_create_embedded.each { |e| collect_known_entities(e, known) }
+          to_create_embedded.each { |e| build_ttl_objekt(embedded_graph, e, [], validate_dependencies, known, skip_store_fetch: true) }
+          sparql.insert_data(embedded_graph, graph: embedded_graph.name)
+        end
+
+        # Updates still processed individually (each needs its own DELETE/INSERT)
+        to_update_embedded.each do |embedded|
+          embedded_data = properties_to_hash(embedded)
+          embedded.update(embedded_data, validate_dependencies, false)
+        end
+
+        graph = as_graph(self, validate_dependencies, {}, skip_store_fetch: true)
 
         Solis::LOGGER.info SPARQL::Client::Update::InsertData.new(graph, graph: graph.name).to_s if ConfigFile[:debug]
 
         result = sparql.insert_data(graph, graph: graph.name)
       end
+
+      # Invalidate cached queries for this entity type
+      Solis::Query.invalidate_cache_for(self.class.name)
 
       after_create_proc&.call(self)
       self
@@ -217,7 +240,8 @@ values ?s {<#{self.graph_id}>}
     #   When false (default), uses PUT semantics:
     #   - Embedded entity arrays are fully replaced
     #   - Entities removed from the array are orphaned and deleted if unreferenced
-    def update(data, validate_dependencies = true, top_level = true, sparql_client = nil, patch: false)
+    # @param prefetched_original [Solis::Model, nil] optional pre-fetched original entity to avoid re-querying
+    def update(data, validate_dependencies = true, top_level = true, sparql_client = nil, patch: false, prefetched_original: nil)
       raise Solis::Error::GeneralError, "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
 
       attributes = data.include?('attributes') ? data['attributes'] : data
@@ -226,7 +250,7 @@ values ?s {<#{self.graph_id}>}
       id = attributes.delete('id')
       sparql = sparql_client || SPARQL::Client.new(self.class.sparql_endpoint)
 
-      original_klass = self.query.filter({ language: self.class.language, filters: { id: [id] } }).find_all.map { |m| m }&.first
+      original_klass = prefetched_original || self.query.filter({ language: self.class.language, filters: { id: [id] } }).find_all.map { |m| m }&.first
       raise Solis::Error::NotFoundError if original_klass.nil?
       updated_klass = original_klass.deep_dup
 
@@ -249,6 +273,16 @@ values ?s {<#{self.graph_id}>}
 
       all_embedded = embedded_by_key.values.flatten
       existing_ids = self.class.batch_exists?(sparql, all_embedded)
+
+      # Build lookup of original embedded entities by ID for pre-fetched updates
+      original_embedded_lookup = {}
+      embedded_by_key.each_key do |key|
+        orig = original_klass.instance_variable_get("@#{key}")
+        next if orig.nil?
+        Array(orig).each do |e|
+          original_embedded_lookup[e.id] = e if solis_model?(e) && e.id
+        end
+      end
 
       # Second pass: process embedded entities using batched results
       embedded_by_key.each do |key, embedded_list|
@@ -280,7 +314,9 @@ values ?s {<#{self.graph_id}>}
           else
             if entity_exists
               embedded_data = properties_to_hash(embedded)
-              embedded.update(embedded_data, validate_dependencies, false)
+              # Pass pre-fetched original to avoid N+1 query in embedded update
+              prefetched = original_embedded_lookup[embedded.id]
+              embedded.update(embedded_data, validate_dependencies, false, nil, prefetched_original: prefetched)
               new_embedded_values << embedded
             else
               embedded_value = embedded.save(validate_dependencies, false)
@@ -328,9 +364,10 @@ values ?s {<#{self.graph_id}>}
         Solis::LOGGER.info("#{original_klass.class.name} unchanged, skipping")
         data = original_klass
       else
-        # Pre-populate known entities to avoid re-fetching during graph building
-        known_entities = { id => original_klass }
-        delete_graph = as_graph(original_klass, false, known_entities)
+        # Pre-populate known entities separately to avoid cross-contamination
+        # between delete and insert graphs (same ID, different attribute values)
+        delete_known = collect_known_entities(original_klass)
+        delete_graph = as_graph(original_klass, false, delete_known)
         where_graph = RDF::Graph.new(graph_name: RDF::URI("#{self.class.graph_name}#{tableized_class_name(self)}/#{id}"), data: RDF::Repository.new)
 
         if id.is_a?(Array)
@@ -341,12 +378,16 @@ values ?s {<#{self.graph_id}>}
           where_graph << [RDF::URI("#{self.class.graph_name}#{tableized_class_name(self)}/#{id}"), :p, :o]
         end
 
-        insert_graph = as_graph(updated_klass, true, known_entities)
+        insert_known = collect_known_entities(updated_klass)
+        insert_graph = as_graph(updated_klass, true, insert_known)
 
         delete_insert_query = SPARQL::Client::Update::DeleteInsert.new(delete_graph, insert_graph, where_graph, graph: insert_graph.name).to_s
         delete_insert_query.gsub!('_:p', '?p')
 
         sparql.query(delete_insert_query)
+
+        # Invalidate cache before verification to avoid stale reads
+        Solis::Query.invalidate_cache_for(self.class.name)
 
         # Verify the update succeeded by re-fetching; fallback to insert if needed
         data = self.query.filter({ filters: { id: [id] } }).find_all.map { |m| m }&.first
@@ -358,6 +399,9 @@ values ?s {<#{self.graph_id}>}
         # Delete orphaned entities after successful update (PUT mode only)
         delete_orphaned_entities(entities_to_check_for_deletion, sparql) unless patch
       end
+
+      # Invalidate cached queries for this entity type
+      Solis::Query.invalidate_cache_for(self.class.name)
 
       after_update_proc&.call(updated_klass, data)
 
@@ -382,6 +426,65 @@ values ?s {<#{self.graph_id}>}
 
     def exists?(sparql)
       sparql.query("ASK WHERE { <#{self.graph_id}> ?p ?o }")
+    end
+
+    # Save multiple entities in a single SPARQL INSERT operation.
+    # Entities that already exist are updated individually.
+    # @param entities [Array<Solis::Model>] entities to save
+    # @param validate_dependencies [Boolean] whether to validate dependencies
+    # @param batch_size [Integer] max entities per INSERT (default 100)
+    # @return [Array<Solis::Model>] the saved entities
+    def self.batch_save(entities, validate_dependencies: true, batch_size: 100)
+      raise "I need a SPARQL endpoint" if sparql_endpoint.nil?
+      return [] if entities.empty?
+
+      sparql = SPARQL::Client.new(sparql_endpoint)
+
+      # Batch check existence of all entities
+      existing_ids = batch_exists?(sparql, entities)
+
+      to_create = []
+      to_update = []
+
+      entities.each do |entity|
+        if existing_ids.include?(entity.graph_id)
+          to_update << entity
+        else
+          to_create << entity
+        end
+      end
+
+      # Batch insert: combine new entity graphs into single INSERT DATA operations
+      unless to_create.empty?
+        to_create.each_slice(batch_size) do |batch|
+          combined_graph = RDF::Graph.new
+          combined_graph.name = RDF::URI(graph_name)
+
+          # Pre-collect known entities from all entities being created
+          known = {}
+          batch.each { |e| e.send(:collect_known_entities, e, known) }
+
+          batch.each do |entity|
+            entity.before_create_proc&.call(entity)
+            entity.send(:build_ttl_objekt, combined_graph, entity, [], validate_dependencies, known, skip_store_fetch: true)
+          end
+
+          sparql.insert_data(combined_graph, graph: combined_graph.name)
+
+          batch.each { |entity| entity.after_create_proc&.call(entity) }
+        end
+
+        # Invalidate cache once for the entity type
+        Solis::Query.invalidate_cache_for(name)
+      end
+
+      # Updates still processed individually (DELETE/INSERT requires per-entity WHERE)
+      to_update.each do |entity|
+        data = entity.send(:properties_to_hash, entity)
+        entity.update(data, validate_dependencies, true, sparql)
+      end
+
+      entities
     end
 
     # Check existence of multiple entities in a single SPARQL query
@@ -545,6 +648,21 @@ values ?s {<#{self.graph_id}>}
 
     private
 
+    # Walk the entity tree and collect all in-memory entities by UUID.
+    # Prevents redundant store fetches during recursive graph building.
+    def collect_known_entities(entity, collected = {})
+      uuid = entity.instance_variable_get("@id")
+      return collected if uuid.nil? || collected.key?(uuid)
+      collected[uuid] = entity
+      entity.class.metadata[:attributes].each do |attr, meta|
+        next if meta[:node_kind].nil?
+        val = entity.instance_variable_get("@#{attr}")
+        next if val.nil?
+        Array(val).each { |v| collect_known_entities(v, collected) if solis_model?(v) }
+      end
+      collected
+    end
+
     # Helper method to check if an object is a Solis model
     def solis_model?(obj)
       obj.class.ancestors.include?(Solis::Model)
@@ -650,15 +768,15 @@ values ?s {<#{self.graph_id}>}
       Set.new(results.map { |r| r[:o].to_s })
     end
 
-    def as_graph(klass = self, resolve_all = true, known_entities = {})
+    def as_graph(klass = self, resolve_all = true, known_entities = {}, skip_store_fetch: false)
       graph = RDF::Graph.new
       graph.name = RDF::URI(self.class.graph_name)
-      id = build_ttl_objekt(graph, klass, [], resolve_all, known_entities)
+      id = build_ttl_objekt(graph, klass, [], resolve_all, known_entities, skip_store_fetch: skip_store_fetch)
 
       graph
     end
 
-    def build_ttl_objekt(graph, klass, hierarchy = [], resolve_all = true, known_entities = {})
+    def build_ttl_objekt(graph, klass, hierarchy = [], resolve_all = true, known_entities = {}, skip_store_fetch: false)
       hierarchy.push("#{klass.class.name}(#{klass.instance_variables.include?(:@id) ? klass.instance_variable_get("@id") : ''})")
 
       graph_name = self.class.graph_name
@@ -669,9 +787,9 @@ values ?s {<#{self.graph_id}>}
 
       graph << [id, RDF::RDFV.type, klass_metadata[:target_class]]
 
-      # Use cached entity if available, otherwise query the store
+      # Use cached entity if available, otherwise query the store (unless skip_store_fetch)
       original_klass = known_entities[uuid]
-      if original_klass.nil?
+      if original_klass.nil? && !skip_store_fetch
         original_klass = klass.query.filter({ filters: { id: [uuid] } }).find_all { |f| f.id == uuid }.first || nil
       end
 
@@ -691,7 +809,7 @@ values ?s {<#{self.graph_id}>}
       known_entities[uuid] = original_klass
 
       begin
-        make_graph(graph, hierarchy, id, original_klass, klass_metadata, resolve_all, known_entities)
+        make_graph(graph, hierarchy, id, original_klass, klass_metadata, resolve_all, known_entities, skip_store_fetch: skip_store_fetch)
       rescue => e
         Solis::LOGGER.error(e.message)
         raise e
@@ -701,16 +819,16 @@ values ?s {<#{self.graph_id}>}
       id
     end
 
-    def make_graph(graph, hierarchy, id, klass, klass_metadata, resolve_all, known_entities = {})
+    def make_graph(graph, hierarchy, id, klass, klass_metadata, resolve_all, known_entities = {}, skip_store_fetch: false)
       klass_metadata[:attributes].each do |attribute, metadata|
         data = klass.instance_variable_get("@#{attribute}")
 
         if data.nil? && metadata.key?(:mincount) && (metadata[:mincount].nil? || metadata[:mincount] > 0) && graph.query(RDF::Query.new({ attribute.to_sym => { RDF.type => metadata[:node] } })).size == 0
           if data.nil?
             uuid = id.value.split('/').last
-            # Use cached entity if available
+            # Use cached entity if available (skip store fetch for new entities)
             original_klass = known_entities[uuid]
-            if original_klass.nil?
+            if original_klass.nil? && !skip_store_fetch
               original_klass = klass.query.filter({ filters: { id: [uuid] } }).find_all { |f| f.id == uuid }.first || nil
               known_entities[uuid] = original_klass if original_klass
             end
@@ -824,96 +942,6 @@ values ?s {<#{self.graph_id}>}
     rescue StandardError => e
       Solis::LOGGER.error(e.message)
       raise e
-    end
-
-    def build_ttl_objekt_old(graph, klass, hierarchy = [], resolve_all = true)
-      hierarchy.push("#{klass.class.name}(#{klass.instance_variables.include?(:@id) ? klass.instance_variable_get("@id") : ''})")
-      sparql_endpoint = self.class.sparql_endpoint
-      if klass.instance_variables.include?(:@id) && hierarchy.length > 1
-        unless sparql_endpoint.nil?
-          existing_klass = klass.query.filter({ filters: { id: [klass.instance_variable_get("@id")] } }).find_all { |f| f.id == klass.instance_variable_get("@id") }
-          if !existing_klass.nil? && !existing_klass.empty? && existing_klass.first.is_a?(klass.class)
-            klass = existing_klass.first
-          end
-        end
-      end
-
-      uuid = klass.instance_variable_get("@id") || SecureRandom.uuid
-      id = RDF::URI("#{self.class.graph_name}#{klass.class.name.tableize}/#{uuid}")
-      graph << [id, RDF::RDFV.type, klass.class.metadata[:target_class]]
-
-      klass.class.metadata[:attributes].each do |attribute, metadata|
-        data = klass.instance_variable_get("@#{attribute}")
-        if data.nil? && metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#boolean')
-          data = false
-        end
-
-        if metadata[:datatype_rdf].eql?("http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON")
-          data = data.to_json
-        end
-
-        if data.nil? && metadata[:mincount] > 0
-          raise Solis::Error::InvalidAttributeError, "#{hierarchy.join('.')}.#{attribute} min=#{metadata[:mincount]} and max=#{metadata[:maxcount]}"
-        end
-
-        next if data.nil? || ([Hash, Array, String].include?(data.class) && data&.empty?)
-
-        data = [data] unless data.is_a?(Array)
-        model = nil
-        model = klass.class.graph.shape_as_model(klass.class.metadata[:attributes][attribute][:datatype].to_s) unless klass.class.metadata[:attributes][attribute][:node_kind].nil?
-
-        data.each do |d|
-          original_d = d
-          if model
-            target_node = model.metadata[:target_node].value.split('/').last.gsub(/Shape$/, '')
-            if model.ancestors[0..model.ancestors.find_index(Solis::Model) - 1].map { |m| m.name }.include?(target_node)
-              parent_model = model.graph.shape_as_model(target_node)
-            end
-          end
-
-          if model && d.is_a?(Hash)
-            model_instance = model.descendants.map { |m| m&.new(d) rescue nil }.compact.first || nil
-            model_instance = model.new(d) if model_instance.nil?
-
-            if resolve_all
-              d = build_ttl_objekt(graph, model_instance, hierarchy, false, known_entities)
-            else
-              real_model = known_entities[model_instance.id] || model_instance.query.filter({ filters: { id: model_instance.id } }).find_all { |f| f.id == model_instance.id }&.first
-              d = RDF::URI("#{self.class.graph_name}#{real_model ? real_model.class.name.tableize : model_instance.class.name.tableize}/#{model_instance.id}")
-            end
-          elsif model && d.is_a?(model)
-            if resolve_all
-              if parent_model
-                model_instance = parent_model.new({ id: d.id })
-                d = build_ttl_objekt(graph, model_instance, hierarchy, false, known_entities)
-              else
-                d = build_ttl_objekt(graph, d, hierarchy, false, known_entities)
-              end
-            else
-              real_model = known_entities[d.id] || model.new.query.filter({ filters: { id: d.id } }).find_all { |f| f.id == d.id }&.first
-              d = RDF::URI("#{self.class.graph_name}#{real_model ? real_model.class.name.tableize : model.name.tableize}/#{d.id}")
-            end
-          else
-            datatype = RDF::Vocabulary.find_term(metadata[:datatype_rdf] || metadata[:node])
-            if datatype && datatype.datatype?
-              d = if metadata[:datatype_rdf].eql?('http://www.w3.org/1999/02/22-rdf-syntax-ns#langString')
-                    RDF::Literal.new(d, language: self.class.language)
-                  else
-                    if metadata[:datatype_rdf].eql?('http://www.w3.org/2001/XMLSchema#anyURI')
-                      RDF::Literal.new(d.to_s, datatype: RDF::XSD.anyURI)
-                    else
-                      RDF::Literal.new(d, datatype: datatype)
-                    end
-                  end
-              d = (d.object.value rescue d.object) unless d.valid?
-            end
-          end
-
-          graph << [id, RDF::URI("#{self.class.graph_name}#{attribute}"), d]
-        end
-      end
-      hierarchy.pop
-      id
     end
 
     def properties_to_hash(model)

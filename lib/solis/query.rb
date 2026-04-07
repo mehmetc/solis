@@ -58,6 +58,30 @@ module Solis
       Solis::Options.instance.get.key?(:graphs) ? Solis::Options.instance.get[:graphs].select{|s| s['type'].eql?(:main)}&.first['name'] : ''
     end
 
+    # Shared class-level query cache to ensure consistent reads/writes/invalidations
+    def self.shared_query_cache
+      cache_dir = File.absolute_path(Solis::Options.instance.get[:cache])
+      @shared_query_cache ||= Moneta.new(:HashFile, dir: cache_dir)
+    end
+
+    # Reset the shared cache (useful when config changes, e.g., in tests)
+    def self.reset_shared_query_cache!
+      @shared_query_cache = nil
+    end
+
+    # Invalidate all cached query results for a given model type.
+    def self.invalidate_cache_for(model_class_name, cache_dir = nil)
+      cache = shared_query_cache
+      tag_key = "TAG:#{model_class_name}"
+      if cache.key?(tag_key)
+        cache[tag_key].each { |key| cache.delete(key) }
+        cache.delete(tag_key)
+        Solis::LOGGER.info("CACHE: invalidated entries for #{model_class_name}") if ConfigFile[:debug]
+      end
+    rescue StandardError => e
+      Solis::LOGGER.warn("CACHE: invalidation failed for #{model_class_name}: #{e.message}")
+    end
+
     def initialize(model)
       @construct_cache = File.absolute_path(Solis::Options.instance.get[:cache])
       @model = model
@@ -73,7 +97,7 @@ module Solis
       @sort = 'ORDER BY ?s'
       @sort_select = ''
       @language = Graphiti.context[:object]&.language || Solis::Options.instance.get[:language] || 'en'
-      @query_cache = Moneta.new(:HashFile, dir: @construct_cache)
+      @query_cache = self.class.shared_query_cache
     end
 
     def each(&block)
@@ -134,6 +158,16 @@ module Solis
     end
 
     private
+
+    # Track a cache key under its model type tag for targeted invalidation
+    def track_cache_key(query_key)
+      tag_key = "TAG:#{@model.model_class_name}"
+      existing_keys = @query_cache.key?(tag_key) ? @query_cache[tag_key] : []
+      unless existing_keys.include?(query_key)
+        existing_keys << query_key
+        @query_cache[tag_key] = existing_keys
+      end
+    end
 
     def model_construct?
       construct_name = @model.model_class_name.tableize.singularize rescue @model.class.name.tableize.singularize
@@ -207,6 +241,9 @@ order by ?s
         @query_cache[query_key] = result unless result.nil? || result.empty?
         Solis::LOGGER.info("CACHE: to #{query_key}") if ConfigFile[:debug]
       end
+
+      # Always ensure the cache key is tracked under its model type tag
+      track_cache_key(query_key)
 
       result
     rescue StandardError => e

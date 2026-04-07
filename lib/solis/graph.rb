@@ -369,6 +369,10 @@ module Solis
 
       @sparql_client = Solis::Store::Sparql::Client.new(@sparql_endpoint)
       result = @sparql_client.query("with <#{graph_name}> delete {?s ?p ?o} where{?s ?p ?o}")
+
+      # Clear the query cache since all data has been flushed
+      Solis::Query.shared_query_cache.clear if defined?(Solis::Query)
+
       LOGGER.info(result)
       true
     end
