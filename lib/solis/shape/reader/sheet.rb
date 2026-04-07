@@ -52,28 +52,20 @@ module Solis
             end
 
             def read_sheets(key, spreadsheet_id, options)
-              data = nil
               prefixes = options[:prefixes] || nil
               metadata = options[:metadata] || nil
 
-              cache_dir = ConfigFile.include?(:cache) ? ConfigFile[:cache] : '/tmp'
-
-              if ::File.exist?("#{cache_dir}/#{spreadsheet_id}.json") && (options.include?(:from_cache) && options[:from_cache])
-                Solis::LOGGER.info("from cache #{cache_dir}/#{spreadsheet_id}.json")
-                data = JSON.parse(::File.read("#{cache_dir}/#{spreadsheet_id}.json"), { symbolize_names: true })
-                return data
-              else
-                Solis::LOGGER.info("from source #{spreadsheet_id}")
-                session = SimpleSheets.new(key, spreadsheet_id)
-                session.key = key
-                sheets = {}
-                session.worksheets.each do |worksheet|
-                  sheet = ::Sheet.new(worksheet)
-                  sheets[sheet.title] = sheet
-                end
-
-                validate(sheets, prefixes, metadata)
+              Solis::LOGGER.info("from source #{spreadsheet_id}")
+              session = SimpleSheets.new(key, spreadsheet_id)
+              session.key = key
+              sheets = {}
+              session.worksheets.each do |worksheet|
+                sheet = ::Sheet.new(worksheet)
+                sheets[sheet.title] = sheet
               end
+
+              validate(sheets, prefixes, metadata)
+
               sheets
             end
 
@@ -118,6 +110,7 @@ module Solis
 
                 entities.store(e['name'].to_sym, { description: e['description'],
                                                    order: e['order'],
+                                                   category: e['categories'],
                                                    plural: e['nameplural'],
                                                    label: e['name'].to_s.strip,
                                                    sub_class_of: e['subclassof'].nil? || e['subclassof'].empty? ? [] : [e['subclassof']],
@@ -136,12 +129,6 @@ module Solis
                 },
                 metadata: ontology_metadata
               }
-
-              cache_dir = ConfigFile.include?(:cache) ? ConfigFile[:cache] : '/tmp'
-              # ::File.open("#{::File.absolute_path(cache_dir)}/#{spreadsheet_id}.json", 'wb') do |f|
-              ::File.open("#{::File.absolute_path(cache_dir)}/#{sheet_id}.json", 'wb') do |f|
-                f.puts data.to_json
-              end
 
               data
             rescue StandardError => e
@@ -180,6 +167,7 @@ module Solis
                       cardinality: { min: min_max['min'], max: min_max['max'] },
                       same_as: p['sameas'],
                       order: p['order'],
+                      category: p['categories'],
                       description: p['description']
                     }
 
@@ -302,6 +290,8 @@ hide empty members
                     node = target_class
                   end
 
+                  groups = {}
+
                   out += %(
 #{graph_prefix}:#{entity_name}Shape
     a               #{shacl_prefix}:NodeShape ;
@@ -322,11 +312,19 @@ hide empty members
                     min_count = property_metadata[:cardinality][:min].strip
                     max_count = property_metadata[:cardinality][:max].strip
                     order = property_metadata.key?(:order) && property_metadata[:order] ? property_metadata[:order]&.strip : nil
+                    category = property_metadata.key?(:category) && property_metadata[:category] ? property_metadata[:category]&.strip : nil
+                    category = category.nil? || category.empty? ? nil : category
+
+                    unless category.nil?
+                      group = "#{category.classify}Group"
+                      groups[group] = category unless groups.key?(group)
+                    end
 
                     if datatype =~ /^#{graph_prefix}:/ || datatype =~ /^<#{graph_name}/
                       out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
                  #{shacl_prefix}:name "#{attribute}" ;
                  #{shacl_prefix}:description "#{description}" ;#{order.nil? ? '' : "\n                 #{shacl_prefix}:order #{order} ;"}
+                 #{category.nil? ? '' : "\n                 #{shacl_prefix}:group #{graph_prefix}:#{group} ;"}
                  #{shacl_prefix}:nodeKind #{shacl_prefix}:IRI ;
                  #{shacl_prefix}:class    #{datatype} ;#{min_count =~ /\d+/ ? "\n                 #{shacl_prefix}:minCount #{min_count} ;" : ''}#{max_count =~ /\d+/ ? "\n                 #{shacl_prefix}:maxCount #{max_count} ;" : ''}
     ] ;
@@ -344,6 +342,7 @@ hide empty members
                         out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
                  #{shacl_prefix}:name "#{attribute}";
                  #{shacl_prefix}:description "#{description}" ;#{order.nil? ? '' : "\n                 #{shacl_prefix}:order #{order} ;"}
+                 #{category.nil? ? '' : "\n                 #{shacl_prefix}:group #{graph_prefix}:#{group} ;"}
                  #{shacl_prefix}:datatype #{datatype} ;#{min_count =~ /\d+/ ? "\n                 #{shacl_prefix}:minCount #{min_count} ;" : ''}#{max_count =~ /\d+/ ? "\n                 #{shacl_prefix}:maxCount #{max_count} ;" : ''}
     ] ;
 )
@@ -359,6 +358,15 @@ hide empty members
                     end
                   end
                   out += ".\n"
+
+                  groups.each do |group, category|
+                    out += %(
+#{graph_prefix}:#{group}
+	a sh:PropertyGroup ;
+	rdfs:label "#{category}" .
+
+)
+                  end
                 end
               end
               out
@@ -716,6 +724,14 @@ hide empty members
             end
           end
 
+          cache_dir = ConfigFile.include?(:cache) ? ConfigFile[:cache] : '/tmp'
+          cache_file = "#{::File.absolute_path(cache_dir)}/#{spreadsheet_id}.json"
+
+          if options[:from_cache] && ::File.exist?(cache_file)
+            Solis::LOGGER.info("Loading cached result from #{cache_file}")
+            return JSON.parse(::File.read(cache_file), symbolize_names: true)
+          end
+
           sheet_data = read_sheets(key, spreadsheet_id, options)
           prefixes = sheet_data['_PREFIXES']
           metadata = sheet_data['_METADATA']
@@ -736,10 +752,6 @@ hide empty members
               { sheet_url: reference['sheeturl'], description: reference['description'] }
             end
 
-            cache_dir = ConfigFile.include?(:cache) ? ConfigFile[:cache] : '/tmp'
-            ::File.open("#{::File.absolute_path(cache_dir)}/#{spreadsheet_id}.json", 'wb') do |f|
-              f.puts references.to_json
-            end
           else
             references = sheet_data
           end
@@ -778,7 +790,16 @@ hide empty members
           Solis::LOGGER.info('Generating JSON SCHEMA')
           json_schema = build_json_schema(shacl)
 
-          { inflections: inflections, shacl: shacl, schema: schema, plantuml: plantuml, json_schema: json_schema }
+          result = { inflections: inflections, shacl: shacl, schema: schema, plantuml: plantuml, json_schema: json_schema }
+
+          begin
+            ::File.open(cache_file, 'wb') { |f| f.puts result.to_json }
+            Solis::LOGGER.info("Cached result to #{cache_file}")
+          rescue StandardError => e
+            Solis::LOGGER.warn("Failed to write cache: #{e.message}")
+          end
+
+          result
         end
       end
     end

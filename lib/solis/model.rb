@@ -583,10 +583,11 @@ values ?s {<#{self.graph_id}>}
         attribute_data = { name: attribute,
                            data_type: attribute_metadata[:datatype],
                            mandatory: (attribute_metadata[:mincount].to_i > 0),
+                           repeatable: (attribute_metadata[:maxcount].to_i > 1 || attribute_metadata[:maxcount].nil?),
                            description: attribute_metadata[:comment]&.value
         }
         attribute_data[:order] = attribute_metadata[:order]&.value.to_i if attribute_metadata.key?(:order) && !attribute_metadata[:order].nil?
-        attribute_data[:category] = attribute_metadata[:category]&.value if attribute_metadata.key?(:category) && !attribute_metadata[:category].nil?
+        attribute_data[:group] = attribute_metadata[:group]&.value.gsub(graph_name,'').gsub(/Group$/,'') if attribute_metadata.key?(:group) && !attribute_metadata[:group].nil?
         attribute_data[:attributes] = cm[:attributes] if cm && cm[:attributes]
 
         m[:attributes] << attribute_data

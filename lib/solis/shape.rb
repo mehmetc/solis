@@ -104,6 +104,7 @@ module Solis
           attribute_class = solution.attributeClass if solution.bound?(:attributeClass)
           attribute_comment = solution.attributeComment if solution.bound?(:attributeComment)
           attribute_order = solution.attributeOrder if solution.bound?(:attributeOrder)
+          attribute_group = solution.attributeGroup if solution.bound?(:attributeGroup)
 
           attribute_max_count =  1 if solution.bound?(:attributeUniqueLang) && solution.attributeUniqueLang.value.eql?('true')
 
@@ -125,6 +126,7 @@ module Solis
             mincount: attribute_min_count,
             maxcount: attribute_max_count,
             order: attribute_order,
+            group: attribute_group,
             node: attribute_node,
             node_kind: attribute_node_kind,
             class: attribute_class,
@@ -142,7 +144,7 @@ PREFIX rdfv: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
 SELECT ?targetClass ?targetNode ?comment ?className ?attributePath ?attributeName ?attributeDatatype
        ?attributeMinCount ?attributeMaxCount ?attributeOr ?attributeClass
-       ?attributeNode ?attributeNodeKind ?attributeComment ?attributeOrder ?attributeUniqueLang ?o
+       ?attributeNode ?attributeNodeKind ?attributeComment ?attributeOrder ?attributeGroup ?attributeUniqueLang ?o
 WHERE {
 
   ?s a sh:NodeShape;
@@ -162,6 +164,7 @@ WHERE {
                            OPTIONAL{ ?attributes sh:node     ?attributeNode } .
                            OPTIONAL{ ?attributes sh:description ?attributeComment } .
                            OPTIONAL{ ?attributes sh:order ?attributeOrder } .
+                           OPTIONAL{ ?attributes sh:group ?attributeGroup } .
                            OPTIONAL{ ?attributes sh:uniqueLang ?attributeUniqueLang } .
      }.
 }
@@ -182,6 +185,7 @@ WHERE {
                     "mincount": 1,
                     "maxcount": 1,
                     "order": nil,
+                    "group": nil,
                     "node": nil,
                     "node_kind": nil,
                     "class": nil,
