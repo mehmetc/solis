@@ -5,7 +5,7 @@ module Solis
       {
         has_many: HasMany,
         belongs_to: BelongsTo,
-        has_one: ::Graphiti::Sideload::HasOne,
+        has_one: HasOne,
         many_to_many: ::Graphiti::Sideload::ManyToMany,
         polymorphic_belongs_to: ::Graphiti::Sideload::PolymorphicBelongsTo
       }
@@ -313,6 +313,24 @@ module Solis
     # end
   end
 
+
+  class HasOne < Graphiti::Sideload::HasOne
+    def load_params(parents, query)
+      query.hash.tap do |hash|
+        hash[:filter] ||= {}
+        unless hash[:filter].include?(:id)
+          all_ids = parents.map{|m| m.instance_variable_get("@#{query.association_name.to_s}")}.flatten.map{|m| m.instance_variable_get("@#{primary_key}")}.uniq.compact.join(',')
+          hash[:filter].merge!({primary_key => all_ids})
+        end
+      end
+    end
+
+    private
+
+    def children_for(parent, map)
+      map.values.first
+    end
+  end
 
   class HasMany  < Graphiti::Sideload::HasMany
     def inverse_filter
