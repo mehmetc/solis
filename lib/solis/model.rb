@@ -806,7 +806,10 @@ values ?s {<#{self.graph_id}>}
       if original_klass.nil?
         original_klass = klass
       else
-        resolve_all = false
+        # A store-fetched original carries id-only stub children, so its subgraph is
+        # not re-resolved. In the create path (skip_store_fetch) known_entities is
+        # pre-populated with full in-memory entities whose children must still be built.
+        resolve_all = false unless skip_store_fetch
         klass.instance_variables.map { |m| m.to_s.gsub(/^@/, '') }
              .select { |s| !["model_name", "model_plural_name"].include?(s) }.each do |attribute|
           data = klass.instance_variable_get("@#{attribute}")
