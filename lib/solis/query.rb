@@ -94,7 +94,7 @@ module Solis
         @sparql_client = Solis::Store::Sparql::Client.new(@sparql_endpoint, graph: @model.class.graph_name)
       end
       @filter = {values: ["VALUES ?type {#{target_class}}"], concepts: ['?concept a ?type .'] }
-      @sort = 'ORDER BY ?s'
+      @sort = 'ORDER BY ?concept'
       @sort_select = ''
       @language = Graphiti.context[:object]&.language || Solis::Options.instance.get[:language] || 'en'
       @query_cache = self.class.shared_query_cache
@@ -211,7 +211,7 @@ module Solis
       if core_query =~ /IN\((.*?)\)/
         #limit = $1.gsub('"','').split(',').length
       else
-        core_query += "ORDER BY ?concept LIMIT #{limit} OFFSET #{offset}"
+        core_query += " LIMIT #{limit} OFFSET #{offset}"
       end
 
       query = %(

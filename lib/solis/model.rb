@@ -669,6 +669,15 @@ values ?s {<#{self.graph_id}>}
       obj.class.ancestors.include?(Solis::Model)
     end
 
+    # True when only the entity's id is populated — an id-only stub, e.g. an embedded
+    # relation materialised by Query#graph_to_object as Model.new(id:).
+    def shallow_stub?(entity)
+      return false unless solis_model?(entity)
+      entity.class.metadata[:attributes].each_key.none? do |attr|
+        attr.to_s != 'id' && !entity.instance_variable_get("@#{attr}").nil?
+      end
+    end
+
     # Helper method to check if an entity is readonly (code table)
     def readonly_entity?(entity, readonly_list = nil)
       readonly_list ||= (Solis::Options.instance.get[:embedded_readonly] || []).map(&:to_s)
@@ -821,6 +830,18 @@ values ?s {<#{self.graph_id}>}
     end
 
     def make_graph(graph, hierarchy, id, klass, klass_metadata, resolve_all, known_entities = {}, skip_store_fetch: false)
+      # klass may arrive as an id-only stub (embedded relation from Query#graph_to_object,
+      # or passed via prefetched_original). Resolve it to the full stored entity once so
+      # every attribute is emitted into the graph.
+      if !skip_store_fetch && shallow_stub?(klass)
+        uuid = id.value.split('/').last
+        fetched = klass.query.filter({ filters: { id: [uuid] } }).find_all { |f| f.id == uuid }.first
+        unless fetched.nil?
+          klass = fetched
+          known_entities[uuid] = fetched
+        end
+      end
+
       klass_metadata[:attributes].each do |attribute, metadata|
         data = klass.instance_variable_get("@#{attribute}")
 
