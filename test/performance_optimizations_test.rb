@@ -122,26 +122,23 @@ class PerformanceOptimizationsTest < Minitest::Test
   # 4. known_entities cache in as_graph / build_ttl_objekt
   # ──────────────────────────────────────────────────────────────────────
 
-  def test_as_graph_with_known_entities
+  def test_as_graph_serializes_entity
     student = Student.new({ id: 'graph-cache-1', first_name: 'Cache', last_name: 'Test', age: 22 })
     student.save
 
-    # as_graph should accept known_entities parameter
-    known = { 'graph-cache-1' => student }
-    graph = student.send(:as_graph, student, true, known)
-    refute_nil graph, "as_graph should return a graph when known_entities are provided"
+    graph = student.send(:as_graph, student)
+    refute_nil graph, "as_graph should return a graph"
     assert graph.size > 0, "Graph should contain triples"
 
     student.destroy
   end
 
-  def test_as_graph_without_known_entities_still_works
+  def test_as_graph_deep_still_works
     student = Student.new({ id: 'graph-no-cache-1', first_name: 'NoCache', last_name: 'Test', age: 23 })
     student.save
 
-    # as_graph without known_entities should still work (backward compatible)
-    graph = student.send(:as_graph, student, true)
-    refute_nil graph, "as_graph should work without known_entities"
+    graph = student.send(:as_graph, student, deep: true)
+    refute_nil graph, "as_graph should work with deep: true"
     assert graph.size > 0, "Graph should contain triples"
 
     student.destroy

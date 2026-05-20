@@ -75,4 +75,45 @@ class EmbeddedUpdateStubResolutionTest < Minitest::Test
     teacher.destroy
     course.destroy
   end
+
+  # An embedded entity sent with a PARTIAL payload (omitting its mandatory attributes)
+  # must keep those attributes — updated_klass is seeded from the full stored original,
+  # not from the id-only stub, so the insert graph stays valid.
+  def test_update_parent_with_partial_embedded_payload_keeps_mandatory_attributes
+    Skill.new({ id: 'sr-skill-b', label: 'Other Skill', short_label: 'OS' }).save
+
+    teacher = Teacher.new({ id: '914', first_name: 'Keep', last_name: 'Me', skill: [{ id: '100' }] })
+    teacher.save(false)
+
+    course = Course.new({ id: '910', course_name: 'Partial Payload' })
+    course.save
+
+    schedule = Schedule.new({
+      id: '915',
+      teacher: { id: '914' },
+      course: { id: '910' },
+      start_date: Time.now,
+      end_date: Time.now
+    })
+    schedule.save(false)
+
+    # The embedded teacher is sent WITHOUT first_name/last_name, only a changed skill
+    # reference. The teacher's stored mandatory attributes must survive the update.
+    schedule.update({
+      'id' => '915',
+      'teacher' => { 'id' => '914', 'skill' => [{ 'id' => 'sr-skill-b' }] },
+      'course' => { 'id' => '910' },
+      'start_date' => Time.now.to_s,
+      'end_date' => Time.now.to_s
+    }, false)
+
+    found = TeacherResource.find(id: '914').data
+    assert_equal 'Keep', found.first_name, "mandatory first_name must be preserved"
+    assert_equal 'Me', found.last_name, "mandatory last_name must be preserved"
+
+    schedule.destroy
+    teacher.destroy
+    course.destroy
+    Skill.new({ id: 'sr-skill-b' }).destroy
+  end
 end
