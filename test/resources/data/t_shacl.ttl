@@ -107,6 +107,13 @@ t:ScheduleShape
                      sh:nodeKind    sh:IRI ;
                      sh:class       t:Student ;
                      sh:minCount    0 ; ] ;
+    sh:property    [ sh:path        t:person ;
+                     sh:name        "person" ;
+                     sh:description "polymorphic reference to any Person subclass (Teacher/Student)" ;
+                     sh:nodeKind    sh:IRI ;
+                     sh:class       t:Person ;
+                     sh:minCount    0 ;
+                     sh:maxCount    1 ; ] ;
     sh:property    [ sh:path        t:course ;
                      sh:name        "course" ;
                      sh:description "course within schedule" ;

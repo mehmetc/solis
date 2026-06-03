@@ -26,10 +26,18 @@ module Solis
             inner_class = self.class.metadata[:attributes][attribute.to_s][:datatype].to_s
             inner_model = self.class.graph.shape_as_model(inner_class)
 
-            if value.key?('id') && value['id'].match?(self.class.graph_name)
-              inner_class = value['id'].gsub(self.class.graph_name, '').split('/').first.classify.to_s
-              if inner_model.descendants.map(&:to_s).include?(inner_class)
-                inner_model = self.class.graph.shape_as_model(inner_class)
+            # Resolve a polymorphic reference to its concrete subclass, preferring an
+            # explicit `type` key, then a full URI whose path segment names the class.
+            # Keys may be strings (JSON) or symbols (internal callers).
+            explicit_type = (value['type'] || value[:type] || value['@type'] || value[:'@type']).to_s
+            value = value.reject { |k, _| %w[type @type].include?(k.to_s) }
+            id_value = (value['id'] || value[:id]).to_s
+            if !explicit_type.empty? && descendant_shape_names(inner_model.name).include?(explicit_type)
+              inner_model = self.class.graph.shape_as_model(explicit_type)
+            elsif !id_value.empty? && id_value.match?(self.class.graph_name)
+              concrete = id_value.gsub(self.class.graph_name, '').split('/').first.classify.to_s
+              if descendant_shape_names(inner_model.name).include?(concrete)
+                inner_model = self.class.graph.shape_as_model(concrete)
               end
             end
 
@@ -158,19 +166,28 @@ values ?s {<#{self.graph_id}>}
       else
         readonly_list = (Solis::Options.instance.get[:embedded_readonly] || []).map(&:to_s)
 
+        # Re-type polymorphic base-class id-only references (e.g. an `agent` stub
+        # that is really an `Organisatie`) to their concrete subclass, so URIs and
+        # existence checks target the subclass's storage path.
+        resolve_polymorphic_references!(self, sparql)
+
         # Enumerate the whole in-memory tree: self plus every embedded descendant.
         all_entities = collect_known_entities(self).values
         existing_ids = self.class.batch_exists?(sparql, all_entities)
 
-        # Classify each entity: new (insert), existing embedded (update), or readonly.
-        # readonly only protects EMBEDDED entities; the entity being saved (self) is
-        # always created even when its class is a code table.
+        # Classify each entity: new (insert), existing embedded (update), readonly,
+        # or a pure reference. readonly only protects EMBEDDED entities; the entity
+        # being saved (self) is always created even when its class is a code table.
         new_entities = []
         existing_embedded = []
         all_entities.each do |entity|
           entity_exists = existing_ids.include?(entity.graph_id)
           if !entity.equal?(self) && readonly_entity?(entity, readonly_list)
             Solis::LOGGER.warn("#{entity.class.name} (id: #{entity.id}) is readonly but does not exist in database. Skipping.") unless entity_exists
+          elsif !entity.equal?(self) && shallow_stub?(entity) && top_level_entity?(entity)
+            # An id-only reference to an independently-addressable entity: link only.
+            # It is emitted as a URI by serialize_entity; never create or rewrite it.
+            raise Solis::Error::NotFoundError, "#{entity.class.name} (id: #{entity.id}) is referenced but does not exist" unless entity_exists
           elsif entity_exists
             existing_embedded << entity
           else
@@ -249,11 +266,17 @@ values ?s {<#{self.graph_id}>}
 
       # First pass: collect all embedded entities for batched existence check
       embedded_by_key = {}
+      poly_cache = {}
       attributes.each_pair do |key, value|
         unless original_klass.class.metadata[:attributes][key][:node].nil?
           value = [value] unless value.is_a?(Array)
           embedded_by_key[key] = value.map do |sub_value|
-            self.class.graph.shape_as_model(original_klass.class.metadata[:attributes][key][:datatype].to_s).new(sub_value)
+            model = self.class.graph.shape_as_model(original_klass.class.metadata[:attributes][key][:datatype].to_s).new(sub_value)
+            # Re-type a polymorphic base-class id-only reference to its concrete
+            # subclass so existence checks and emitted URIs target the right path.
+            concrete = resolve_polymorphic_class(model, sparql, poly_cache)
+            model = concrete.new({ id: model.id }) if concrete && concrete != model.class
+            model
           end
         end
       end
@@ -655,6 +678,99 @@ values ?s {<#{self.graph_id}>}
       entity.class.metadata[:attributes].each_key.none? do |attr|
         attr.to_s != 'id' && !entity.instance_variable_get("@#{attr}").nil?
       end
+    end
+
+    # Map of shape_name => parent_shape_name, derived from each shape's sh:node
+    # (target_node) pointing at "<graph_name><Parent>Shape". Pure metadata.
+    def polymorphic_parent_map
+      graph_name = self.class.graph_name
+      map = {}
+      self.class.shapes.each do |name, meta|
+        tn = meta[:target_node]
+        next if tn.nil?
+        if tn.to_s =~ /^#{Regexp.escape(graph_name)}(.+)Shape$/
+          parent = $1
+          map[name] = parent unless parent == name
+        end
+      end
+      map
+    end
+
+    # Names of shapes that inherit (directly or transitively, via sh:node) from
+    # base_shape_name — i.e. the concrete subclasses of a polymorphic base.
+    def descendant_shape_names(base_shape_name)
+      parent_of = polymorphic_parent_map
+      parent_of.keys.select do |name|
+        ancestor = parent_of[name]
+        found = false
+        while ancestor
+          if ancestor == base_shape_name
+            found = true
+            break
+          end
+          ancestor = parent_of[ancestor]
+        end
+        found
+      end
+    end
+
+    # For a polymorphic id-only stub declared as a base class, ask the store which
+    # concrete subclass URI actually holds this id, and return that concrete model
+    # class. Returns nil when the declared class has no subclasses (not polymorphic)
+    # or no matching subject exists. Write-path only — issues a SPARQL query.
+    def resolve_polymorphic_class(stub, sparql, cache = {})
+      return nil unless solis_model?(stub) && shallow_stub?(stub) && stub.id
+
+      base_name = stub.class.name
+      # Key by declared class + id: the same id may be referenced through different
+      # declared relation types, so a nil for one base must not shadow another.
+      cache_key = "#{base_name}|#{stub.id}"
+      return cache[cache_key] if cache.key?(cache_key)
+
+      subclass_names = descendant_shape_names(base_name)
+      return cache[cache_key] = nil if subclass_names.empty?
+
+      graph_name = stub.class.graph_name
+      candidates = ([base_name] + subclass_names).uniq.map { |name| "#{graph_name}#{name.tableize}/#{stub.id}" }
+      values = candidates.map { |u| "<#{u}>" }.join(' ')
+      result = sparql.query("SELECT ?s WHERE { VALUES ?s { #{values} } . ?s ?p ?o } LIMIT 1")
+      uri = result.first && result.first[:s] && result.first[:s].to_s
+
+      klass = nil
+      unless uri.nil?
+        concrete_name = uri.sub(graph_name, '').split('/').first.classify
+        klass = self.class.graph.shape_as_model(concrete_name) if self.class.graph.shape?(concrete_name)
+      end
+      cache[cache_key] = klass
+    end
+
+    # Walk the relation tree and re-type every polymorphic base-class id-only stub
+    # to its concrete subclass (resolved from the store), so existence checks and
+    # emitted reference URIs use the subclass's storage path. Write-path only.
+    def resolve_polymorphic_references!(entity, sparql, cache = {}, visited = Set.new)
+      return entity if visited.include?(entity.object_id)
+      visited << entity.object_id
+      entity.class.metadata[:attributes].each do |attr, meta|
+        next if meta[:node_kind].nil?
+        val = entity.instance_variable_get("@#{attr}")
+        next if val.nil?
+        if val.is_a?(Array)
+          entity.instance_variable_set("@#{attr}", val.map { |v| retype_polymorphic_stub(v, sparql, cache, visited) })
+        else
+          entity.instance_variable_set("@#{attr}", retype_polymorphic_stub(val, sparql, cache, visited))
+        end
+      end
+      entity
+    end
+
+    # Resolve a single relation value: re-type a polymorphic base stub to its
+    # concrete subclass, then recurse. Non-model values pass through unchanged.
+    def retype_polymorphic_stub(v, sparql, cache, visited)
+      return v unless solis_model?(v)
+      concrete = resolve_polymorphic_class(v, sparql, cache)
+      v = concrete.new({ id: v.id }) if concrete && concrete != v.class
+      resolve_polymorphic_references!(v, sparql, cache, visited)
+      v
     end
 
     # Load the full stored entity for this model's class by id. Returns nil when absent.
