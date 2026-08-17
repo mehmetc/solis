@@ -11,6 +11,15 @@ module Solis
     include Enumerable
     include Solis::QueryFilter
 
+    # XSD numeric datatypes must be ordered by value; wrapping them in STR() would sort
+    # them lexically ("100" < "9"). Every other datatype is STR()-wrapped in the outer
+    # ORDER BY (see #sort_key_expression) to dodge a Virtuoso collation bug.
+    XSD_NUMERIC_DATATYPES = %w[
+      integer decimal float double long int short byte
+      nonNegativeInteger nonPositiveInteger negativeInteger positiveInteger
+      unsignedLong unsignedInt unsignedShort unsignedByte
+    ].map { |t| "http://www.w3.org/2001/XMLSchema##{t}" }.freeze
+
     def self.run(entity, query, options = {})
       Solis::Query::Runner.run(entity, query, options)
     end
@@ -96,6 +105,13 @@ module Solis
       @filter = {values: ["VALUES ?type {#{target_class}}"], concepts: ['?concept a ?type .'] }
       @sort = 'ORDER BY ?concept'
       @sort_select = ''
+      # @sort_project carries the sort key(s) out of the inner (paginated) subquery so the
+      # outer query can re-sort on them; @sort_outer is that outer ORDER BY. A subquery's
+      # ORDER BY only decides which rows survive LIMIT/OFFSET — it does NOT propagate
+      # through the enclosing join — so the outer query must sort too. See #sort for the
+      # datatype-aware STR() handling that the outer ORDER BY needs.
+      @sort_project = ''
+      @sort_outer = ''
       @language = Graphiti.context[:object]&.language || Solis::Options.instance.get[:language] || 'en'
       @query_cache = self.class.shared_query_cache
     end
@@ -113,19 +129,31 @@ module Solis
     def sort(params)
       @sort = ''
       @sort_select = ''
+      @sort_project = ''
+      @sort_outer = ''
       if params.key?(:sort)
         i = 0
+        outer = ''
         params[:sort].each do |attribute, direction|
-          path = @model.class.metadata[:attributes][attribute.to_s][:path]
-          @sort_select += "optional {\n" if @model.class.metadata[:attributes][attribute.to_s][:mincount] == 0
+          meta = @model.class.metadata[:attributes][attribute.to_s]
+          path = meta[:path]
+          @sort_select += "optional {\n" if meta[:mincount] == 0
           @sort_select += "?concept <#{path}> ?__#{attribute} . "
-          @sort_select += "}\n" if @model.class.metadata[:attributes][attribute.to_s][:mincount] == 0
+          @sort_select += "}\n" if meta[:mincount] == 0
           @sort += ',' if i.positive?
           @sort += "#{direction.to_s.upcase}(?__#{attribute})"
+          # Carry the sort key out of the subquery so the outer query can re-sort on it.
+          @sort_project += " ?__#{attribute}"
+          outer += ',' if i.positive?
+          outer += "#{direction.to_s.upcase}(#{sort_key_expression(attribute, meta)})"
           i += 1
         end
 
-        @sort = "ORDER BY #{@sort}" if i.positive?
+        if i.positive?
+          @sort = "ORDER BY #{@sort}"
+          # ?s tiebreaker keeps each subject's triples contiguous and ties deterministic.
+          @sort_outer = "ORDER BY #{outer} ?s"
+        end
       end
 
       self
@@ -214,16 +242,27 @@ module Solis
         core_query += " LIMIT #{limit} OFFSET #{offset}"
       end
 
+      # ?o is bound via BIND(?o_raw AS ?o) instead of being projected directly from the
+      # triple pattern. Some Virtuoso builds (e.g. 08.03.3335) mis-bind ?o to the wrong
+      # object when the open `?s ?p ?o` pattern is combined with the disjunctive
+      # language_filter, returning the rdf:type object for every row. Aliasing through
+      # BIND blocks that optimizer rewrite and is a no-op on engines without the bug.
+      # Outer ordering: the inner subquery's ORDER BY only selects which rows survive
+      # LIMIT/OFFSET; it does NOT propagate through the enclosing join. The outer query
+      # therefore re-sorts on the same key(s) (@sort_outer, datatype-aware STR()). When
+      # no sort is requested, `order by ?s` gives a cheap deterministic default order.
+      outer_order = @sort_outer.empty? ? 'order by ?s' : @sort_outer
       query = %(
       #{prefixes}
 SELECT ?s ?p ?o WHERE {
- ?s ?p ?o
+ ?s ?p ?o_raw .
+ BIND(?o_raw AS ?o)
 {
   #{core_query}
 }
 #{language_filter}
 }
-order by ?s
+#{outer_order}
 )
 
       Solis::LOGGER.info(query) if ConfigFile[:debug]
@@ -268,10 +307,13 @@ order by ?s
     end
 
     def core_query(relationship)
+      # @sort_project re-exposes the sort key(s) bound in @sort_select so the OUTER query
+      # can ORDER BY them. NB: for a multi-valued sort attribute this turns DISTINCT into
+      # one row per (concept, value) pair, which would skew LIMIT/OFFSET — sort attributes
+      # are expected to be single-valued.
       core_query = %(
-  SELECT distinct (?concept AS ?s) WHERE {
+  SELECT distinct (?concept AS ?s)#{@sort_project} WHERE {
     #{@filter[:values].join("\n")}
-    ?concept ?role ?objects.
     #{relationship}
     #{@filter[:concepts].join("\n")}
 
@@ -279,6 +321,21 @@ order by ?s
   }
 #{@sort}
 )
+    end
+
+    # SPARQL expression to sort an attribute by in the OUTER query.
+    #
+    # The outer (post-join) ORDER BY on this Virtuoso build (08.03.3335) mis-collates
+    # language-tagged literals, so string-ish keys are wrapped in STR() — which fixes the
+    # ordering and is order-preserving for xsd:string, dates, gYear, booleans and EDTF.
+    # Numeric keys must NOT be wrapped: STR() would order them lexically ("100" < "9"),
+    # and numbers carry no language tag so they are unaffected by the collation bug.
+    def sort_key_expression(attribute, meta = @model.class.metadata[:attributes][attribute.to_s])
+      if XSD_NUMERIC_DATATYPES.include?(meta[:datatype_rdf].to_s)
+        "?__#{attribute}"
+      else
+        "STR(?__#{attribute})"
+      end
     end
 
     def prefixes

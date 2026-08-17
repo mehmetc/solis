@@ -14,6 +14,8 @@ module Solis
             parse_solution(shapes, solution)
           end
 
+          add_labels(shapes, graph)
+
           # shapes = add_missing_attributes(shapes)
           shapes
         rescue Solis::Error::GeneralError => e
@@ -135,6 +137,47 @@ module Solis
 
           shape[:attributes].delete_if { |k, _| k.nil? }
           shapes[shape_name] = shape
+        end
+
+        # Reads the rdfs:label statements of every node shape and property shape into
+        # { nl: 'Publiceren', en: 'Publish' }. This is a second pass on purpose: adding
+        # rdfs:label to the main query would multiply every solution by the number of
+        # languages.
+        def add_labels(shapes, graph)
+          graph.query([nil, RDF.type, RDF::Vocab::SHACL.NodeShape]) do |node_shape|
+            shape_name = name_of(graph, node_shape.subject)
+            shape = shapes[shape_name]
+            next if shape.nil?
+
+            shape[:label] = labels_of(graph, node_shape.subject)
+
+            graph.query([node_shape.subject, RDF::Vocab::SHACL.property, nil]) do |property|
+              attribute = shape[:attributes][name_of(graph, property.object)]
+              next if attribute.nil?
+
+              attribute[:label] = labels_of(graph, property.object)
+            end
+          end
+
+          shapes
+        end
+
+        def name_of(graph, subject)
+          graph.query([subject, RDF::Vocab::SHACL.name, nil]).first&.object&.value
+        end
+
+        def labels_of(graph, subject)
+          labels = {}
+
+          graph.query([subject, RDF::RDFS.label, nil]).each do |statement|
+            literal = statement.object
+            language = Solis::LanguageTag.normalize(literal.language) if literal.is_a?(RDF::Literal)
+            next if language.nil?
+
+            labels[language] = literal.value
+          end
+
+          labels
         end
 
         def query

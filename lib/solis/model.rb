@@ -583,6 +583,7 @@ values ?s {<#{self.graph_id}>}
         end
 
         attribute_data = { name: attribute,
+                           label: attribute_metadata[:label] || {},
                            data_type: attribute_metadata[:datatype],
                            mandatory: (attribute_metadata[:mincount].to_i > 0),
                            repeatable: (attribute_metadata[:maxcount].to_i > 1 || attribute_metadata[:maxcount].nil?),

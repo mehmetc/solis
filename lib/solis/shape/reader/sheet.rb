@@ -113,6 +113,7 @@ module Solis
                                                    category: e['categories'],
                                                    plural: e['nameplural'],
                                                    label: e['name'].to_s.strip,
+                                                   labels: parse_labels(e),
                                                    sub_class_of: e['subclassof'].nil? || e['subclassof'].empty? ? [] : [e['subclassof']],
                                                    same_as: e['sameas'],
                                                    properties: entity_data })
@@ -133,6 +134,26 @@ module Solis
               data
             rescue StandardError => e
               raise Solis::Error::GeneralError, e.message
+            end
+
+            # Matches the 'Label_XX' columns (header is downcased by ::Sheet#header) where
+            # XX is a language tag, ex. 'Label_NL', 'Label_EN', 'Label_nl-BE'
+            LANGUAGE_LABEL_COLUMN = /\Alabel_(?<language>[a-z]{2,3}([-_][a-z0-9]{2,8})*)\z/.freeze
+
+            # Collects all 'Label_XX' columns of a row into { nl: 'Publiceren', en: 'Publish' }
+            def parse_labels(row)
+              labels = {}
+              return labels unless row.respond_to?(:each_pair)
+
+              row.each_pair do |column, value|
+                match = LANGUAGE_LABEL_COLUMN.match(column.to_s)
+                next if match.nil?
+                next if value.nil? || value.to_s.strip.empty?
+
+                labels[Solis::LanguageTag.normalize(match[:language])] = value.to_s.strip
+              end
+
+              labels
             end
 
             def parse_entity_data(entity_name, graph_prefix, _graph_name, e, options = {})
@@ -168,31 +189,9 @@ module Solis
                       same_as: p['sameas'],
                       order: p['order'],
                       category: p['categories'],
+                      label: parse_labels(p),
                       description: p['description']
                     }
-
-                    # unless graph_prefix.eql?(datatype_prefix.to_sym)
-                    #   prefixes = options[:prefixes]
-                    #   if prefixes.key?(datatype_prefix.to_sym) && !prefixes[datatype_prefix.to_sym][:sheet_url].empty?
-                    #     tmp = URI(prefixes[datatype_prefix.to_sym][:sheet_url]).path.split('/')
-                    #     spreadsheet_id = tmp[tmp.index('d') + 1]
-                    #
-                    #     processed_remote_sheet = {}
-                    #     if prefixes[datatype_prefix.to_sym].key?(:data) && !prefixes[datatype_prefix.to_sym][:data].empty?
-                    #       processed_remote_sheet = prefixes[datatype_prefix.to_sym][:data]
-                    #     else
-                    #       if options[:follow]
-                    #         sleep 30
-                    #         remote_sheet = read_sheets(options[:key], spreadsheet_id, { from_cache: true })
-                    #         processed_remote_sheet = process_sheet(options[:key], remote_sheet, {follow: false})
-                    #         prefixes[datatype_prefix.to_sym][:data] = processed_remote_sheet
-                    #       end
-                    #     end
-                    #
-                    #     processed_remote_sheet
-                    #   end
-                    # end
-
                   end
                 end
               end
@@ -266,11 +265,31 @@ hide empty members
               datatypes[datatype][as]
             end
 
+            # Turns { nl: 'Publiceren', en: 'Publish' } into a single rdfs:label statement with
+            # one language tagged literal per language, ex.
+            #   rdfs:label "Publiceren"@nl, "Publish"@en ;
+            def build_labels(labels, rdfs_prefix, indent)
+              return '' if labels.nil? || labels.empty?
+
+              literals = labels.map do |language, value|
+                %("#{value.to_s.gsub('"', "'").gsub(/\n|\r/, '')}"@#{language})
+              end
+
+              "\n#{indent}#{rdfs_prefix}:label #{literals.join(', ')} ;"
+            end
+
             def build_shacl(datas)
               shacl_prefix = datas.first[:ontologies][:all].select { |_, v| v[:uri] =~ /shacl/ }.keys.first
               shacl_prefix = 'sh' if shacl_prefix.nil?
 
+              rdfs_prefix = datas.first[:ontologies][:all].select { |_, v| v[:uri] =~ /rdf-schema/ }.keys.first
+
               out = header(datas.first)
+
+              if rdfs_prefix.nil?
+                rdfs_prefix = 'rdfs'
+                out += "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n"
+              end
 
               datas.each do |data|
                 data[:entities].each do |entity_name, metadata|
@@ -300,7 +319,7 @@ hide empty members
                     unless node.nil? || node.empty?
                       "\n    #{shacl_prefix}:node         #{node} ;"
                     end}
-    #{shacl_prefix}:name         "#{label}" ;
+    #{shacl_prefix}:name         "#{label}" ;#{build_labels(metadata[:labels], rdfs_prefix, ' ' * 4)}
 )
                   metadata[:properties].each do |property, property_metadata|
                     attribute = property.to_s.strip
@@ -314,6 +333,7 @@ hide empty members
                     order = property_metadata.key?(:order) && property_metadata[:order] ? property_metadata[:order]&.strip : nil
                     category = property_metadata.key?(:category) && property_metadata[:category] ? property_metadata[:category]&.strip : nil
                     category = category.nil? || category.empty? ? nil : category
+                    labels = build_labels(property_metadata[:label], rdfs_prefix, ' ' * 17)
 
                     unless category.nil?
                       group = "#{category.classify}Group"
@@ -322,7 +342,7 @@ hide empty members
 
                     if datatype =~ /^#{graph_prefix}:/ || datatype =~ /^<#{graph_name}/
                       out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
-                 #{shacl_prefix}:name "#{attribute}" ;
+                 #{shacl_prefix}:name "#{attribute}" ;#{labels}
                  #{shacl_prefix}:description "#{description}" ;#{order.nil? ? '' : "\n                 #{shacl_prefix}:order #{order} ;"}
                  #{category.nil? ? '' : "\n                 #{shacl_prefix}:group #{graph_prefix}:#{group} ;"}
                  #{shacl_prefix}:nodeKind #{shacl_prefix}:IRI ;
@@ -332,7 +352,7 @@ hide empty members
                     else
                       if datatype.eql?('rdf:langString') && max_count.eql?('1')
                         out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
-                 #{shacl_prefix}:name "#{attribute}";
+                 #{shacl_prefix}:name "#{attribute}";#{labels}
                  #{shacl_prefix}:description "#{description}" ;#{order.nil? ? '' : "\n                 #{shacl_prefix}:order #{order} ;"}
                  #{shacl_prefix}:uniqueLang true ;
                  #{shacl_prefix}:datatype #{datatype} ;#{min_count =~ /\d+/ ? "\n                 #{shacl_prefix}:minCount #{min_count} ;" : ''}
@@ -340,7 +360,7 @@ hide empty members
 )
                       elsif datatype.eql?('rdf:langString')
                         out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
-                 #{shacl_prefix}:name "#{attribute}";
+                 #{shacl_prefix}:name "#{attribute}";#{labels}
                  #{shacl_prefix}:description "#{description}" ;#{order.nil? ? '' : "\n                 #{shacl_prefix}:order #{order} ;"}
                  #{category.nil? ? '' : "\n                 #{shacl_prefix}:group #{graph_prefix}:#{group} ;"}
                  #{shacl_prefix}:datatype #{datatype} ;#{min_count =~ /\d+/ ? "\n                 #{shacl_prefix}:minCount #{min_count} ;" : ''}#{max_count =~ /\d+/ ? "\n                 #{shacl_prefix}:maxCount #{max_count} ;" : ''}
@@ -348,7 +368,7 @@ hide empty members
 )
                       else
                         out += %(    #{shacl_prefix}:property [#{shacl_prefix}:path #{path} ;
-                 #{shacl_prefix}:name "#{attribute}";
+                 #{shacl_prefix}:name "#{attribute}";#{labels}
                  #{shacl_prefix}:description "#{description}" ;#{order.nil? ? '' : "\n                 #{shacl_prefix}:order #{order} ;"}
                  #{shacl_prefix}:datatype #{datatype} ;#{min_count =~ /\d+/ ? "\n                 #{shacl_prefix}:minCount #{min_count} ;" : ''}#{max_count =~ /\d+/ ? "\n                 #{shacl_prefix}:maxCount #{max_count} ;" : ''}
     ] ;
@@ -362,8 +382,8 @@ hide empty members
                   groups.each do |group, category|
                     out += %(
 #{graph_prefix}:#{group}
-	a sh:PropertyGroup ;
-	rdfs:label "#{category}" .
+	a #{shacl_prefix}:PropertyGroup ;
+	#{rdfs_prefix}:label "#{category}" .
 
 )
                   end
