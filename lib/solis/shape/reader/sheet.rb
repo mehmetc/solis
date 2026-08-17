@@ -43,6 +43,11 @@ module Solis
                 raise "_REFERENCES tab must have ['sheeturl', 'description', 'entityrange'] as a header at row 1" unless (%w[sheeturl description entityrange] - references.header).length == 0
               end
 
+              if sheets.key?('_CATEGORIES')
+                categories = sheets['_CATEGORIES']
+                raise "_CATEGORIES tab must have ['name'] as a header at row 1" unless (%w[name] - categories.header).length == 0
+              end
+
               sheets.each do |sheet_name, sheet|
                 if sheet_name !~ /^_/
                   entities = sheets[sheet_name]
@@ -336,7 +341,7 @@ hide empty members
                     labels = build_labels(property_metadata[:label], rdfs_prefix, ' ' * 17)
 
                     unless category.nil?
-                      group = "#{category.classify}Group"
+                      group = "#{category.camelize}Group"
                       groups[group] = category unless groups.key?(group)
                     end
 
@@ -509,7 +514,7 @@ hide empty members
               puts e.message
             end
 
-            def build_inflections(datas)
+            def build_inflections(datas, categories = [])
               inflections = {}
               datas.each do |data|
                 data[:entities].each do |entity, metadata|
@@ -517,6 +522,16 @@ hide empty members
                   inflections[entity.to_s.underscore.to_sym] = metadata[:plural].underscore
                 end
               end
+
+              # categories are uninflected, singular and plural are the same word.
+              # an entity by the same name keeps its own plural.
+              # categories.each do |category|
+              #   name = category.to_s.strip
+              #   next if name.empty?
+              #
+              #   inflections[name.to_sym] = name unless inflections.key?(name.to_sym) || inclections.value?(name.to_s)
+              #   inflections[name.underscore.to_sym] = name.underscore unless inflections.key?(name.underscore.to_sym) || inclections.value?(name.to_s)
+              # end
 
               inflections.to_json
             rescue StandardError => e
@@ -763,6 +778,11 @@ hide empty members
 
           options[:prefixes] = prefixes
           options[:metadata] = metadata
+
+          # like _REFERENCES, _CATEGORIES only lives in the main sheet
+          categories = sheet_data.is_a?(Hash) && sheet_data.key?('_CATEGORIES') ? sheet_data['_CATEGORIES'].map { |c| c['name'] } : []
+          Solis::LOGGER.info("Found #{categories.length} categories") unless categories.empty?
+
           #TODO: cleanup
           if sheet_data.is_a?(Hash)
             raise "No _REFERENCES sheet found" unless sheet_data.key?("_REFERENCES")
@@ -806,7 +826,7 @@ hide empty members
           Solis::LOGGER.info('Generating SCHEMA')
           schema = build_schema(datas)
           Solis::LOGGER.info('Generating INFLECTIONS')
-          inflections = build_inflections(datas)
+          inflections = build_inflections(datas, categories)
           Solis::LOGGER.info('Generating JSON SCHEMA')
           json_schema = build_json_schema(shacl)
 
