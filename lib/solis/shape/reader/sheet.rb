@@ -45,7 +45,8 @@ module Solis
 
               if sheets.key?('_CATEGORIES')
                 categories = sheets['_CATEGORIES']
-                raise "_CATEGORIES tab must have ['name'] as a header at row 1" unless (%w[name] - categories.header).length == 0
+                has_name = categories.header.include?('name') || categories.header.any? { |h| language_column('name').match?(h.to_s) }
+                raise "_CATEGORIES tab must have ['name'] or ['name_XX', ...] as a header at row 1" unless has_name
               end
 
               sheets.each do |sheet_name, sheet|
@@ -141,17 +142,20 @@ module Solis
               raise Solis::Error::GeneralError, e.message
             end
 
-            # Matches the 'Label_XX' columns (header is downcased by ::Sheet#header) where
-            # XX is a language tag, ex. 'Label_NL', 'Label_EN', 'Label_nl-BE'
-            LANGUAGE_LABEL_COLUMN = /\Alabel_(?<language>[a-z]{2,3}([-_][a-z0-9]{2,8})*)\z/.freeze
+            # Matches the '<prefix>_XX' columns (header is downcased by ::Sheet#header) where
+            # XX is a language tag, ex. 'Label_NL', 'Label_EN', 'Label_nl-BE', 'Name_nl'
+            def language_column(prefix)
+              /\A#{Regexp.escape(prefix.to_s.downcase)}_(?<language>[a-z]{2,3}([-_][a-z0-9]{2,8})*)\z/
+            end
 
-            # Collects all 'Label_XX' columns of a row into { nl: 'Publiceren', en: 'Publish' }
-            def parse_labels(row)
+            # Collects all 'Label_XX' (or '<prefix>_XX') columns of a row into { nl: 'Publiceren', en: 'Publish' }
+            def parse_labels(row, prefix = 'label')
               labels = {}
               return labels unless row.respond_to?(:each_pair)
 
+              column_pattern = language_column(prefix)
               row.each_pair do |column, value|
-                match = LANGUAGE_LABEL_COLUMN.match(column.to_s)
+                match = column_pattern.match(column.to_s)
                 next if match.nil?
                 next if value.nil? || value.to_s.strip.empty?
 
@@ -283,7 +287,7 @@ hide empty members
               "\n#{indent}#{rdfs_prefix}:label #{literals.join(', ')} ;"
             end
 
-            def build_shacl(datas)
+            def build_shacl(datas, categories = [])
               shacl_prefix = datas.first[:ontologies][:all].select { |_, v| v[:uri] =~ /shacl/ }.keys.first
               shacl_prefix = 'sh' if shacl_prefix.nil?
 
@@ -385,10 +389,17 @@ hide empty members
                   out += ".\n"
 
                   groups.each do |group, category|
+                    # use the per language names from _CATEGORIES when the category is referenced by any of them
+                    category_labels = categories.find { |c| c[:name].eql?(category) || c[:labels].value?(category) }&.dig(:labels)
+                    group_label = if category_labels.nil? || category_labels.empty?
+                                    %(#{rdfs_prefix}:label "#{category}")
+                                  else
+                                    build_labels(category_labels, rdfs_prefix, '').strip.chomp(' ;')
+                                  end
                     out += %(
 #{graph_prefix}:#{group}
 	a #{shacl_prefix}:PropertyGroup ;
-	#{rdfs_prefix}:label "#{category}" .
+	#{group_label} .
 
 )
                   end
@@ -526,7 +537,7 @@ hide empty members
               # categories are uninflected, singular and plural are the same word.
               # an entity by the same name keeps its own plural.
               # categories.each do |category|
-              #   name = category.to_s.strip
+              #   name = category[:name].to_s.strip
               #   next if name.empty?
               #
               #   inflections[name.to_sym] = name unless inflections.key?(name.to_sym) || inclections.value?(name.to_s)
@@ -780,7 +791,19 @@ hide empty members
           options[:metadata] = metadata
 
           # like _REFERENCES, _CATEGORIES only lives in the main sheet
-          categories = sheet_data.is_a?(Hash) && sheet_data.key?('_CATEGORIES') ? sheet_data['_CATEGORIES'].map { |c| c['name'] } : []
+          # a category can have a name per language ('Name_nl', 'Name_en', ...) next to, or instead of, 'Name'.
+          # entity sheets refer to a category by 'Name' or, when missing, by the first 'Name_XX' column.
+          categories = []
+          if sheet_data.is_a?(Hash) && sheet_data.key?('_CATEGORIES')
+            categories = sheet_data['_CATEGORIES'].map do |c|
+              labels = parse_labels(c, 'name')
+              name = c['name'].to_s.strip
+              name = labels.values.first.to_s if name.empty?
+              next if name.empty?
+
+              { name: name, labels: labels }
+            end.compact
+          end
           Solis::LOGGER.info("Found #{categories.length} categories") unless categories.empty?
 
           #TODO: cleanup
@@ -820,7 +843,7 @@ hide empty members
           end
 
           Solis::LOGGER.info('Generating SHACL')
-          shacl = build_shacl(datas)
+          shacl = build_shacl(datas, categories)
           Solis::LOGGER.info('Generating PLANTUML')
           plantuml = build_plantuml(datas)
           Solis::LOGGER.info('Generating SCHEMA')

@@ -156,10 +156,23 @@ module Solis
               next if attribute.nil?
 
               attribute[:label] = labels_of(graph, property.object)
+              attribute[:group] = group_of(graph, attribute[:group]) unless attribute[:group].nil?
             end
           end
 
           shapes
+        end
+
+        # Turns a sh:PropertyGroup URI into
+        #   { uri: RDF::URI, name: 'OpleidingEnLoopbaan', label: { nl: 'opleiding_en_loopbaan', en: 'education_and_career' } }
+        def group_of(graph, group)
+          return group if group.is_a?(Hash)
+
+          {
+            uri: group,
+            name: group.to_s.split(%r{[/#]}).last.to_s.gsub(/Group$/, ''),
+            label: labels_of(graph, group)
+          }
         end
 
         def name_of(graph, subject)

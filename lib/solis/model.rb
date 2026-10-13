@@ -590,7 +590,10 @@ values ?s {<#{self.graph_id}>}
                            description: attribute_metadata[:comment]&.value
         }
         attribute_data[:order] = attribute_metadata[:order]&.value.to_i if attribute_metadata.key?(:order) && !attribute_metadata[:order].nil?
-        attribute_data[:group] = attribute_metadata[:group]&.value.gsub(graph_name,'').gsub(/Group$/,'') if attribute_metadata.key?(:group) && !attribute_metadata[:group].nil?
+        if attribute_metadata.key?(:group) && !attribute_metadata[:group].nil?
+          attribute_data[:group] = { name: attribute_metadata[:group][:name],
+                                     label: attribute_metadata[:group][:label] || {} }
+        end
         attribute_data[:attributes] = cm[:attributes] if cm && cm[:attributes]
 
         m[:attributes] << attribute_data
