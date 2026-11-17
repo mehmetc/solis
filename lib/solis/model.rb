@@ -156,7 +156,8 @@ values ?s {<#{self.graph_id}>}
 
     def save(validate_dependencies = true, top_level = true)
       raise "I need a SPARQL endpoint" if self.class.sparql_endpoint.nil?
-      sparql = SPARQL::Client.new(self.class.sparql_endpoint)
+      pool = Solis::Store::Sparql::Client.pool_for(self.class.sparql_endpoint)
+      sparql = pool.checkout
 
       before_create_proc&.call(self)
 
@@ -225,6 +226,8 @@ values ?s {<#{self.graph_id}>}
     rescue StandardError => e
       Solis::LOGGER.error e.message
       raise e
+    ensure
+      pool.checkin if pool && sparql
     end
 
     # Update an entity.
@@ -249,7 +252,8 @@ values ?s {<#{self.graph_id}>}
       raise "id is mandatory when updating" unless attributes.keys.include?('id')
 
       id = attributes.delete('id')
-      sparql = sparql_client || SPARQL::Client.new(self.class.sparql_endpoint)
+      pool = Solis::Store::Sparql::Client.pool_for(self.class.sparql_endpoint) if sparql_client.nil?
+      sparql = sparql_client || pool.checkout
 
       # prefetched_original is used only when it is a complete entity; an id-only stub
       # cannot seed updated_klass (omitted mandatory attributes would be lost).
@@ -419,6 +423,9 @@ values ?s {<#{self.graph_id}>}
       sparql.insert_data(original_graph, graph: original_graph.name) if defined?(original_graph) && original_graph && defined?(sparql) && sparql
 
       raise e
+    ensure
+      # Only return a client this call borrowed itself; a passed-in sparql_client belongs to the caller.
+      pool.checkin if pool && sparql
     end
 
     def graph_id
@@ -443,7 +450,8 @@ values ?s {<#{self.graph_id}>}
       raise "I need a SPARQL endpoint" if sparql_endpoint.nil?
       return [] if entities.empty?
 
-      sparql = SPARQL::Client.new(sparql_endpoint)
+      pool = Solis::Store::Sparql::Client.pool_for(sparql_endpoint)
+      sparql = pool.checkout
 
       # Batch check existence of all entities
       existing_ids = batch_exists?(sparql, entities)
@@ -487,6 +495,8 @@ values ?s {<#{self.graph_id}>}
       end
 
       entities
+    ensure
+      pool.checkin if pool && sparql
     end
 
     # Check existence of multiple entities in a single SPARQL query

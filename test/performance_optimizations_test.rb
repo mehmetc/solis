@@ -45,10 +45,50 @@ class PerformanceOptimizationsTest < Minitest::Test
     graph_name = 'http://solis.template/'
     client = Solis::Store::Sparql::Client.new(endpoint, graph_name: graph_name)
 
-    # After a successful check, cache should be set
+    # After a successful check, the shared (per-pool) cache should be set
     client.up?
-    assert client.instance_variable_get(:@up_checked_at), "Cache timestamp should be set after successful check"
-    assert client.instance_variable_get(:@up_result), "Cache result should be set after successful check"
+    cached = Solis::Store::Sparql::Client.cached_up(client.instance_variable_get(:@key))
+    assert cached, "Cache entry should be set after successful check"
+    assert cached[:result], "Cache result should be set after successful check"
+
+    # A second instance for the same endpoint/graph sees the same cache
+    other = Solis::Store::Sparql::Client.new(endpoint, graph_name: graph_name)
+    assert Solis::Store::Sparql::Client.cached_up(other.instance_variable_get(:@key)), "up? cache should be shared across instances"
+  end
+
+  # ──────────────────────────────────────────────────────────────────────
+  # 1b. Shared connection pool (no connection leak per request)
+  # ──────────────────────────────────────────────────────────────────────
+
+  def test_clients_share_one_pool_per_endpoint
+    endpoint = Solis::ConfigFile[:solis][:sparql_endpoint]
+    a = Solis::Store::Sparql::Client.new(endpoint, graph_name: 'http://solis.template/')
+    b = Solis::Store::Sparql::Client.new(endpoint, graph_name: 'http://solis.template/')
+    assert_same a.instance_variable_get(:@pool), b.instance_variable_get(:@pool)
+
+    before = Solis::Store::Sparql::Client.pool_count
+    50.times { Solis::Store::Sparql::Client.new(endpoint, graph_name: 'http://solis.template/').query('ASK { ?s ?p ?o }') }
+    assert_equal before, Solis::Store::Sparql::Client.pool_count, "new instances must not create new pools"
+  end
+
+  def test_pool_is_reentrant_within_a_thread
+    endpoint = Solis::ConfigFile[:solis][:sparql_endpoint]
+    Solis::Store::Sparql::Client.with(endpoint) do |outer|
+      Solis::Store::Sparql::Client.with(endpoint) do |inner|
+        assert_same outer, inner, "nested checkout in one thread must reuse the same client"
+      end
+    end
+  end
+
+  def test_save_and_update_return_clients_to_pool
+    endpoint = Solis::ConfigFile[:solis][:sparql_endpoint]
+    pool = Solis::Store::Sparql::Client.pool_for(endpoint)
+
+    student = Student.new({ first_name: 'Pool', last_name: 'Test', age: 30 })
+    student.save
+    student.update({ 'id' => student.id, 'age' => 31 })
+
+    assert_equal pool.size, pool.available, "all pooled clients should be checked back in"
   end
 
   # ──────────────────────────────────────────────────────────────────────

@@ -56,6 +56,10 @@ module Solis
         end
 
         #SPARQL::Client.new(@sparql_endpoint, graph: @model.class.graph_name, read_timeout: 120)
+        # Querying the live endpoint goes through the shared pool; an in-memory
+        # repository (constructed or cached result) needs no HTTP connection.
+        return @sparql_client unless sparql_repository.is_a?(RDF::Queryable)
+
         SPARQL::Client.new(sparql_repository, read_timeout: 120)
       end
 
